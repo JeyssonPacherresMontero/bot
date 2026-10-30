@@ -4,45 +4,99 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
+    --background: #f4f6f9;
+    --foreground: #212529;
     --card: #ffffff;
-    --card-foreground: #0f172a;
-    --border: #e2e8f0;
-    --ring: #3b82f6;
+    --card-foreground: #212529;
+    --border: #dee2e6;
+    --ring: #007bff;
   }
 
   .dark {
-    --background: #0b1120;
-    --foreground: #f8fafc;
-    --card: #1e293b;
-    --card-foreground: #f8fafc;
-    --border: #334155;
-    --ring: #60a5fa;
+    --background: #1e282c;
+    --foreground: #ced4da;
+    --card: #343a40;
+    --card-foreground: #f8f9fa;
+    --border: #4b545c;
+    --ring: #3b82f6;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
   }
+}
+
+/* AdminLTE Card and Component Utilities */
+.lte-card {
+  @apply bg-white dark:bg-[#343a40] border border-[#dee2e6] dark:border-[#4b545c] rounded-[0.25rem] shadow-sm transition-all;
+}
+
+.lte-card-header {
+  @apply px-4 py-3 border-b border-[#dee2e6] dark:border-[#4b545c] flex items-center justify-between font-semibold text-[#212529] dark:text-[#f8f9fa];
+}
+
+.lte-card-body {
+  @apply p-4;
+}
+
+.lte-card-footer {
+  @apply px-4 py-3 bg-[#f8f9fa] dark:bg-[#384047] border-t border-[#dee2e6] dark:border-[#4b545c] text-xs text-[#6c757d] dark:text-[#ced4da];
+}
+
+/* AdminLTE Buttons */
+.btn-lte {
+  @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[0.25rem] text-sm font-medium transition-colors cursor-pointer border select-none disabled:opacity-60 disabled:cursor-not-allowed shadow-sm;
+}
+
+.btn-lte-primary {
+  @apply btn-lte bg-[#007bff] hover:bg-[#0069d9] text-white border-[#007bff] active:bg-[#0062cc];
+}
+
+.btn-lte-success {
+  @apply btn-lte bg-[#28a745] hover:bg-[#218838] text-white border-[#28a745] active:bg-[#1e7e34];
+}
+
+.btn-lte-danger {
+  @apply btn-lte bg-[#dc3545] hover:bg-[#c82333] text-white border-[#dc3545] active:bg-[#bd2130];
+}
+
+.btn-lte-warning {
+  @apply btn-lte bg-[#ffc107] hover:bg-[#e0a800] text-[#1f2d3d] border-[#ffc107] font-semibold;
+}
+
+.btn-lte-info {
+  @apply btn-lte bg-[#17a2b8] hover:bg-[#138496] text-white border-[#17a2b8];
+}
+
+.btn-lte-default {
+  @apply btn-lte bg-white dark:bg-[#343a40] hover:bg-[#e2e6ea] dark:hover:bg-[#3f474e] text-[#495057] dark:text-[#ced4da] border-[#ced4da] dark:border-[#6c757d];
+}
+
+/* AdminLTE Form Inputs */
+.form-control-lte {
+  @apply w-full px-3 py-1.5 text-sm bg-white dark:bg-[#343a40] text-[#495057] dark:text-[#ced4da] border border-[#ced4da] dark:border-[#6c757d] rounded-[0.25rem] placeholder-[#6c757d] focus:outline-none focus:border-[#80bdff] focus:ring-2 focus:ring-[#80bdff]/30 transition-all;
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
 }
 ::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 9999px;
+  background: #adb5bd;
+  border-radius: 4px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #495057;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #6c757d;
 }

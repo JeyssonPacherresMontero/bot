@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/auth-context';
+import { ContentHeader } from '@/components/layout/ContentHeader';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { formatFechaHoraLima } from '@/lib/utils';
 import type { UsuarioTelegram } from '@/types/database.types';
@@ -73,20 +74,18 @@ export default function TecnicosPage() {
   }, [supabase]);
 
   useEffect(() => {
-    if (isAdmin) {
-      loadTecnicos();
-    }
-  }, [isAdmin, loadTecnicos]);
+    loadTecnicos();
+  }, [loadTecnicos]);
 
   if (!authLoading && !isAdmin) {
     return (
-      <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-        <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+      <div className="p-8 text-center lte-card border-t-[3px] border-t-[#dc3545]">
+        <ShieldAlert className="w-10 h-10 text-[#dc3545] mx-auto mb-2" />
+        <h2 className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
           Acceso Restringido
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          La gestión de técnicos autorizados de Telegram está reservada únicamente para administradores.
+        <p className="text-xs text-[#6c757d] dark:text-[#ced4da] mt-1">
+          Solo los administradores del sistema pueden gestionar la lista de técnicos de Telegram.
         </p>
       </div>
     );
@@ -207,46 +206,48 @@ export default function TecnicosPage() {
     }
   };
 
+  const actions = (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={loadTecnicos}
+        className="btn-lte-default text-xs"
+        title="Recargar"
+      >
+        <RefreshCw className="w-3.5 h-3.5" />
+      </button>
+      <button
+        onClick={handleOpenCreate}
+        className="btn-lte-primary text-xs"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>Registrar Técnico</span>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Bot className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            Técnicos de Mantenimiento en Telegram
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Lista blanca de usuarios autorizados para interactuar con el bot y enviar reportes vía Telegram.
-          </p>
-        </div>
+    <div className="space-y-4">
+      {/* Content Header AdminLTE */}
+      <ContentHeader
+        title="Técnicos de Mantenimiento en Telegram"
+        subtitle="Lista blanca de usuarios autorizados para interactuar con el bot y enviar reportes vía Telegram."
+        breadcrumbs={[
+          { label: 'Inicio', href: '/dashboard' },
+          { label: 'Técnicos Telegram', active: true },
+        ]}
+        actions={actions}
+      />
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadTecnicos}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-            title="Recargar"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleOpenCreate}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Registrar Técnico</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Helper Box */}
-      <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 flex items-start gap-3 text-xs text-blue-900 dark:text-blue-300">
-        <HelpCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+      {/* Helper Box - AdminLTE Callout Style */}
+      <div className="lte-card border-l-4 border-l-[#17a2b8] p-3 flex items-start gap-3 text-xs">
+        <HelpCircle className="w-5 h-5 text-[#17a2b8] shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <p className="font-semibold">¿Cómo obtiene el técnico su Chat ID?</p>
-          <p className="text-blue-800 dark:text-blue-300/90 leading-relaxed">
+          <p className="font-bold text-[#212529] dark:text-[#f8f9fa]">
+            ¿Cómo obtiene el técnico su Chat ID?
+          </p>
+          <p className="text-[#6c757d] dark:text-[#ced4da] leading-relaxed">
             El técnico solo debe abrir el bot de Telegram en su celular y enviar el comando{' '}
-            <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">
+            <code className="bg-[#e9ecef] dark:bg-[#4b545c] text-[#007bff] dark:text-[#66b0ff] px-1.5 py-0.5 rounded font-mono font-bold">
               /start
             </code>
             . El bot le responderá inmediatamente con su número identificador (Chat ID). Cópialo y regístralo aquí.
@@ -254,182 +255,212 @@ export default function TecnicosPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        {loading ? (
-          <div className="p-6">
-            <TableSkeleton rows={5} cols={6} />
+      {/* Table Card - AdminLTE Card Outline */}
+      <div className="lte-card border-t-[3px] border-t-[#007bff]">
+        <div className="lte-card-header">
+          <div className="flex items-center gap-2">
+            <Bot className="w-4 h-4 text-[#007bff]" />
+            <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+              Técnicos Habilitados en el Bot
+            </span>
+            <span className="bg-[#007bff] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
+              {tecnicos.length}
+            </span>
           </div>
-        ) : tecnicos.length === 0 ? (
-          <div className="p-12 text-center text-xs text-slate-400">
-            No hay técnicos registrados. Agrega uno con el botón superior.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Chat ID</th>
-                  <th className="py-3.5 px-4">Nombre Completo</th>
-                  <th className="py-3.5 px-4">Cargo / Especialidad</th>
-                  <th className="py-3.5 px-4">Reportes Enviados</th>
-                  <th className="py-3.5 px-4">Estado</th>
-                  <th className="py-3.5 px-4">Fecha Registro</th>
-                  <th className="py-3.5 px-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {tecnicos.map((t) => {
-                  const count = reportCountMap[t.chat_id] || 0;
-                  return (
-                    <tr
-                      key={t.chat_id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
-                    >
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-800 dark:text-slate-200">
-                        {t.chat_id}
-                      </td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-slate-100">
-                        {t.nombre}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">
-                        {t.cargo || '—'}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                          {count} reporte{count === 1 ? '' : 's'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <button
-                          onClick={() => handleToggleActivo(t)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer ${
-                            t.activo
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                          }`}
-                          title="Clic para cambiar estado"
-                        >
-                          {t.activo ? (
-                            <>
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              <span>Activo</span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3.5 h-3.5" />
-                              <span>Inactivo</span>
-                            </>
-                          )}
-                        </button>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                        {formatFechaHoraLima(t.created_at)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap space-x-1">
-                        <button
-                          onClick={() => handleOpenEdit(t)}
-                          className="p-1.5 text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                          title="Editar"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(t)}
-                          className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        </div>
+
+        <div className="p-0">
+          {loading ? (
+            <div className="p-4">
+              <TableSkeleton rows={5} cols={7} />
+            </div>
+          ) : tecnicos.length === 0 ? (
+            <div className="p-10 text-center text-xs text-[#adb5bd]">
+              No hay técnicos registrados. Agrega uno con el botón superior.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#f4f6f9] dark:bg-[#2c3338] text-[#495057] dark:text-[#ced4da] font-semibold border-b border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Chat ID</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Nombre Completo</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Cargo / Especialidad</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Reportes Enviados</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Estado</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Fecha Registro</th>
+                    <th className="py-2.5 px-3 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#dee2e6] dark:divide-[#4b545c]">
+                  {tecnicos.map((t) => {
+                    const count = reportCountMap[t.chat_id] || 0;
+                    return (
+                      <tr
+                        key={t.chat_id}
+                        className="even:bg-[#f8f9fa] dark:even:bg-[#2f353a] hover:bg-[#e9ecef]/60 dark:hover:bg-[#3f474e]/50 transition-colors"
+                      >
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#007bff] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {t.chat_id}
+                        </td>
+                        <td className="py-2.5 px-3 font-semibold text-[#212529] dark:text-[#f8f9fa] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {t.nombre}
+                        </td>
+                        <td className="py-2.5 px-3 text-[#495057] dark:text-[#ced4da] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {t.cargo || '—'}
+                        </td>
+                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <span className="font-bold text-[#28a745]">
+                            {count} reporte{count === 1 ? '' : 's'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <button
+                            onClick={() => handleToggleActivo(t)}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold cursor-pointer ${
+                              t.activo
+                                ? 'bg-[#28a745] text-white'
+                                : 'bg-[#6c757d] text-white'
+                            }`}
+                            title="Clic para cambiar estado"
+                          >
+                            {t.activo ? (
+                              <>
+                                <CheckCircle className="w-3 h-3" />
+                                <span>Activo</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3" />
+                                <span>Inactivo</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+                        <td className="py-2.5 px-3 text-[#6c757d] dark:text-[#ced4da] whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {formatFechaHoraLima(t.created_at)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap space-x-1">
+                          <button
+                            onClick={() => handleOpenEdit(t)}
+                            className="btn-lte-default text-xs p-1"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-[#007bff]" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(t)}
+                            className="btn-lte-danger text-xs p-1"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <div className="lte-card-footer">
+          Base de datos de acceso al webhook de Telegram en n8n
+        </div>
       </div>
 
-      {/* Create / Edit Modal */}
+      {/* Create / Edit Modal - AdminLTE Modal Style */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              {editingTecnico ? 'Editar Técnico' : 'Registrar Nuevo Técnico'}
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="w-full max-w-md lte-card border-t-[4px] border-t-[#007bff] shadow-lte-lg">
+            <div className="lte-card-header bg-[#007bff] text-white">
+              <h3 className="text-sm font-bold text-white">
+                {editingTecnico ? 'Editar Técnico' : 'Registrar Nuevo Técnico'}
+              </h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-white hover:opacity-80"
+              >
+                &times;
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveModal} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Chat ID de Telegram <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  disabled={!!editingTecnico}
-                  value={modalChatId}
-                  onChange={(e) => setModalChatId(e.target.value)}
-                  placeholder="Ej. 123456789"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono disabled:opacity-50 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
+            <form onSubmit={handleSaveModal}>
+              <div className="lte-card-body space-y-3 text-xs">
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Chat ID de Telegram <span className="text-[#dc3545]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={!!editingTecnico}
+                    value={modalChatId}
+                    onChange={(e) => setModalChatId(e.target.value)}
+                    placeholder="Ej. 123456789"
+                    className="form-control-lte font-mono disabled:opacity-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Nombre Completo <span className="text-[#dc3545]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={modalNombre}
+                    onChange={(e) => setModalNombre(e.target.value)}
+                    placeholder="Ej. Carlos Mendoza"
+                    className="form-control-lte"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Cargo o Especialidad
+                  </label>
+                  <input
+                    type="text"
+                    value={modalCargo}
+                    onChange={(e) => setModalCargo(e.target.value)}
+                    placeholder="Ej. Técnico Mecánico, Electricista"
+                    className="form-control-lte"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="chkActivo"
+                    checked={modalActivo}
+                    onChange={(e) => setModalActivo(e.target.checked)}
+                    className="w-4 h-4 rounded-[0.2rem] text-[#007bff] focus:ring-[#007bff] border-[#ced4da]"
+                  />
+                  <label
+                    htmlFor="chkActivo"
+                    className="font-semibold text-[#495057] dark:text-[#ced4da] cursor-pointer"
+                  >
+                    Técnico Activo (Habilitado para reportar en Telegram)
+                  </label>
+                </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Nombre Completo <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={modalNombre}
-                  onChange={(e) => setModalNombre(e.target.value)}
-                  placeholder="Ej. Carlos Mendoza"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Cargo o Especialidad
-                </label>
-                <input
-                  type="text"
-                  value={modalCargo}
-                  onChange={(e) => setModalCargo(e.target.value)}
-                  placeholder="Ej. Técnico Mecánico, Electricista, Instrumentista"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="chkActivo"
-                  checked={modalActivo}
-                  onChange={(e) => setModalActivo(e.target.checked)}
-                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700"
-                />
-                <label htmlFor="chkActivo" className="font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
-                  Técnico Activo (Permite enviar reportes)
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="lte-card-footer flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3.5 py-2 rounded-xl font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="btn-lte-default text-xs"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
+                  className="btn-lte-primary text-xs"
                 >
-                  {formLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <span>{editingTecnico ? 'Guardar Cambios' : 'Registrar'}</span>
+                  {formLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{editingTecnico ? 'Guardar Cambios' : 'Registrar Técnico'}</span>
                 </button>
               </div>
             </form>

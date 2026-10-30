@@ -15,41 +15,42 @@ export function EstadoBadge({ estado, isDemorado = false, className }: EstadoBad
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-800',
-            isDemorado && 'ring-2 ring-red-500 animate-pulse bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-300',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#ffc107] text-[#1f2d3d] shadow-2xs',
+            isDemorado && 'ring-2 ring-[#dc3545] animate-pulse bg-[#dc3545] text-white',
             className
           )}
           title={isDemorado ? 'Pendiente hace más de 24h sin revisión' : 'Pendiente de revisión'}
         >
-          <Clock className="w-3.5 h-3.5" />
+          <Clock className="w-3 h-3" />
           <span>Pendiente</span>
-          {isDemorado && <span className="text-[10px] bg-red-600 text-white px-1 rounded font-bold ml-1">+24h</span>}
+          {isDemorado && <span className="bg-black/30 text-white text-[10px] px-1 rounded ml-0.5 font-black">+24h</span>}
         </span>
       );
     case 'corregido':
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-950/70 dark:text-orange-300 border border-orange-300 dark:border-orange-800',
-            isDemorado && 'ring-2 ring-red-500 animate-pulse bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 border-red-300',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#fd7e14] text-white shadow-2xs',
+            isDemorado && 'ring-2 ring-[#dc3545] animate-pulse bg-[#dc3545] text-white',
             className
           )}
           title={isDemorado ? 'Corregido hace más de 24h sin revisión' : 'Corregido por técnico'}
         >
-          <AlertCircle className="w-3.5 h-3.5" />
+          <AlertCircle className="w-3 h-3" />
           <span>Corregido</span>
-          {isDemorado && <span className="text-[10px] bg-red-600 text-white px-1 rounded font-bold ml-1">+24h</span>}
+          {isDemorado && <span className="bg-black/30 text-white text-[10px] px-1 rounded ml-0.5 font-black">+24h</span>}
         </span>
       );
     case 'confirmado':
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-300 dark:border-blue-800',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#007bff] text-white shadow-2xs',
             className
           )}
+          title="Confirmado por técnico / listo para cierre"
         >
-          <CheckCircle2 className="w-3.5 h-3.5" />
+          <CheckCircle2 className="w-3 h-3" />
           <span>Confirmado</span>
         </span>
       );
@@ -57,11 +58,12 @@ export function EstadoBadge({ estado, isDemorado = false, className }: EstadoBad
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#28a745] text-white shadow-2xs',
             className
           )}
+          title="Aprobado y cerrado por supervisor"
         >
-          <CheckCheck className="w-3.5 h-3.5" />
+          <CheckCheck className="w-3 h-3" />
           <span>Revisado</span>
         </span>
       );
@@ -69,18 +71,24 @@ export function EstadoBadge({ estado, isDemorado = false, className }: EstadoBad
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-300 dark:border-rose-800',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#dc3545] text-white shadow-2xs',
             className
           )}
+          title="Rechazado"
         >
-          <XCircle className="w-3.5 h-3.5" />
+          <XCircle className="w-3 h-3" />
           <span>Rechazado</span>
         </span>
       );
     default:
       return (
-        <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300', className)}>
-          {estado}
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#6c757d] text-white shadow-2xs',
+            className
+          )}
+        >
+          <span>{estado}</span>
         </span>
       );
   }

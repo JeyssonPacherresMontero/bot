@@ -10,7 +10,7 @@ interface TipoBadgeProps {
 
 export function TipoBadge({ tipo, className }: TipoBadgeProps) {
   if (!tipo) {
-    return <span className={cn('text-xs text-slate-400 dark:text-slate-500', className)}>—</span>;
+    return <span className={cn('text-xs text-[#adb5bd]', className)}>—</span>;
   }
 
   switch (tipo.toLowerCase()) {
@@ -18,11 +18,11 @@ export function TipoBadge({ tipo, className }: TipoBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 border border-red-200 dark:border-red-900',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#dc3545] text-white shadow-2xs',
             className
           )}
         >
-          <ShieldAlert className="w-3 h-3 text-red-500" />
+          <ShieldAlert className="w-3 h-3" />
           <span>Correctivo</span>
         </span>
       );
@@ -30,11 +30,11 @@ export function TipoBadge({ tipo, className }: TipoBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-900',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#007bff] text-white shadow-2xs',
             className
           )}
         >
-          <Wrench className="w-3 h-3 text-sky-500" />
+          <Wrench className="w-3 h-3" />
           <span>Preventivo</span>
         </span>
       );
@@ -42,11 +42,11 @@ export function TipoBadge({ tipo, className }: TipoBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-900',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#6f42c1] text-white shadow-2xs',
             className
           )}
         >
-          <Activity className="w-3 h-3 text-purple-500" />
+          <Activity className="w-3 h-3" />
           <span>Predictivo</span>
         </span>
       );
@@ -54,11 +54,11 @@ export function TipoBadge({ tipo, className }: TipoBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200 dark:border-teal-900',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#17a2b8] text-white shadow-2xs',
             className
           )}
         >
-          <Search className="w-3 h-3 text-teal-500" />
+          <Search className="w-3 h-3" />
           <span>Inspección</span>
         </span>
       );
@@ -66,12 +66,12 @@ export function TipoBadge({ tipo, className }: TipoBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-medium bg-[#6c757d] text-white',
             className
           )}
         >
-          <HelpCircle className="w-3 h-3 text-slate-400" />
-          <span>Otro</span>
+          <HelpCircle className="w-3 h-3" />
+          <span>{tipo}</span>
         </span>
       );
   }

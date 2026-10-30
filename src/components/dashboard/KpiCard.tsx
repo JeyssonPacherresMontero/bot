@@ -1,5 +1,6 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import Link from 'next/link';
+import { LucideIcon, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface KpiCardProps {
@@ -7,8 +8,9 @@ interface KpiCardProps {
   value: string | number;
   subtitle?: string;
   icon: LucideIcon;
-  variant?: 'default' | 'warning' | 'success' | 'info' | 'purple';
+  variant?: 'default' | 'warning' | 'success' | 'info' | 'purple' | 'danger' | 'primary';
   trend?: string;
+  href?: string;
 }
 
 export function KpiCard({
@@ -17,57 +19,109 @@ export function KpiCard({
   subtitle,
   icon: Icon,
   variant = 'default',
+  trend,
+  href = '#',
 }: KpiCardProps) {
   const variantStyles = {
-    default: {
-      bg: 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800',
-      iconBg: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    },
-    warning: {
-      bg: 'bg-white dark:bg-slate-900 border-amber-200 dark:border-amber-900/50',
-      iconBg: 'bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-400',
+    info: {
+      bg: 'bg-[#17a2b8] text-white',
+      footer: 'bg-black/15 hover:bg-black/25 text-white',
+      iconOpacity: 'text-white/20',
     },
     success: {
-      bg: 'bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-900/50',
-      iconBg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-400',
+      bg: 'bg-[#28a745] text-white',
+      footer: 'bg-black/15 hover:bg-black/25 text-white',
+      iconOpacity: 'text-white/20',
     },
-    info: {
-      bg: 'bg-white dark:bg-slate-900 border-blue-200 dark:border-blue-900/50',
-      iconBg: 'bg-blue-100 text-blue-700 dark:bg-blue-950/70 dark:text-blue-400',
+    warning: {
+      bg: 'bg-[#ffc107] text-[#1f2d3d]',
+      footer: 'bg-black/15 hover:bg-black/25 text-[#1f2d3d]',
+      iconOpacity: 'text-black/15',
+    },
+    danger: {
+      bg: 'bg-[#dc3545] text-white',
+      footer: 'bg-black/15 hover:bg-black/25 text-white',
+      iconOpacity: 'text-white/20',
+    },
+    primary: {
+      bg: 'bg-[#007bff] text-white',
+      footer: 'bg-black/15 hover:bg-black/25 text-white',
+      iconOpacity: 'text-white/20',
     },
     purple: {
-      bg: 'bg-white dark:bg-slate-900 border-purple-200 dark:border-purple-900/50',
-      iconBg: 'bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-400',
+      bg: 'bg-[#6f42c1] text-white',
+      footer: 'bg-black/15 hover:bg-black/25 text-white',
+      iconOpacity: 'text-white/20',
+    },
+    default: {
+      bg: 'bg-[#6c757d] text-white',
+      footer: 'bg-black/15 hover:bg-black/25 text-white',
+      iconOpacity: 'text-white/20',
     },
   };
 
-  const style = variantStyles[variant];
+  const style = variantStyles[variant] || variantStyles.default;
 
-  return (
+  const content = (
     <div
       className={cn(
-        'p-5 rounded-xl border shadow-xs transition-all hover:shadow-md flex flex-col justify-between',
+        'relative overflow-hidden rounded-[0.25rem] shadow-lte transition-transform hover:-translate-y-0.5 select-none flex flex-col justify-between',
         style.bg
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <div className="p-4 relative z-10">
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-none">
+            {value}
+          </h3>
+          {trend && (
+            <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-black/20">
+              {trend}
+            </span>
+          )}
+        </div>
+        <p className="text-xs sm:text-sm font-medium uppercase tracking-wider mt-1 opacity-95">
           {title}
         </p>
-        <div className={cn('p-2.5 rounded-lg shrink-0', style.iconBg)}>
-          <Icon className="w-5 h-5" />
-        </div>
-      </div>
-      <div className="mt-4">
-        <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          {value}
-        </div>
         {subtitle && (
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {subtitle}
-          </p>
+          <p className="text-[11px] mt-1 opacity-80 line-clamp-1">{subtitle}</p>
         )}
       </div>
+
+      {/* AdminLTE large background watermark icon */}
+      <div
+        className={cn(
+          'absolute -right-2 top-0 pointer-events-none transition-all duration-300',
+          style.iconOpacity
+        )}
+      >
+        <Icon className="w-20 h-20 sm:w-24 sm:h-24 transform translate-y-1" />
+      </div>
+
+      {/* AdminLTE small-box footer */}
+      {href && href !== '#' ? (
+        <Link
+          href={href}
+          className={cn(
+            'flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold transition-colors z-10',
+            style.footer
+          )}
+        >
+          <span>Más detalles</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      ) : (
+        <div
+          className={cn(
+            'flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold z-10',
+            style.footer
+          )}
+        >
+          <span>Supervisión en vivo</span>
+        </div>
+      )}
     </div>
   );
+
+  return content;
 }

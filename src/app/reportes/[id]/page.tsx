@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/auth-context';
 import { EstadoBadge } from '@/components/badges/EstadoBadge';
 import { OrigenBadge } from '@/components/badges/OrigenBadge';
+import { ContentHeader } from '@/components/layout/ContentHeader';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import {
   formatReporteNumero,
@@ -99,21 +100,22 @@ export default function ReporteDetallePage() {
         setTipoMantenimiento(r.tipo_mantenimiento || '');
         setFalla(r.falla || '');
         setCausaProbable(r.causa_probable || '');
-        setActividades(r.actividades || []);
-        setRepuestos(r.repuestos || []);
+        setActividades(Array.isArray(r.actividades) ? r.actividades : []);
+        setRepuestos(Array.isArray(r.repuestos) ? (r.repuestos as RepuestoItem[]) : []);
         setPrioridad(r.prioridad || '');
         setNumeroOt(r.numero_ot || '');
-        setFechaIntervencion(r.fecha_intervencion || '');
+        setFechaIntervencion(r.fecha_intervencion ? r.fecha_intervencion.slice(0, 10) : '');
         setDuracionMinutos(r.duracion_minutos ?? '');
         setObservaciones(r.observaciones || '');
         setComentarioSupervisor(r.comentario_supervisor || '');
 
-        // Fetch other reports for this equipment
-        if (r.equipo) {
+        // Fetch other reports from the same equipment
+        if (r.equipo || r.codigo_equipo) {
+          const filterTerm = r.codigo_equipo || r.equipo;
           const { data: otros } = await supabase
             .from('reportes')
             .select('*')
-            .eq('equipo', r.equipo)
+            .or(`equipo.eq.${filterTerm},codigo_equipo.eq.${filterTerm}`)
             .neq('id', r.id)
             .order('created_at', { ascending: false })
             .limit(5);
@@ -124,7 +126,7 @@ export default function ReporteDetallePage() {
         }
       }
     } catch (err) {
-      console.error('Error al cargar reporte:', err);
+      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
@@ -134,68 +136,68 @@ export default function ReporteDetallePage() {
     loadReporte();
   }, [loadReporte]);
 
-  // Activity handlers
+  // Handlers for dynamic list: Actividades
   const handleAddActividad = () => {
     setActividades([...actividades, '']);
   };
 
   const handleUpdateActividad = (index: number, val: string) => {
-    const list = [...actividades];
-    list[index] = val;
-    setActividades(list);
+    const updated = [...actividades];
+    updated[index] = val;
+    setActividades(updated);
   };
 
   const handleRemoveActividad = (index: number) => {
     setActividades(actividades.filter((_, i) => i !== index));
   };
 
-  // Repuesto handlers
+  // Handlers for dynamic list: Repuestos
   const handleAddRepuesto = () => {
     setRepuestos([...repuestos, { nombre: '', cantidad: 1, codigo: null }]);
   };
 
-  const handleUpdateRepuesto = (index: number, field: keyof RepuestoItem, val: unknown) => {
-    const list = [...repuestos];
-    list[index] = { ...list[index], [field]: val };
-    setRepuestos(list);
+  const handleUpdateRepuesto = (
+    index: number,
+    field: keyof RepuestoItem,
+    val: string | number | null
+  ) => {
+    const updated = [...repuestos];
+    updated[index] = { ...updated[index], [field]: val };
+    setRepuestos(updated);
   };
 
   const handleRemoveRepuesto = (index: number) => {
     setRepuestos(repuestos.filter((_, i) => i !== index));
   };
 
-  // Save changes (Without changing state)
+  // Save manual modifications
   const handleSaveChanges = async () => {
     if (!reporte) return;
     setSaving(true);
     try {
-      const cleanActividades = actividades.map((a) => a.trim()).filter(Boolean);
-      const cleanRepuestos = repuestos.filter((r) => r.nombre.trim());
+      const payload: Partial<Reporte> = {
+        equipo: equipo.trim() || null,
+        codigo_equipo: codigoEquipo.trim() || null,
+        area: area.trim() || null,
+        tipo_mantenimiento: (tipoMantenimiento as TipoMantenimiento) || null,
+        falla: falla.trim() || null,
+        causa_probable: causaProbable.trim() || null,
+        actividades: actividades.filter((a) => a.trim() !== ''),
+        repuestos: repuestos.filter((r) => r.nombre.trim() !== ''),
+        prioridad: (prioridad as PrioridadReporte) || null,
+        numero_ot: numeroOt.trim() || null,
+        fecha_intervencion: fechaIntervencion ? `${fechaIntervencion}T00:00:00Z` : null,
+        duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
+        observaciones: observaciones.trim() || null,
+        comentario_supervisor: comentarioSupervisor.trim() || null,
+      };
 
-      const { error } = await supabase
-        .from('reportes')
-        .update({
-          equipo: equipo.trim() || null,
-          codigo_equipo: codigoEquipo.trim() || null,
-          area: area.trim() || null,
-          tipo_mantenimiento: tipoMantenimiento || null,
-          falla: falla.trim() || null,
-          causa_probable: causaProbable.trim() || null,
-          actividades: cleanActividades,
-          repuestos: cleanRepuestos,
-          prioridad: prioridad || null,
-          numero_ot: numeroOt.trim() || null,
-          fecha_intervencion: fechaIntervencion || null,
-          duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
-          observaciones: observaciones.trim() || null,
-          comentario_supervisor: comentarioSupervisor.trim() || null,
-        })
-        .eq('id', reporte.id);
+      const { error } = await supabase.from('reportes').update(payload).eq('id', reporte.id);
 
       if (error) {
         alert(`Error al guardar cambios: ${error.message}`);
       } else {
-        alert('Cambios guardados exitosamente.');
+        alert('Cambios guardados con éxito.');
         loadReporte();
       }
     } catch (err: unknown) {
@@ -327,8 +329,8 @@ export default function ReporteDetallePage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+      <div className="space-y-4">
+        <div className="h-8 w-48 bg-[#e9ecef] dark:bg-[#343a40] rounded-[0.25rem] animate-pulse" />
         <TableSkeleton rows={6} cols={4} />
       </div>
     );
@@ -336,20 +338,17 @@ export default function ReporteDetallePage() {
 
   if (!reporte) {
     return (
-      <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-        <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+      <div className="p-12 text-center lte-card border-t-[3px] border-t-[#dc3545]">
+        <AlertTriangle className="w-12 h-12 text-[#ffc107] mx-auto mb-3" />
+        <h2 className="text-base font-bold text-[#212529] dark:text-[#f8f9fa]">
           Reporte no encontrado
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-xs text-[#6c757d] dark:text-[#ced4da] mt-1">
           El reporte solicitado no existe o no cuentas con los permisos necesarios.
         </p>
-        <Link
-          href="/reportes"
-          className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Volver a la lista</span>
+        <Link href="/reportes" className="btn-lte-primary text-xs mt-4">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Volver al listado</span>
         </Link>
       </div>
     );
@@ -358,533 +357,533 @@ export default function ReporteDetallePage() {
   const faltantes = reporte.campos_faltantes || [];
   const demorado = isReporteDemorado(reporte.created_at, reporte.estado);
 
+  const headerActions = (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <Link href="/reportes" className="btn-lte-default text-xs">
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>Volver</span>
+      </Link>
+
+      <button
+        onClick={handleSaveChanges}
+        disabled={saving || actionLoading}
+        className="btn-lte-primary text-xs"
+      >
+        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+        <span>Guardar cambios</span>
+      </button>
+
+      {reporte.estado !== 'revisado' && (
+        <button
+          onClick={handleValidate}
+          disabled={actionLoading || saving}
+          className="btn-lte-success text-xs"
+        >
+          <CheckCheck className="w-3.5 h-3.5" />
+          <span>Validar reporte</span>
+        </button>
+      )}
+
+      {reporte.estado !== 'rechazado' && (
+        <button
+          onClick={() => {
+            setRejectReason(reporte.comentario_supervisor || '');
+            setShowRejectModal(true);
+          }}
+          disabled={actionLoading || saving}
+          className="btn-lte-danger text-xs"
+        >
+          <XCircle className="w-3.5 h-3.5" />
+          <span>Rechazar</span>
+        </button>
+      )}
+
+      {(reporte.estado === 'revisado' || reporte.estado === 'rechazado') && (
+        <button
+          onClick={handleReopen}
+          disabled={actionLoading || saving}
+          className="btn-lte-warning text-xs"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Reabrir</span>
+        </button>
+      )}
+
+      {isAdmin && (
+        <button
+          onClick={handleDelete}
+          disabled={actionLoading || saving}
+          className="btn-lte-danger text-xs"
+          title="Eliminar reporte (Solo Admin)"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Top Breadcrumb & Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/reportes"
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
-            title="Volver a la lista"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xl font-black text-slate-900 dark:text-slate-100">
-                {formatReporteNumero(reporte.numero)}
+    <div className="space-y-4">
+      {/* Content Header AdminLTE */}
+      <ContentHeader
+        title={`Reporte #${formatReporteNumero(reporte.numero)}`}
+        subtitle={`Registrado el ${formatFechaHoraLima(reporte.created_at)} por ${reporte.tecnico_nombre || 'Técnico desconocido'}`}
+        breadcrumbs={[
+          { label: 'Inicio', href: '/dashboard' },
+          { label: 'Reportes', href: '/reportes' },
+          { label: `#${formatReporteNumero(reporte.numero)}`, active: true },
+        ]}
+        actions={headerActions}
+      />
+
+      {/* Origin & Metadata Strip - AdminLTE Callout Style */}
+      <div className="lte-card border-l-4 border-l-[#17a2b8] p-3 text-xs flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[#495057] dark:text-[#ced4da]">Estado:</span>
+            <EstadoBadge estado={reporte.estado} isDemorado={demorado} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-[#495057] dark:text-[#ced4da]">Origen:</span>
+            <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
+          </div>
+          <div className="flex items-center gap-1.5 text-[#6c757d] dark:text-[#adb5bd]">
+            <Clock className="w-3.5 h-3.5 text-[#17a2b8]" />
+            <span>Tiempo IA:</span>
+            <span className="font-bold text-[#212529] dark:text-[#f8f9fa]">
+              {formatSegundos(reporte.tiempo_procesamiento_ms ? Math.round(reporte.tiempo_procesamiento_ms / 1000) : null)}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[#6c757d] dark:text-[#adb5bd]">
+            <Sparkles className="w-3.5 h-3.5 text-[#28a745]" />
+            <span>Confianza:</span>
+            <span className="font-bold text-[#28a745]">
+              {formatConfianza(reporte.confianza)}
+            </span>
+          </div>
+        </div>
+
+        {reporte.revisado_en && (
+          <div className="flex items-center gap-1 text-[#28a745] font-semibold text-xs">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Validado el {formatFechaHoraLima(reporte.revisado_en)}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Main 2 Columns: Transcriptions & Form */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Section: "Lo que dijo el técnico" - Card Outline Info */}
+          <div className="lte-card border-t-[3px] border-t-[#17a2b8]">
+            <div className="lte-card-header">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#17a2b8]" />
+                <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+                  Relato Original del Técnico
+                </span>
+              </div>
+              <span className="text-xs text-[#6c757d] dark:text-[#adb5bd]">
+                {reporte.origen === 'audio' ? 'Transcripción Whisper' : 'Texto directo Telegram'}
               </span>
-              <EstadoBadge estado={reporte.estado} isDemorado={demorado} />
-              {demorado && (
-                <span className="text-xs text-red-600 dark:text-red-400 font-semibold flex items-center gap-1">
+            </div>
+
+            <div className="lte-card-body space-y-3">
+              <div className="p-3 bg-[#f8f9fa] dark:bg-[#2c3338] rounded-[0.25rem] border border-[#dee2e6] dark:border-[#4b545c] text-xs">
+                <p className="font-bold text-[#495057] dark:text-[#ced4da] uppercase tracking-wider text-[10px] mb-1">
+                  Texto Transcrito:
+                </p>
+                <p className="text-[#212529] dark:text-[#f8f9fa] leading-relaxed whitespace-pre-wrap">
+                  {reporte.texto_original || 'Sin texto original registrado.'}
+                </p>
+              </div>
+
+              {reporte.texto_correccion && (
+                <div className="p-3 bg-[#fff3cd] dark:bg-[#ffc107]/15 rounded-[0.25rem] border border-[#ffeeba] dark:border-[#ffc107]/40 text-xs">
+                  <p className="font-bold text-[#856404] dark:text-[#ffc107] uppercase tracking-wider text-[10px] mb-1">
+                    Corrección posterior enviada por el técnico:
+                  </p>
+                  <p className="text-[#856404] dark:text-[#ffeeba] leading-relaxed whitespace-pre-wrap">
+                    {reporte.texto_correccion}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section: Formulario editable de campos extraídos - Card Outline Primary */}
+          <div className="lte-card border-t-[3px] border-t-[#007bff]">
+            <div className="lte-card-header">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+                  Campos Extraídos por MaintAI
+                </span>
+              </div>
+              {faltantes.length > 0 && (
+                <span className="bg-[#ffc107] text-[#1f2d3d] text-xs font-bold px-2 py-0.5 rounded-[0.2rem] flex items-center gap-1">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  +24h sin revisión
+                  <span>Faltantes: {faltantes.join(', ')}</span>
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Registrado el {formatFechaHoraLima(reporte.created_at)} por{' '}
-              <span className="font-semibold text-slate-700 dark:text-slate-300">
-                {reporte.tecnico_nombre || 'Técnico desconocido'}
-              </span>
-            </p>
-          </div>
-        </div>
 
-        {/* Supervisor Action Bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={handleSaveChanges}
-            disabled={saving || actionLoading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin text-emerald-600" /> : <Save className="w-4 h-4 text-emerald-600" />}
-            <span>Guardar cambios</span>
-          </button>
-
-          {reporte.estado !== 'revisado' && (
-            <button
-              onClick={handleValidate}
-              disabled={actionLoading || saving}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-all shadow-sm"
-            >
-              <CheckCheck className="w-4 h-4" />
-              <span>Validar reporte</span>
-            </button>
-          )}
-
-          {reporte.estado !== 'rechazado' && (
-            <button
-              onClick={() => {
-                setRejectReason(reporte.comentario_supervisor || '');
-                setShowRejectModal(true);
-              }}
-              disabled={actionLoading || saving}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 hover:bg-rose-100 transition-colors"
-            >
-              <XCircle className="w-4 h-4" />
-              <span>Rechazar</span>
-            </button>
-          )}
-
-          {(reporte.estado === 'revisado' || reporte.estado === 'rechazado') && (
-            <button
-              onClick={handleReopen}
-              disabled={actionLoading || saving}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Reabrir</span>
-            </button>
-          )}
-
-          {isAdmin && (
-            <button
-              onClick={handleDelete}
-              disabled={actionLoading || saving}
-              className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-xl border border-rose-200 dark:border-rose-900 transition-colors"
-              title="Eliminar reporte (Solo Admin)"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Origin & Metadata Bar */}
-      <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center gap-6 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500 dark:text-slate-400">Origen:</span>
-          <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-slate-400" />
-          <span className="text-slate-500 dark:text-slate-400">Tiempo procesamiento IA:</span>
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
-            {formatSegundos(reporte.tiempo_procesamiento_ms ? Math.round(reporte.tiempo_procesamiento_ms / 1000) : null)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-emerald-500" />
-          <span className="text-slate-500 dark:text-slate-400">Certeza de extracción:</span>
-          <span className="font-bold text-emerald-600 dark:text-emerald-400">
-            {formatConfianza(reporte.confianza)}
-          </span>
-        </div>
-        {reporte.correcciones > 0 && (
-          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 font-semibold text-[11px]">
-            <span>{reporte.correcciones} corrección(es) del técnico</span>
-          </div>
-        )}
-        {reporte.revisado_en && (
-          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Revisado el {formatFechaHoraLima(reporte.revisado_en)}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main 2 Cols: Transcriptions & Form */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Section: "Lo que dijo el técnico" */}
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              Lo que dijo el técnico
-            </h2>
-
-            {/* Original message */}
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs">
-              <p className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] mb-1">
-                Relato Original {reporte.origen === 'audio' ? '(Transcripción Whisper)' : '(Texto enviado)'}:
-              </p>
-              <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">
-                {reporte.texto_original || 'Sin texto original registrado.'}
-              </p>
-            </div>
-
-            {/* Correction message */}
-            {reporte.texto_correccion && (
-              <div className="p-3.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/60 text-xs">
-                <p className="font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider text-[10px] mb-1">
-                  Última Corrección enviada por el técnico en Telegram:
-                </p>
-                <p className="text-orange-900 dark:text-orange-200 leading-relaxed whitespace-pre-wrap">
-                  {reporte.texto_correccion}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Section: Formulario editable de campos extraídos */}
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Campos Extraídos por MaintAI
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Puedes corregir o completar la información técnica antes de validar.
-                </p>
-              </div>
-
-              {faltantes.length > 0 && (
-                <div className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 font-semibold text-xs flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Faltantes: {faltantes.join(', ')}</span>
+            <div className="lte-card-body space-y-4">
+              {/* Fields Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Equipo */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Equipo {faltantes.includes('equipo') && <span className="text-[#dc3545] font-bold">(*Faltante)</span>}
+                  </label>
+                  <input
+                    type="text"
+                    value={equipo}
+                    onChange={(e) => setEquipo(e.target.value)}
+                    placeholder="Ej. Turbina de vapor TV-01"
+                    className={`form-control-lte ${faltantes.includes('equipo') ? 'border-[#dc3545] bg-[#dc3545]/5' : ''}`}
+                  />
                 </div>
-              )}
-            </div>
 
-            {/* Fields Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              {/* Equipo */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Equipo {faltantes.includes('equipo') && <span className="text-red-500 font-bold">*Faltante</span>}
-                </label>
-                <input
-                  type="text"
-                  value={equipo}
-                  onChange={(e) => setEquipo(e.target.value)}
-                  placeholder="Ej. Turbina de vapor TV-01"
-                  className={`w-full p-2.5 rounded-lg border bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden ${
-                    faltantes.includes('equipo')
-                      ? 'border-red-400 dark:border-red-600 bg-red-50/20'
-                      : 'border-slate-300 dark:border-slate-700'
-                  }`}
-                />
-              </div>
-
-              {/* Codigo Equipo */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Código de Equipo / Tag
-                </label>
-                <input
-                  type="text"
-                  value={codigoEquipo}
-                  onChange={(e) => setCodigoEquipo(e.target.value)}
-                  placeholder="Ej. P-101A, TV-01, CALD-2"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
-
-              {/* Area */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Área de Planta
-                </label>
-                <input
-                  type="text"
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  placeholder="Ej. Sala de Turbinas, SE-1, Recuperación de Condensados"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
-
-              {/* Tipo Mantenimiento */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Tipo de Mantenimiento
-                </label>
-                <select
-                  value={tipoMantenimiento}
-                  onChange={(e) => setTipoMantenimiento(e.target.value as TipoMantenimiento)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                >
-                  <option value="">Seleccione tipo...</option>
-                  <option value="correctivo">Correctivo</option>
-                  <option value="preventivo">Preventivo</option>
-                  <option value="predictivo">Predictivo</option>
-                  <option value="inspeccion">Inspección</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </div>
-
-              {/* Prioridad */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Prioridad
-                </label>
-                <select
-                  value={prioridad}
-                  onChange={(e) => setPrioridad(e.target.value as PrioridadReporte)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                >
-                  <option value="">Seleccione prioridad...</option>
-                  <option value="critica">Crítica</option>
-                  <option value="alta">Alta</option>
-                  <option value="media">Media</option>
-                  <option value="baja">Baja</option>
-                </select>
-              </div>
-
-              {/* Numero OT */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Número de Orden de Trabajo (OT)
-                </label>
-                <input
-                  type="text"
-                  value={numeroOt}
-                  onChange={(e) => setNumeroOt(e.target.value)}
-                  placeholder="Ej. OT-2026-442"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
-
-              {/* Fecha Intervención */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Fecha de Intervención
-                </label>
-                <input
-                  type="date"
-                  value={fechaIntervencion}
-                  onChange={(e) => setFechaIntervencion(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
-
-              {/* Duración en minutos */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Duración de Intervención (minutos)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={duracionMinutos}
-                  onChange={(e) =>
-                    setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))
-                  }
-                  placeholder="Ej. 60"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
-            </div>
-
-            {/* Falla (Full Width) */}
-            <div className="text-xs">
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Falla / Síntoma Observado {faltantes.includes('falla') && <span className="text-red-500 font-bold">*Faltante</span>}
-              </label>
-              <textarea
-                rows={2}
-                value={falla}
-                onChange={(e) => setFalla(e.target.value)}
-                placeholder="Descripción del síntoma o anomalía reportada..."
-                className={`w-full p-2.5 rounded-lg border bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden ${
-                  faltantes.includes('falla')
-                    ? 'border-red-400 dark:border-red-600 bg-red-50/20'
-                    : 'border-slate-300 dark:border-slate-700'
-                }`}
-              />
-            </div>
-
-            {/* Causa Probable */}
-            <div className="text-xs">
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Causa Probable
-              </label>
-              <textarea
-                rows={2}
-                value={causaProbable}
-                onChange={(e) => setCausaProbable(e.target.value)}
-                placeholder="Origen probable determinado tras la inspección..."
-                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-              />
-            </div>
-
-            {/* Actividades (Editable list) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-              <div className="flex items-center justify-between">
-                <label className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <span>Actividades Ejecutadas ({actividades.length})</span>
-                  {faltantes.includes('actividades') && (
-                    <span className="text-red-500 font-bold">*Faltante</span>
-                  )}
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAddActividad}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Añadir actividad</span>
-                </button>
-              </div>
-
-              {actividades.length === 0 ? (
-                <p className="text-slate-400 italic py-2">No se han registrado actividades.</p>
-              ) : (
-                <div className="space-y-2">
-                  {actividades.map((act, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <span className="text-slate-400 font-mono text-xs w-4">{index + 1}.</span>
-                      <input
-                        type="text"
-                        value={act}
-                        onChange={(e) => handleUpdateActividad(index, e.target.value)}
-                        placeholder="Ej. Desmontaje y cambio de sello mecánico..."
-                        className="flex-1 p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveActividad(index)}
-                        className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                {/* Codigo Equipo */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Código de Equipo / Tag
+                  </label>
+                  <input
+                    type="text"
+                    value={codigoEquipo}
+                    onChange={(e) => setCodigoEquipo(e.target.value)}
+                    placeholder="Ej. P-101A, TV-01, CALD-2"
+                    className="form-control-lte font-mono"
+                  />
                 </div>
-              )}
-            </div>
 
-            {/* Repuestos (Editable table) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-              <div className="flex items-center justify-between">
-                <label className="font-semibold text-slate-700 dark:text-slate-300">
-                  Repuestos y Materiales Empleados ({repuestos.length})
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAddRepuesto}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Añadir repuesto</span>
-                </button>
+                {/* Area */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Área de Planta
+                  </label>
+                  <input
+                    type="text"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    placeholder="Ej. Sala de Turbinas, Condensados"
+                    className="form-control-lte"
+                  />
+                </div>
+
+                {/* Tipo Mantenimiento */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Tipo de Mantenimiento
+                  </label>
+                  <select
+                    value={tipoMantenimiento}
+                    onChange={(e) => setTipoMantenimiento(e.target.value as TipoMantenimiento)}
+                    className="form-control-lte"
+                  >
+                    <option value="">Seleccione tipo...</option>
+                    <option value="correctivo">Correctivo</option>
+                    <option value="preventivo">Preventivo</option>
+                    <option value="predictivo">Predictivo</option>
+                    <option value="inspeccion">Inspección</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+
+                {/* Prioridad */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Prioridad
+                  </label>
+                  <select
+                    value={prioridad}
+                    onChange={(e) => setPrioridad(e.target.value as PrioridadReporte)}
+                    className="form-control-lte"
+                  >
+                    <option value="">Seleccione prioridad...</option>
+                    <option value="critica">Crítica</option>
+                    <option value="alta">Alta</option>
+                    <option value="media">Media</option>
+                    <option value="baja">Baja</option>
+                  </select>
+                </div>
+
+                {/* Numero OT */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Número de Orden de Trabajo (OT)
+                  </label>
+                  <input
+                    type="text"
+                    value={numeroOt}
+                    onChange={(e) => setNumeroOt(e.target.value)}
+                    placeholder="Ej. OT-2026-442"
+                    className="form-control-lte font-mono"
+                  />
+                </div>
+
+                {/* Fecha Intervención */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Fecha de Intervención
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaIntervencion}
+                    onChange={(e) => setFechaIntervencion(e.target.value)}
+                    className="form-control-lte"
+                  />
+                </div>
+
+                {/* Duración en minutos */}
+                <div>
+                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                    Duración Estimada (minutos)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={duracionMinutos}
+                    onChange={(e) =>
+                      setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                    placeholder="Ej. 60"
+                    className="form-control-lte"
+                  />
+                </div>
               </div>
 
-              {repuestos.length === 0 ? (
-                <p className="text-slate-400 italic py-2">No se indicaron repuestos utilizados.</p>
-              ) : (
-                <div className="space-y-2">
-                  {repuestos.map((rep, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-6">
+              {/* Falla (Full Width) */}
+              <div className="text-xs">
+                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  Falla / Síntoma Observado {faltantes.includes('falla') && <span className="text-[#dc3545] font-bold">(*Faltante)</span>}
+                </label>
+                <textarea
+                  rows={2}
+                  value={falla}
+                  onChange={(e) => setFalla(e.target.value)}
+                  placeholder="Descripción de la anomalía o falla reportada..."
+                  className={`form-control-lte ${faltantes.includes('falla') ? 'border-[#dc3545] bg-[#dc3545]/5' : ''}`}
+                />
+              </div>
+
+              {/* Causa Probable */}
+              <div className="text-xs">
+                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  Causa Probable Determinada
+                </label>
+                <textarea
+                  rows={2}
+                  value={causaProbable}
+                  onChange={(e) => setCausaProbable(e.target.value)}
+                  placeholder="Origen probable determinado tras la inspección..."
+                  className="form-control-lte"
+                />
+              </div>
+
+              {/* Actividades (Editable list) */}
+              <div className="space-y-2 pt-2 border-t border-[#dee2e6] dark:border-[#4b545c] text-xs">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-[#495057] dark:text-[#ced4da] flex items-center gap-1.5">
+                    <span>Actividades Realizadas ({actividades.length})</span>
+                    {faltantes.includes('actividades') && (
+                      <span className="text-[#dc3545] font-bold">(*Faltante)</span>
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddActividad}
+                    className="btn-lte-primary text-xs py-1 px-2"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Añadir actividad</span>
+                  </button>
+                </div>
+
+                {actividades.length === 0 ? (
+                  <p className="text-[#adb5bd] italic py-1">No se han registrado actividades.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {actividades.map((act, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="text-[#adb5bd] font-mono text-xs w-4">{index + 1}.</span>
                         <input
                           type="text"
-                          value={rep.nombre}
-                          onChange={(e) => handleUpdateRepuesto(index, 'nombre', e.target.value)}
-                          placeholder="Nombre del repuesto..."
-                          className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs"
+                          value={act}
+                          onChange={(e) => handleUpdateActividad(index, e.target.value)}
+                          placeholder="Ej. Desmontaje y cambio de sello mecánico..."
+                          className="form-control-lte flex-1"
                         />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          min="1"
-                          value={rep.cantidad ?? ''}
-                          onChange={(e) =>
-                            handleUpdateRepuesto(
-                              index,
-                              'cantidad',
-                              e.target.value === '' ? null : Number(e.target.value)
-                            )
-                          }
-                          placeholder="Cant."
-                          className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="text"
-                          value={rep.codigo ?? ''}
-                          onChange={(e) =>
-                            handleUpdateRepuesto(
-                              index,
-                              'codigo',
-                              e.target.value.trim() ? e.target.value : null
-                            )
-                          }
-                          placeholder="Código / Parte"
-                          className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono"
-                        />
-                      </div>
-                      <div className="col-span-1 text-right">
                         <button
                           type="button"
-                          onClick={() => handleRemoveRepuesto(index)}
-                          className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors"
+                          onClick={() => handleRemoveActividad(index)}
+                          className="btn-lte-danger py-1 px-2"
+                          title="Eliminar"
                         >
-                          <Trash className="w-4 h-4" />
+                          <Trash className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Repuestos (Editable table) */}
+              <div className="space-y-2 pt-2 border-t border-[#dee2e6] dark:border-[#4b545c] text-xs">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-[#495057] dark:text-[#ced4da]">
+                    Repuestos y Materiales Empleados ({repuestos.length})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddRepuesto}
+                    className="btn-lte-primary text-xs py-1 px-2"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Añadir repuesto</span>
+                  </button>
                 </div>
-              )}
-            </div>
 
-            {/* Observaciones */}
-            <div className="text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Observaciones Generales
-              </label>
-              <textarea
-                rows={2}
-                value={observaciones}
-                onChange={(e) => setObservaciones(e.target.value)}
-                placeholder="Notas adicionales o recomendaciones para el próximo turno..."
-                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-              />
-            </div>
+                {repuestos.length === 0 ? (
+                  <p className="text-[#adb5bd] italic py-1">No se indicaron repuestos utilizados.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {repuestos.map((rep, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-6">
+                          <input
+                            type="text"
+                            value={rep.nombre}
+                            onChange={(e) => handleUpdateRepuesto(index, 'nombre', e.target.value)}
+                            placeholder="Nombre del repuesto..."
+                            className="form-control-lte"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={rep.cantidad ?? ''}
+                            onChange={(e) =>
+                              handleUpdateRepuesto(
+                                index,
+                                'cantidad',
+                                e.target.value === '' ? null : Number(e.target.value)
+                              )
+                            }
+                            placeholder="Cant."
+                            className="form-control-lte"
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <input
+                            type="text"
+                            value={rep.codigo ?? ''}
+                            onChange={(e) =>
+                              handleUpdateRepuesto(
+                                index,
+                                'codigo',
+                                e.target.value.trim() ? e.target.value : null
+                              )
+                            }
+                            placeholder="Código / Tag"
+                            className="form-control-lte font-mono"
+                          />
+                        </div>
+                        <div className="col-span-1 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveRepuesto(index)}
+                            className="btn-lte-danger py-1 px-2"
+                            title="Eliminar"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* Comentario Supervisor */}
-            <div className="text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Comentario del Supervisor
-              </label>
-              <textarea
-                rows={2}
-                value={comentarioSupervisor}
-                onChange={(e) => setComentarioSupervisor(e.target.value)}
-                placeholder="Comentarios u observaciones de supervisión que se notifican a Telegram..."
-                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-              />
+              {/* Observaciones */}
+              <div className="text-xs pt-2 border-t border-[#dee2e6] dark:border-[#4b545c]">
+                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  Observaciones Generales
+                </label>
+                <textarea
+                  rows={2}
+                  value={observaciones}
+                  onChange={(e) => setObservaciones(e.target.value)}
+                  placeholder="Notas adicionales o recomendaciones para el próximo turno..."
+                  className="form-control-lte"
+                />
+              </div>
+
+              {/* Comentario Supervisor */}
+              <div className="text-xs pt-2 border-t border-[#dee2e6] dark:border-[#4b545c]">
+                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  Comentario de Supervisión (Notificación al Técnico)
+                </label>
+                <textarea
+                  rows={2}
+                  value={comentarioSupervisor}
+                  onChange={(e) => setComentarioSupervisor(e.target.value)}
+                  placeholder="Comentarios u observaciones de supervisión que se envían al técnico..."
+                  className="form-control-lte"
+                />
+              </div>
+            </div>
+            <div className="lte-card-footer flex justify-end">
+              <button
+                onClick={handleSaveChanges}
+                disabled={saving || actionLoading}
+                className="btn-lte-primary text-xs"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Guardar Cambios del Formulario</span>
+              </button>
             </div>
           </div>
         </div>
 
         {/* Sidebar Column: AI JSON & Other Reports of Same Equipment */}
-        <div className="space-y-6">
-          {/* Collapsible raw_ia */}
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-            <button
-              onClick={() => setShowRawIa(!showRawIa)}
-              className="w-full flex items-center justify-between text-left text-xs font-bold text-slate-800 dark:text-slate-200"
-            >
-              <span className="flex items-center gap-2">
-                <Bot className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                Extracción Cruda de IA (JSON)
-              </span>
-              {showRawIa ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
+        <div className="space-y-4">
+          {/* Collapsible raw_ia - Card Outline Purple */}
+          <div className="lte-card border-t-[3px] border-t-[#6f42c1]">
+            <div className="lte-card-header">
+              <button
+                onClick={() => setShowRawIa(!showRawIa)}
+                className="w-full flex items-center justify-between text-left text-xs font-bold text-[#212529] dark:text-[#f8f9fa]"
+              >
+                <span className="flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-[#6f42c1]" />
+                  Extracción Cruda de IA (JSON)
+                </span>
+                {showRawIa ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            </div>
 
             {showRawIa && (
-              <pre className="p-3 rounded-lg bg-slate-900 text-slate-100 text-[11px] font-mono overflow-x-auto max-h-96">
-                {JSON.stringify(reporte.raw_ia || {}, null, 2)}
-              </pre>
+              <div className="lte-card-body p-2">
+                <pre className="p-3 rounded-[0.25rem] bg-[#212529] text-[#20c997] text-[11px] font-mono overflow-x-auto max-h-96">
+                  {JSON.stringify(reporte.raw_ia || {}, null, 2)}
+                </pre>
+              </div>
             )}
           </div>
 
-          {/* Otros reportes del mismo equipo */}
-          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+          {/* Otros reportes del mismo equipo - Card Outline Warning */}
+          <div className="lte-card border-t-[3px] border-t-[#ffc107]">
+            <div className="lte-card-header">
+              <h3 className="text-xs font-bold text-[#212529] dark:text-[#f8f9fa]">
                 Historial del mismo equipo
               </h3>
               {reporte.equipo && (
                 <Link
                   href={`/equipos/${encodeURIComponent(reporte.codigo_equipo || reporte.equipo)}`}
-                  className="text-[11px] font-semibold text-emerald-600 hover:underline flex items-center gap-1"
+                  className="text-[11px] font-bold text-[#007bff] hover:underline flex items-center gap-1"
                 >
                   Ver todo
                   <ExternalLink className="w-3 h-3" />
@@ -892,71 +891,82 @@ export default function ReporteDetallePage() {
               )}
             </div>
 
-            {otrosReportesEquipo.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">
-                No hay otros reportes registrados para este equipo.
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {otrosReportesEquipo.map((o) => (
+            <div className="lte-card-body p-2 space-y-2">
+              {otrosReportesEquipo.length === 0 ? (
+                <p className="text-xs text-[#adb5bd] italic p-2">
+                  No hay otros reportes registrados para este equipo.
+                </p>
+              ) : (
+                otrosReportesEquipo.map((o) => (
                   <Link
                     key={o.id}
                     href={`/reportes/${o.id}`}
-                    className="block p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="block p-2.5 rounded-[0.25rem] border border-[#dee2e6] dark:border-[#4b545c] bg-[#f8f9fa] dark:bg-[#2c3338] hover:bg-[#e9ecef] dark:hover:bg-[#384047] transition-colors"
                   >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                      <span className="font-mono font-bold text-[#007bff]">
                         {formatReporteNumero(o.numero)}
                       </span>
                       <EstadoBadge estado={o.estado} />
                     </div>
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mt-1 line-clamp-1">
+                    <p className="text-xs font-medium text-[#212529] dark:text-[#f8f9fa] mt-1 line-clamp-1">
                       {o.falla || 'Sin falla reportada'}
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[10px] text-[#6c757d] dark:text-[#adb5bd] mt-0.5">
                       {formatFechaHoraLima(o.created_at)} · {o.tecnico_nombre || 'Técnico'}
                     </p>
                   </Link>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Reject Confirmation Modal */}
+      {/* Reject Confirmation Modal - AdminLTE Modal Style */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
-              <XCircle className="w-6 h-6 shrink-0" />
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Rechazar Reporte {formatReporteNumero(reporte.numero)}
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Indica de manera obligatoria el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram para que envíe la corrección.
-            </p>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Motivo del rechazo <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                required
-                rows={3}
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Ej. El código de equipo no corresponde; favor de indicar el tag correcto de la bomba..."
-                className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-rose-500 focus:outline-hidden"
-              />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="w-full max-w-md lte-card border-t-[4px] border-t-[#dc3545] shadow-lte-lg">
+            <div className="lte-card-header bg-[#dc3545] text-white">
+              <div className="flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-white" />
+                <h3 className="text-sm font-bold text-white">
+                  Rechazar Reporte #{formatReporteNumero(reporte.numero)}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="text-white hover:opacity-80"
+              >
+                &times;
+              </button>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="lte-card-body space-y-3">
+              <p className="text-xs text-[#6c757d] dark:text-[#ced4da]">
+                Indica de manera obligatoria el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram para que envíe la corrección.
+              </p>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  Motivo del rechazo <span className="text-[#dc3545]">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Ej. El código de equipo no corresponde; favor de indicar el tag correcto..."
+                  className="form-control-lte"
+                />
+              </div>
+            </div>
+
+            <div className="lte-card-footer flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowRejectModal(false)}
-                className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="btn-lte-default text-xs"
               >
                 Cancelar
               </button>
@@ -964,9 +974,9 @@ export default function ReporteDetallePage() {
                 type="button"
                 onClick={handleConfirmReject}
                 disabled={!rejectReason.trim() || actionLoading}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-colors"
+                className="btn-lte-danger text-xs"
               >
-                {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {actionLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Confirmar Rechazo</span>
               </button>
             </div>

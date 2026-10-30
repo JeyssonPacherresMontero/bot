@@ -10,6 +10,7 @@ import { PrioridadBadge } from '@/components/badges/PrioridadBadge';
 import { TipoBadge } from '@/components/badges/TipoBadge';
 import { OrigenBadge } from '@/components/badges/OrigenBadge';
 import { FiltrosReportes, type FiltrosReportesState } from '@/components/reportes/FiltrosReportes';
+import { ContentHeader } from '@/components/layout/ContentHeader';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { exportReportesToCSV } from '@/lib/export-csv';
 import {
@@ -20,7 +21,6 @@ import {
 } from '@/lib/utils';
 import type { Reporte, EstadoReporte } from '@/types/database.types';
 import {
-  Download,
   CheckCheck,
   ChevronLeft,
   ChevronRight,
@@ -30,6 +30,7 @@ import {
   AlertCircle,
   RefreshCw,
   Loader2,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 const PAGE_SIZE = 25;
@@ -113,7 +114,7 @@ function ReportesContent() {
         query = query.lte('created_at', `${filtros.fechaHasta}T23:59:59Z`);
       }
 
-      // Filter by missing fields (campos_faltantes not empty array)
+      // Filter by missing fields
       if (filtros.soloFaltantes) {
         query = query.not('campos_faltantes', 'eq', '{}');
       }
@@ -121,7 +122,7 @@ function ReportesContent() {
       // Sorting
       query = query.order(sortColumn, { ascending: sortAsc });
 
-      // Server Pagination
+      // Pagination
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
       query = query.range(from, to);
@@ -129,41 +130,34 @@ function ReportesContent() {
       const { data, count, error } = await query;
 
       if (error) {
-        console.error('Error fetching reportes:', error);
+        console.error('Error al cargar reportes:', error);
       } else {
         setReportes((data as Reporte[]) || []);
         setTotalCount(count || 0);
       }
     } catch (err) {
-      console.error('Error in loadReportes:', err);
+      console.error('Error general cargando reportes:', err);
     } finally {
       setLoading(false);
     }
-  }, [supabase, filtros, page, sortColumn, sortAsc]);
+  }, [filtros, page, sortColumn, sortAsc, supabase]);
 
   useEffect(() => {
     loadReportes();
   }, [loadReportes]);
 
-  // Realtime subscription
+  // Realtime subscription for INSERT in reportes
   useEffect(() => {
     const channel = supabase
-      .channel('public:reportes')
+      .channel('realtime_reportes_channel')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'reportes' },
         (payload) => {
-          const newRow = payload.new as Reporte;
+          const newRep = payload.new as Reporte;
           setNewReporteNotice(
-            `¡Nuevo reporte ingresado vía Telegram (${newRow.equipo || 'Sin equipo'})! Haz clic para actualizar.`
+            `Nuevo reporte recibido: #${formatReporteNumero(newRep.numero)} - ${newRep.equipo || 'Equipo'} (${newRep.tecnico_nombre || 'Técnico'})`
           );
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'reportes' },
-        () => {
-          loadReportes();
         }
       )
       .subscribe();
@@ -171,9 +165,9 @@ function ReportesContent() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, loadReportes]);
+  }, [supabase]);
 
-  // Toggle sorting
+  // Sort handler
   const handleSort = (column: string) => {
     if (sortColumn === column) {
       setSortAsc(!sortAsc);
@@ -184,7 +178,7 @@ function ReportesContent() {
     setPage(1);
   };
 
-  // Checkbox selection
+  // Selection handlers
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelectedIds(reportes.map((r) => r.id));
@@ -238,7 +232,6 @@ function ReportesContent() {
   const handleExportCSV = async () => {
     setExporting(true);
     try {
-      // Fetch all matching records without pagination limit
       let query = supabase.from('reportes').select('*');
 
       if (filtros.busqueda.trim()) {
@@ -276,78 +269,79 @@ function ReportesContent() {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
+  const actions = (
+    <div className="flex items-center gap-2">
+      {selectedIds.length > 0 && (
+        <button
+          onClick={handleBatchValidate}
+          disabled={batchLoading}
+          className="btn-lte-primary text-xs"
+        >
+          {batchLoading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <CheckCheck className="w-3.5 h-3.5" />
+          )}
+          <span>Validar {selectedIds.length}</span>
+        </button>
+      )}
+
+      <button
+        onClick={handleExportCSV}
+        disabled={exporting || totalCount === 0}
+        className="btn-lte-success text-xs"
+      >
+        {exporting ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <FileSpreadsheet className="w-3.5 h-3.5" />
+        )}
+        <span>Exportar CSV</span>
+      </button>
+
+      <button
+        onClick={() => loadReportes()}
+        disabled={loading}
+        className="btn-lte-default text-xs"
+        title="Recargar"
+      >
+        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#007bff]' : ''}`} />
+        <span className="hidden sm:inline">Recargar</span>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Realtime Alert Banner */}
       {newReporteNotice && (
-        <div className="p-4 rounded-xl bg-emerald-500 text-white flex items-center justify-between shadow-lg shadow-emerald-500/20 animate-bounce">
-          <div className="flex items-center gap-3">
-            <BellRing className="w-5 h-5 text-amber-300 shrink-0" />
-            <span className="text-sm font-semibold">{newReporteNotice}</span>
+        <div className="p-3 rounded-[0.25rem] bg-[#28a745] text-white flex items-center justify-between shadow-lte border border-[#1e7e34]">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+            <BellRing className="w-4 h-4 text-[#ffc107] shrink-0" />
+            <span>{newReporteNotice}</span>
           </div>
           <button
             onClick={() => {
               setNewReporteNotice(null);
               loadReportes();
             }}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-emerald-800 hover:bg-slate-100 transition-colors"
+            className="btn-lte bg-white text-[#155724] hover:bg-[#e9ecef] text-xs font-bold py-1 px-2.5 rounded-[0.2rem]"
           >
-            Actualizar tabla
+            Actualizar
           </button>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-            Registro de Reportes
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {totalCount} reporte{totalCount === 1 ? '' : 's'} en total según los filtros aplicados.
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2">
-          {selectedIds.length > 0 && (
-            <button
-              onClick={handleBatchValidate}
-              disabled={batchLoading}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
-            >
-              {batchLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <CheckCheck className="w-4 h-4" />
-              )}
-              <span>Validar {selectedIds.length} seleccionados</span>
-            </button>
-          )}
-
-          <button
-            onClick={handleExportCSV}
-            disabled={exporting || totalCount === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-xs"
-          >
-            {exporting ? (
-              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-            ) : (
-              <Download className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            )}
-            <span>Exportar CSV</span>
-          </button>
-
-          <button
-            onClick={() => loadReportes()}
-            disabled={loading}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-            title="Recargar"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
-          </button>
-        </div>
-      </div>
+      {/* Content Header AdminLTE */}
+      <ContentHeader
+        title="Registro de Reportes"
+        subtitle={`${totalCount} reporte${totalCount === 1 ? '' : 's'} en total según los filtros aplicados.`}
+        breadcrumbs={[
+          { label: 'Inicio', href: '/dashboard' },
+          { label: 'Reportes', active: true },
+        ]}
+        actions={actions}
+      />
 
       {/* Filters component */}
       <FiltrosReportes
@@ -371,189 +365,224 @@ function ReportesContent() {
         }}
       />
 
-      {/* Reports Table Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        {loading ? (
-          <div className="p-6">
-            <TableSkeleton rows={8} cols={9} />
+      {/* Reports Table Card - AdminLTE Card Outline */}
+      <div className="lte-card border-t-[3px] border-t-[#007bff]">
+        <div className="lte-card-header">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+              Listado de Órdenes de Trabajo y Reportes
+            </span>
+            <span className="bg-[#007bff] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
+              Total: {totalCount}
+            </span>
           </div>
-        ) : reportes.length === 0 ? (
-          <div className="p-12 text-center">
-            <AlertCircle className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              No se encontraron reportes
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Prueba cambiando o limpiando los filtros de búsqueda.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                  <th className="py-3 px-3 w-8">
-                    <input
-                      type="checkbox"
-                      checked={
-                        reportes.length > 0 && selectedIds.length === reportes.length
-                      }
-                      onChange={handleSelectAll}
-                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700"
-                    />
-                  </th>
-                  <th
-                    className="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100"
-                    onClick={() => handleSort('numero')}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>N.º</span>
-                      <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </th>
-                  <th
-                    className="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100"
-                    onClick={() => handleSort('created_at')}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Fecha</span>
-                      <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </th>
-                  <th className="py-3 px-3">Técnico</th>
-                  <th
-                    className="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100"
-                    onClick={() => handleSort('equipo')}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Equipo / Código</span>
-                      <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </th>
-                  <th className="py-3 px-3">Falla</th>
-                  <th className="py-3 px-3">Tipo</th>
-                  <th className="py-3 px-3">Prioridad</th>
-                  <th
-                    className="py-3 px-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100"
-                    onClick={() => handleSort('estado')}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Estado</span>
-                      <ArrowUpDown className="w-3 h-3" />
-                    </div>
-                  </th>
-                  <th className="py-3 px-3">Confianza</th>
-                  <th className="py-3 px-3">Origen</th>
-                  <th className="py-3 px-3 text-right">Detalle</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {reportes.map((r) => {
-                  const demorado = isReporteDemorado(r.created_at, r.estado);
-                  const isSelected = selectedIds.includes(r.id);
+          <span className="text-xs text-[#6c757d] dark:text-[#ced4da]">
+            Página {page} de {totalPages}
+          </span>
+        </div>
 
-                  return (
-                    <tr
-                      key={r.id}
-                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${
-                        demorado ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''
-                      } ${isSelected ? 'bg-emerald-50/40 dark:bg-emerald-950/30' : ''}`}
+        <div className="p-0">
+          {loading ? (
+            <div className="p-4">
+              <TableSkeleton rows={8} cols={9} />
+            </div>
+          ) : reportes.length === 0 ? (
+            <div className="p-10 text-center text-[#6c757d] dark:text-[#adb5bd]">
+              <AlertCircle className="w-8 h-8 text-[#ffc107] mx-auto mb-2 opacity-80" />
+              <h3 className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+                No se encontraron reportes
+              </h3>
+              <p className="text-xs text-[#6c757d] dark:text-[#adb5bd] mt-0.5">
+                Prueba cambiando o limpiando los filtros de búsqueda.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#f4f6f9] dark:bg-[#2c3338] text-[#495057] dark:text-[#ced4da] font-semibold border-b border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-2.5 px-3 w-8 border-r border-[#dee2e6] dark:border-[#4b545c] text-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          reportes.length > 0 && selectedIds.length === reportes.length
+                        }
+                        onChange={handleSelectAll}
+                        className="w-3.5 h-3.5 rounded text-[#007bff] focus:ring-[#007bff] border-[#ced4da]"
+                      />
+                    </th>
+                    <th
+                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      onClick={() => handleSort('numero')}
                     >
-                      <td className="py-3 px-3">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleSelectRow(r.id)}
-                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700"
-                        />
-                      </td>
-                      <td className="py-3 px-3 font-mono font-bold text-slate-800 dark:text-slate-200">
-                        {formatReporteNumero(r.numero)}
-                      </td>
-                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {formatFechaHoraLima(r.created_at)}
-                      </td>
-                      <td className="py-3 px-3 font-medium text-slate-800 dark:text-slate-200">
-                        {r.tecnico_nombre || 'Sin nombre'}
-                      </td>
-                      <td className="py-3 px-3">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100">
-                          {r.equipo || 'Sin equipo'}
-                        </div>
-                        {r.codigo_equipo && (
-                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                            {r.codigo_equipo}
-                          </div>
-                        )}
-                      </td>
-                      <td
-                        className="py-3 px-3 max-w-xs truncate text-slate-700 dark:text-slate-300"
-                        title={r.falla || ''}
+                      <div className="flex items-center gap-1">
+                        <span>N.º</span>
+                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                      </div>
+                    </th>
+                    <th
+                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Fecha</span>
+                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                      </div>
+                    </th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                      Técnico
+                    </th>
+                    <th
+                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      onClick={() => handleSort('equipo')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Equipo / Código</span>
+                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                      </div>
+                    </th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                      Falla
+                    </th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                      Tipo
+                    </th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                      Prioridad
+                    </th>
+                    <th
+                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      onClick={() => handleSort('estado')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Estado</span>
+                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                      </div>
+                    </th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                      Confianza
+                    </th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                      Origen
+                    </th>
+                    <th className="py-2.5 px-3 text-right">Detalle</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#dee2e6] dark:divide-[#4b545c]">
+                  {reportes.map((r) => {
+                    const demorado = isReporteDemorado(r.created_at, r.estado);
+                    const isSelected = selectedIds.includes(r.id);
+
+                    return (
+                      <tr
+                        key={r.id}
+                        className={`hover:bg-[#e9ecef]/60 dark:hover:bg-[#3f474e]/50 transition-colors ${
+                          demorado
+                            ? 'bg-[#fff3cd]/50 dark:bg-[#ffc107]/10'
+                            : isSelected
+                            ? 'bg-[#e8f4fd] dark:bg-[#007bff]/15'
+                            : 'even:bg-[#f8f9fa] dark:even:bg-[#2f353a]'
+                        }`}
                       >
-                        {r.falla || '—'}
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <TipoBadge tipo={r.tipo_mantenimiento} />
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <PrioridadBadge prioridad={r.prioridad} />
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <EstadoBadge estado={r.estado} isDemorado={demorado} />
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
-                          {formatConfianza(r.confianza)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <OrigenBadge
-                          origen={r.origen}
-                          duracionSeg={r.audio_duracion_seg}
-                        />
-                      </td>
-                      <td className="py-3 px-3 text-right whitespace-nowrap">
-                        <Link
-                          href={`/reportes/${r.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-colors shadow-2xs"
+                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c] text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectRow(r.id)}
+                            className="w-3.5 h-3.5 rounded text-[#007bff] focus:ring-[#007bff] border-[#ced4da]"
+                          />
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#007bff] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {formatReporteNumero(r.numero)}
+                        </td>
+                        <td className="py-2.5 px-3 text-[#495057] dark:text-[#ced4da] whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {formatFechaHoraLima(r.created_at)}
+                        </td>
+                        <td className="py-2.5 px-3 font-medium text-[#212529] dark:text-[#f8f9fa] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {r.tecnico_nombre || 'Sin nombre'}
+                        </td>
+                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <div className="font-semibold text-[#212529] dark:text-[#f8f9fa]">
+                            {r.equipo || 'Sin equipo'}
+                          </div>
+                          {r.codigo_equipo && (
+                            <div className="text-[10px] font-mono text-[#6c757d] dark:text-[#adb5bd]">
+                              {r.codigo_equipo}
+                            </div>
+                          )}
+                        </td>
+                        <td
+                          className="py-2.5 px-3 max-w-xs truncate text-[#495057] dark:text-[#ced4da] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                          title={r.falla || ''}
                         >
-                          <span>Ver</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                          {r.falla || '—'}
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <TipoBadge tipo={r.tipo_mantenimiento} />
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <PrioridadBadge prioridad={r.prioridad} />
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <EstadoBadge estado={r.estado} isDemorado={demorado} />
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <span className="font-medium text-[#495057] dark:text-[#ced4da]">
+                            {formatConfianza(r.confianza)}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <OrigenBadge
+                            origen={r.origen}
+                            duracionSeg={r.audio_duracion_seg}
+                          />
+                        </td>
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                          <Link
+                            href={`/reportes/${r.id}`}
+                            className="btn-lte-primary text-xs px-2.5 py-1"
+                          >
+                            <span>Ver</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
         {/* Server Pagination Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <p className="text-slate-500 dark:text-slate-400">
+        <div className="lte-card-footer flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-[#6c757d] dark:text-[#ced4da]">
             Mostrando página{' '}
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{page}</span> de{' '}
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{totalPages}</span> (
-            {totalCount} reportes)
+            <span className="font-bold text-[#212529] dark:text-[#f8f9fa]">{page}</span> de{' '}
+            <span className="font-bold text-[#212529] dark:text-[#f8f9fa]">{totalPages}</span> (
+            {totalCount} reportes en total)
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
+              className="btn-lte-default text-xs px-2.5 py-1"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
               <span>Anterior</span>
             </button>
+            <span className="px-2 py-1 bg-[#007bff] text-white text-xs font-bold rounded-[0.25rem]">
+              {page}
+            </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
+              className="btn-lte-default text-xs px-2.5 py-1"
             >
               <span>Siguiente</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

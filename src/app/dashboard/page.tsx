@@ -9,6 +9,7 @@ import { EstadoBadge } from '@/components/badges/EstadoBadge';
 import { PrioridadBadge } from '@/components/badges/PrioridadBadge';
 import { TipoBadge } from '@/components/badges/TipoBadge';
 import { OrigenBadge } from '@/components/badges/OrigenBadge';
+import { ContentHeader } from '@/components/layout/ContentHeader';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import {
   formatReporteNumero,
@@ -33,9 +34,9 @@ import {
   Timer,
   Zap,
   ExternalLink,
-  Calendar,
   AlertTriangle,
   RefreshCw,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -107,33 +108,39 @@ export default function DashboardPage() {
       const { data: reportesDist } = await query;
 
       if (reportesDist) {
-        // Tipos
+        // Count distribution by tipo_mantenimiento
         const tipoMap: Record<string, number> = {};
-        const prioridadMap: Record<string, number> = {};
-        const estadoMap: Record<string, number> = {};
+        const prioMap: Record<string, number> = {};
+        const estMap: Record<string, number> = {};
 
         reportesDist.forEach((r) => {
-          const t = r.tipo_mantenimiento || 'otro';
+          const t = r.tipo_mantenimiento || 'Sin especificar';
           tipoMap[t] = (tipoMap[t] || 0) + 1;
 
-          const p = r.prioridad || 'sin definir';
-          prioridadMap[p] = (prioridadMap[p] || 0) + 1;
+          const p = r.prioridad || 'Sin prioridad';
+          prioMap[p] = (prioMap[p] || 0) + 1;
 
           const e = r.estado || 'pendiente';
-          estadoMap[e] = (estadoMap[e] || 0) + 1;
+          estMap[e] = (estMap[e] || 0) + 1;
         });
 
-        setDistribucionTipo(Object.entries(tipoMap).map(([name, value]) => ({ name, value })));
-        setDistribucionPrioridad(Object.entries(prioridadMap).map(([name, value]) => ({ name, value })));
-        setDistribucionEstado(Object.entries(estadoMap).map(([name, value]) => ({ name, value })));
+        setDistribucionTipo(
+          Object.entries(tipoMap).map(([name, value]) => ({ name, value }))
+        );
+        setDistribucionPrioridad(
+          Object.entries(prioMap).map(([name, value]) => ({ name, value }))
+        );
+        setDistribucionEstado(
+          Object.entries(estMap).map(([name, value]) => ({ name, value }))
+        );
       }
     } catch (err) {
-      console.error('Error al cargar dashboard:', err);
+      console.error('Error cargando datos del dashboard:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [supabase, dateRange]);
+  }, [dateRange, supabase]);
 
   useEffect(() => {
     loadDashboardData();
@@ -144,67 +151,67 @@ export default function DashboardPage() {
     loadDashboardData();
   };
 
-  return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            Panel de Supervisión
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              En Vivo
-            </span>
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Indicadores clave de rendimiento (KPI) e informes de la central de cogeneración.
-          </p>
-        </div>
-
-        {/* Date Filter Controls */}
-        <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
-            {(
-              [
-                { id: 'hoy', label: 'Hoy' },
-                { id: '7dias', label: '7 Días' },
-                { id: '30dias', label: '30 Días' },
-                { id: 'todo', label: 'Histórico' },
-              ] as const
-            ).map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setDateRange(filter.id)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  dateRange === filter.id
-                    ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      {/* AdminLTE button group */}
+      <div className="inline-flex rounded-[0.25rem] shadow-xs border border-[#ced4da] dark:border-[#4b545c] bg-white dark:bg-[#343a40] overflow-hidden text-xs">
+        {(
+          [
+            { id: 'hoy', label: 'Hoy' },
+            { id: '7dias', label: '7 Días' },
+            { id: '30dias', label: '30 Días' },
+            { id: 'todo', label: 'Histórico' },
+          ] as const
+        ).map((filter) => (
           <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
-            title="Actualizar datos"
-            aria-label="Actualizar"
+            key={filter.id}
+            onClick={() => setDateRange(filter.id)}
+            className={`px-3 py-1.5 font-medium transition-colors border-r last:border-r-0 border-[#dee2e6] dark:border-[#4b545c] ${
+              dateRange === filter.id
+                ? 'bg-[#007bff] text-white font-semibold'
+                : 'text-[#495057] dark:text-[#ced4da] hover:bg-[#e9ecef] dark:hover:bg-[#4b545c]'
+            }`}
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
+            {filter.label}
           </button>
-        </div>
+        ))}
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <button
+        onClick={handleRefresh}
+        disabled={refreshing}
+        className="btn-lte-default text-xs px-2.5 py-1.5"
+        title="Actualizar datos"
+        aria-label="Actualizar"
+      >
+        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-[#007bff]' : ''}`} />
+        <span className="hidden sm:inline">Refrescar</span>
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Content Header AdminLTE */}
+      <ContentHeader
+        title="Dashboard"
+        subtitle="Panel de Control y Supervisión Operativa en Tiempo Real"
+        breadcrumbs={[
+          { label: 'Inicio', href: '/dashboard' },
+          { label: 'Dashboard', active: true },
+        ]}
+        actions={headerActions}
+      />
+
+      {/* AdminLTE Small Boxes Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <KpiCard
           title="Total Reportes"
           value={kpi?.total_reportes ?? '—'}
-          subtitle={`${kpi?.confirmados ?? 0} validados/confirmados`}
+          subtitle={`${kpi?.confirmados ?? 0} validados / confirmados`}
           icon={FileText}
           variant="info"
+          href="/reportes"
         />
         <KpiCard
           title="Por Revisar"
@@ -212,10 +219,15 @@ export default function DashboardPage() {
           subtitle={`${kpi?.rechazados ?? 0} rechazados`}
           icon={Clock}
           variant={(kpi?.pendientes ?? 0) > 0 ? 'warning' : 'default'}
+          href="/reportes?estado=pendiente,corregido"
         />
         <KpiCard
           title="% Sin Corrección"
-          value={kpi?.pct_sin_correccion !== null && kpi?.pct_sin_correccion !== undefined ? `${kpi.pct_sin_correccion}%` : '—'}
+          value={
+            kpi?.pct_sin_correccion !== null && kpi?.pct_sin_correccion !== undefined
+              ? `${kpi.pct_sin_correccion}%`
+              : '—'
+          }
           subtitle="Precisión del técnico"
           icon={Sparkles}
           variant="success"
@@ -225,7 +237,7 @@ export default function DashboardPage() {
           value={formatMinutos(kpi?.duracion_promedio_min)}
           subtitle="Tiempo de intervención"
           icon={Timer}
-          variant="default"
+          variant="primary"
         />
         <KpiCard
           title="Tiempo IA"
@@ -236,27 +248,21 @@ export default function DashboardPage() {
         />
         <KpiCard
           title="Confianza IA"
-          value={kpi?.confianza_promedio !== null && kpi?.confianza_promedio !== undefined ? formatConfianza(kpi.confianza_promedio) : '—'}
-          subtitle="Certeza global"
-          icon={Sparkles}
+          value={
+            kpi?.confianza_promedio !== null && kpi?.confianza_promedio !== undefined
+              ? formatConfianza(kpi.confianza_promedio)
+              : '—'
+          }
+          subtitle="Certeza del modelo"
+          icon={CheckCircle2}
           variant="default"
         />
       </div>
 
       {/* Charts Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            Análisis Gráfico Operativo
-          </h2>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            Filtro actual: {dateRange === 'hoy' ? 'Hoy' : dateRange === '7dias' ? 'Últimos 7 días' : dateRange === '30dias' ? 'Últimos 30 días' : 'Histórico completo'}
-          </span>
-        </div>
-
         {loading ? (
-          <div className="h-96 rounded-xl bg-slate-100 dark:bg-slate-800/60 animate-pulse" />
+          <div className="h-80 rounded-[0.25rem] bg-[#e9ecef] dark:bg-[#343a40] animate-pulse" />
         ) : (
           <DashboardCharts
             reportesPorDia={reportesPorDia}
@@ -270,115 +276,126 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Últimos 10 Reportes Pendientes */}
-      <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              Últimos Reportes Pendientes de Revisión
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Reportes generados por los técnicos que esperan validación o corrección del supervisor
-            </p>
+      {/* Últimos 10 Reportes Pendientes - AdminLTE Card Outline */}
+      <div className="lte-card border-t-[3px] border-t-[#dc3545]">
+        <div className="lte-card-header">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-[#dc3545]" />
+            <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+              Reportes Pendientes de Revisión Prioritaria
+            </span>
+            <span className="bg-[#dc3545] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
+              {reportesPendientes.length}
+            </span>
           </div>
+
           <Link
             href="/reportes?estado=pendiente,corregido"
-            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
+            className="text-xs font-semibold text-[#007bff] hover:underline inline-flex items-center gap-1"
           >
-            Ver todos los pendientes
+            <span>Ver todos los pendientes</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        {loading ? (
-          <TableSkeleton rows={5} cols={7} />
-        ) : reportesPendientes.length === 0 ? (
-          <div className="py-12 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-            <Clock className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              ¡Al día! No hay reportes pendientes de revisión.
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Todos los reportes enviados han sido validados o rechazados.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto -mx-6 px-6">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                  <th className="py-3 px-3">N.º</th>
-                  <th className="py-3 px-3">Fecha</th>
-                  <th className="py-3 px-3">Técnico</th>
-                  <th className="py-3 px-3">Equipo</th>
-                  <th className="py-3 px-3">Falla Reportada</th>
-                  <th className="py-3 px-3">Tipo / Prioridad</th>
-                  <th className="py-3 px-3">Estado</th>
-                  <th className="py-3 px-3">Origen</th>
-                  <th className="py-3 px-3 text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {reportesPendientes.map((r) => {
-                  const demorado = isReporteDemorado(r.created_at, r.estado);
-                  return (
-                    <tr
-                      key={r.id}
-                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${
-                        demorado ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-3 font-mono font-bold text-slate-800 dark:text-slate-200">
-                        {formatReporteNumero(r.numero)}
-                      </td>
-                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                        {formatFechaHoraLima(r.created_at)}
-                      </td>
-                      <td className="py-3 px-3 font-medium text-slate-800 dark:text-slate-200">
-                        {r.tecnico_nombre || 'Sin nombre'}
-                      </td>
-                      <td className="py-3 px-3">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100">
-                          {r.equipo || 'Sin equipo'}
-                        </div>
-                        {r.codigo_equipo && (
-                          <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                            {r.codigo_equipo}
+        <div className="p-0">
+          {loading ? (
+            <div className="p-4">
+              <TableSkeleton rows={4} cols={8} />
+            </div>
+          ) : reportesPendientes.length === 0 ? (
+            <div className="py-10 text-center text-[#6c757d] dark:text-[#adb5bd]">
+              <Clock className="w-8 h-8 text-[#28a745] mx-auto mb-2 opacity-80" />
+              <p className="text-sm font-semibold text-[#212529] dark:text-[#f8f9fa]">
+                ¡Al día! No hay reportes pendientes de revisión.
+              </p>
+              <p className="text-xs text-[#6c757d] dark:text-[#adb5bd] mt-0.5">
+                Todas las intervenciones reportadas han sido validadas.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-[#f4f6f9] dark:bg-[#2c3338] text-[#495057] dark:text-[#ced4da] font-semibold border-b border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">N.º</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Fecha</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Técnico</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Equipo</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Falla Reportada</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Tipo / Prioridad</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Estado</th>
+                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Origen</th>
+                    <th className="py-2.5 px-3 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#dee2e6] dark:divide-[#4b545c]">
+                  {reportesPendientes.map((r) => {
+                    const demorado = isReporteDemorado(r.created_at, r.estado);
+                    return (
+                      <tr
+                        key={r.id}
+                        className={`hover:bg-[#e9ecef]/60 dark:hover:bg-[#3f474e]/50 transition-colors ${
+                          demorado ? 'bg-[#fff3cd]/50 dark:bg-[#ffc107]/10' : 'even:bg-[#f8f9fa] dark:even:bg-[#2f353a]'
+                        }`}
+                      >
+                        <td className="py-2.5 px-3 font-mono font-bold text-[#007bff] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {formatReporteNumero(r.numero)}
+                        </td>
+                        <td className="py-2.5 px-3 text-[#495057] dark:text-[#ced4da] whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {formatFechaHoraLima(r.created_at)}
+                        </td>
+                        <td className="py-2.5 px-3 font-medium text-[#212529] dark:text-[#f8f9fa] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          {r.tecnico_nombre || 'Sin nombre'}
+                        </td>
+                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <div className="font-semibold text-[#212529] dark:text-[#f8f9fa]">
+                            {r.equipo || 'Sin equipo'}
                           </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-3 max-w-xs truncate text-slate-700 dark:text-slate-300" title={r.falla || ''}>
-                        {r.falla || '—'}
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <TipoBadge tipo={r.tipo_mantenimiento} />
-                          <PrioridadBadge prioridad={r.prioridad} />
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <EstadoBadge estado={r.estado} isDemorado={demorado} />
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <OrigenBadge origen={r.origen} duracionSeg={r.audio_duracion_seg} />
-                      </td>
-                      <td className="py-3 px-3 text-right whitespace-nowrap">
-                        <Link
-                          href={`/reportes/${r.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-colors shadow-2xs"
+                          {r.codigo_equipo && (
+                            <div className="text-[10px] font-mono text-[#6c757d] dark:text-[#adb5bd]">
+                              {r.codigo_equipo}
+                            </div>
+                          )}
+                        </td>
+                        <td
+                          className="py-2.5 px-3 max-w-xs truncate text-[#495057] dark:text-[#ced4da] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                          title={r.falla || ''}
                         >
-                          <span>Abrir</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                          {r.falla || '—'}
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <div className="flex items-center gap-1">
+                            <TipoBadge tipo={r.tipo_mantenimiento} />
+                            <PrioridadBadge prioridad={r.prioridad} />
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <EstadoBadge estado={r.estado} isDemorado={demorado} />
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                          <OrigenBadge origen={r.origen} duracionSeg={r.audio_duracion_seg} />
+                        </td>
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                          <Link
+                            href={`/reportes/${r.id}`}
+                            className="btn-lte-primary text-xs px-2.5 py-1"
+                          >
+                            <span>Abrir</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <div className="lte-card-footer">
+          Se muestran los 10 reportes prioritarios recibidos recientemente desde Telegram
+        </div>
       </div>
     </div>
   );

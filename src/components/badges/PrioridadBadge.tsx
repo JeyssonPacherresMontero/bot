@@ -11,7 +11,7 @@ interface PrioridadBadgeProps {
 export function PrioridadBadge({ prioridad, className }: PrioridadBadgeProps) {
   if (!prioridad) {
     return (
-      <span className={cn('inline-flex items-center text-xs text-slate-400 dark:text-slate-500', className)}>
+      <span className={cn('text-xs text-[#adb5bd]', className)}>
         —
       </span>
     );
@@ -22,11 +22,11 @@ export function PrioridadBadge({ prioridad, className }: PrioridadBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300 border border-red-300 dark:border-red-800',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-bold bg-[#dc3545] text-white shadow-2xs',
             className
           )}
         >
-          <Flame className="w-3 h-3 text-red-600 dark:text-red-400" />
+          <Flame className="w-3 h-3" />
           <span>Crítica</span>
         </span>
       );
@@ -34,11 +34,11 @@ export function PrioridadBadge({ prioridad, className }: PrioridadBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-bold bg-[#fd7e14] text-white shadow-2xs',
             className
           )}
         >
-          <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+          <AlertTriangle className="w-3 h-3" />
           <span>Alta</span>
         </span>
       );
@@ -46,11 +46,11 @@ export function PrioridadBadge({ prioridad, className }: PrioridadBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#17a2b8] text-white shadow-2xs',
             className
           )}
         >
-          <ArrowUp className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+          <ArrowUp className="w-3 h-3" />
           <span>Media</span>
         </span>
       );
@@ -58,17 +58,22 @@ export function PrioridadBadge({ prioridad, className }: PrioridadBadgeProps) {
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold bg-[#6c757d] text-white shadow-2xs',
             className
           )}
         >
-          <ArrowDown className="w-3 h-3 text-slate-500" />
+          <ArrowDown className="w-3 h-3" />
           <span>Baja</span>
         </span>
       );
     default:
       return (
-        <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300', className)}>
+        <span
+          className={cn(
+            'inline-flex items-center px-2 py-0.5 rounded-[0.25rem] text-xs font-medium bg-[#6c757d] text-white',
+            className
+          )}
+        >
           {prioridad}
         </span>
       );
