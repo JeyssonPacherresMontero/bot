@@ -32,7 +32,7 @@ import {
   Clock,
   Sparkles,
   Timer,
-  Zap,
+  Cpu,
   ExternalLink,
   AlertTriangle,
   RefreshCw,
@@ -153,8 +153,8 @@ export default function DashboardPage() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      {/* AdminLTE button group */}
-      <div className="inline-flex rounded-[0.25rem] shadow-xs border border-[#ced4da] dark:border-[#4b545c] bg-white dark:bg-[#343a40] overflow-hidden text-xs">
+      {/* Modern Segmented Date Control */}
+      <div className="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-xs">
         {(
           [
             { id: 'hoy', label: 'Hoy' },
@@ -166,10 +166,10 @@ export default function DashboardPage() {
           <button
             key={filter.id}
             onClick={() => setDateRange(filter.id)}
-            className={`px-3 py-1.5 font-medium transition-colors border-r last:border-r-0 border-[#dee2e6] dark:border-[#4b545c] ${
+            className={`px-3 py-1.5 rounded-md font-medium transition-all ${
               dateRange === filter.id
-                ? 'bg-[#007bff] text-white font-semibold'
-                : 'text-[#495057] dark:text-[#ced4da] hover:bg-[#e9ecef] dark:hover:bg-[#4b545c]'
+                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs font-semibold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             {filter.label}
@@ -180,22 +180,22 @@ export default function DashboardPage() {
       <button
         onClick={handleRefresh}
         disabled={refreshing}
-        className="btn-lte-default text-xs px-2.5 py-1.5"
+        className="btn-modern-default text-xs px-3 py-1.5"
         title="Actualizar datos"
         aria-label="Actualizar"
       >
-        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-[#007bff]' : ''}`} />
-        <span className="hidden sm:inline">Refrescar</span>
+        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
+        <span className="hidden sm:inline">Actualizar</span>
       </button>
     </div>
   );
 
   return (
-    <div className="space-y-4">
-      {/* Content Header AdminLTE */}
+    <div className="space-y-6">
+      {/* Content Header */}
       <ContentHeader
-        title="Dashboard"
-        subtitle="Panel de Control y Supervisión Operativa en Tiempo Real"
+        title="Dashboard de Mantenimiento"
+        subtitle="Panel de supervisión operativa y estado de planta en tiempo real"
         breadcrumbs={[
           { label: 'Inicio', href: '/dashboard' },
           { label: 'Dashboard', active: true },
@@ -203,12 +203,12 @@ export default function DashboardPage() {
         actions={headerActions}
       />
 
-      {/* AdminLTE Small Boxes Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
         <KpiCard
           title="Total Reportes"
           value={kpi?.total_reportes ?? '—'}
-          subtitle={`${kpi?.confirmados ?? 0} validados / confirmados`}
+          subtitle={`${kpi?.confirmados ?? 0} validados y confirmados`}
           icon={FileText}
           variant="info"
           href="/reportes"
@@ -242,8 +242,8 @@ export default function DashboardPage() {
         <KpiCard
           title="Tiempo IA"
           value={formatSegundos(kpi?.procesamiento_promedio_seg)}
-          subtitle="Whisper + Extracción"
-          icon={Zap}
+          subtitle="Procesamiento inteligente IA"
+          icon={Cpu}
           variant="purple"
         />
         <KpiCard
@@ -262,7 +262,7 @@ export default function DashboardPage() {
       {/* Charts Section */}
       <div className="space-y-4">
         {loading ? (
-          <div className="h-80 rounded-[0.25rem] bg-[#e9ecef] dark:bg-[#343a40] animate-pulse" />
+          <div className="h-80 rounded-xl bg-slate-100 dark:bg-slate-800/50 animate-pulse" />
         ) : (
           <DashboardCharts
             reportesPorDia={reportesPorDia}
@@ -276,22 +276,24 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Últimos 10 Reportes Pendientes - AdminLTE Card Outline */}
-      <div className="lte-card border-t-[3px] border-t-[#dc3545]">
-        <div className="lte-card-header">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#dc3545]" />
-            <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+      {/* Últimos 10 Reportes Pendientes */}
+      <div className="modern-card">
+        <div className="modern-card-header">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-slate-800 dark:text-slate-100">
               Reportes Pendientes de Revisión Prioritaria
             </span>
-            <span className="bg-[#dc3545] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
-              {reportesPendientes.length}
+            <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+              {reportesPendientes.length} pendientes
             </span>
           </div>
 
           <Link
             href="/reportes?estado=pendiente,corregido"
-            className="text-xs font-semibold text-[#007bff] hover:underline inline-flex items-center gap-1"
+            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
           >
             <span>Ver todos los pendientes</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -300,16 +302,16 @@ export default function DashboardPage() {
 
         <div className="p-0">
           {loading ? (
-            <div className="p-4">
+            <div className="p-5">
               <TableSkeleton rows={4} cols={8} />
             </div>
           ) : reportesPendientes.length === 0 ? (
-            <div className="py-10 text-center text-[#6c757d] dark:text-[#adb5bd]">
-              <Clock className="w-8 h-8 text-[#28a745] mx-auto mb-2 opacity-80" />
-              <p className="text-sm font-semibold text-[#212529] dark:text-[#f8f9fa]">
-                ¡Al día! No hay reportes pendientes de revisión.
+            <div className="py-12 text-center text-slate-400">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Al día: sin reportes pendientes de revisión
               </p>
-              <p className="text-xs text-[#6c757d] dark:text-[#adb5bd] mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Todas las intervenciones reportadas han sido validadas.
               </p>
             </div>
@@ -317,69 +319,69 @@ export default function DashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#f4f6f9] dark:bg-[#2c3338] text-[#495057] dark:text-[#ced4da] font-semibold border-b border-[#dee2e6] dark:border-[#4b545c]">
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">N.º</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Fecha</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Técnico</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Equipo</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Falla Reportada</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Tipo / Prioridad</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Estado</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Origen</th>
-                    <th className="py-2.5 px-3 text-right">Acción</th>
+                  <tr className="bg-slate-50/70 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200/80 dark:border-slate-800">
+                    <th className="py-3 px-4">N.º</th>
+                    <th className="py-3 px-4">Fecha</th>
+                    <th className="py-3 px-4">Técnico</th>
+                    <th className="py-3 px-4">Equipo</th>
+                    <th className="py-3 px-4">Falla Reportada</th>
+                    <th className="py-3 px-4">Tipo y Prioridad</th>
+                    <th className="py-3 px-4">Estado</th>
+                    <th className="py-3 px-4">Origen</th>
+                    <th className="py-3 px-4 text-right">Acción</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#dee2e6] dark:divide-[#4b545c]">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {reportesPendientes.map((r) => {
                     const demorado = isReporteDemorado(r.created_at, r.estado);
                     return (
                       <tr
                         key={r.id}
-                        className={`hover:bg-[#e9ecef]/60 dark:hover:bg-[#3f474e]/50 transition-colors ${
-                          demorado ? 'bg-[#fff3cd]/50 dark:bg-[#ffc107]/10' : 'even:bg-[#f8f9fa] dark:even:bg-[#2f353a]'
+                        className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
+                          demorado ? 'bg-amber-50/40 dark:bg-amber-950/20' : ''
                         }`}
                       >
-                        <td className="py-2.5 px-3 font-mono font-bold text-[#007bff] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 font-mono font-bold text-blue-600 dark:text-blue-400">
                           {formatReporteNumero(r.numero)}
                         </td>
-                        <td className="py-2.5 px-3 text-[#495057] dark:text-[#ced4da] whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           {formatFechaHoraLima(r.created_at)}
                         </td>
-                        <td className="py-2.5 px-3 font-medium text-[#212529] dark:text-[#f8f9fa] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">
                           {r.tecnico_nombre || 'Sin nombre'}
                         </td>
-                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
-                          <div className="font-semibold text-[#212529] dark:text-[#f8f9fa]">
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-slate-900 dark:text-slate-100">
                             {r.equipo || 'Sin equipo'}
                           </div>
                           {r.codigo_equipo && (
-                            <div className="text-[10px] font-mono text-[#6c757d] dark:text-[#adb5bd]">
+                            <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                               {r.codigo_equipo}
                             </div>
                           )}
                         </td>
                         <td
-                          className="py-2.5 px-3 max-w-xs truncate text-[#495057] dark:text-[#ced4da] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                          className="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-300"
                           title={r.falla || ''}
                         >
                           {r.falla || '—'}
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
-                          <div className="flex items-center gap-1">
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
                             <TipoBadge tipo={r.tipo_mantenimiento} />
                             <PrioridadBadge prioridad={r.prioridad} />
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <EstadoBadge estado={r.estado} isDemorado={demorado} />
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <OrigenBadge origen={r.origen} duracionSeg={r.audio_duracion_seg} />
                         </td>
-                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
                           <Link
                             href={`/reportes/${r.id}`}
-                            className="btn-lte-primary text-xs px-2.5 py-1"
+                            className="btn-modern-primary text-xs px-2.5 py-1"
                           >
                             <span>Abrir</span>
                             <ExternalLink className="w-3 h-3" />
@@ -393,7 +395,7 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-        <div className="lte-card-footer">
+        <div className="modern-card-footer">
           Se muestran los 10 reportes prioritarios recibidos recientemente desde Telegram
         </div>
       </div>

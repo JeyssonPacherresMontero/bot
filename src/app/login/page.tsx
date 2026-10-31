@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Zap, AlertCircle, Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
+import { Cpu, AlertCircle, Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
@@ -82,35 +82,37 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-[380px] sm:max-w-[420px] select-none">
-      {/* AdminLTE login-logo */}
-      <div className="text-center mb-4">
-        <div className="inline-flex items-center justify-center gap-2 mb-1">
-          <div className="w-9 h-9 rounded-[0.25rem] bg-[#007bff] text-white flex items-center justify-center font-black shadow-xs">
-            <Zap className="w-5 h-5 text-white fill-white" />
+      {/* Brand Logo Header */}
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-xs">
+            <Cpu className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
-          <span className="text-3xl font-light text-[#212529] dark:text-[#f8f9fa]">
-            Maint<b className="font-extrabold text-[#007bff]">AI</b>
-            <span className="text-xs bg-[#007bff] text-white px-2 py-0.5 rounded font-bold uppercase ml-2 align-middle">
-              LTE
-            </span>
+          <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            Maint<span className="text-blue-600 dark:text-blue-400">AI</span>
           </span>
         </div>
-        <p className="text-xs font-semibold text-[#6c757d] dark:text-[#ced4da] uppercase tracking-wider">
-          Vaporsur Energía S.A.C. · Refinería Bahía Norte
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Vaporsur Energía · Planta de Cogeneración
         </p>
       </div>
 
-      {/* AdminLTE Card Outline Primary */}
-      <div className="lte-card border-t-4 border-t-[#007bff] shadow-lte-md">
-        <div className="p-6">
-          <p className="text-center text-xs text-[#495057] dark:text-[#ced4da] font-medium mb-5">
-            Ingrese sus credenciales para iniciar sesión
-          </p>
+      {/* Modern Card */}
+      <div className="modern-card shadow-card">
+        <div className="p-6 sm:p-8">
+          <div className="mb-6 text-center">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              Iniciar Sesión
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Ingresa tus credenciales institucionales para acceder al sistema
+            </p>
+          </div>
 
           {/* Error notification */}
           {errorMsg && (
-            <div className="mb-4 p-3 rounded-[0.25rem] bg-[#f8d7da] text-[#721c24] border border-[#f5c6cb] flex items-start gap-2.5 text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#dc3545]" />
+            <div className="mb-5 p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2.5 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
               <div className="flex-1 font-medium leading-relaxed">{errorMsg}</div>
             </div>
           )}
@@ -119,16 +121,19 @@ function LoginForm() {
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             {/* Email input group */}
             <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                Correo Electrónico
+              </label>
               <div className="relative">
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Correo institucional..."
-                  className="form-control-lte pr-10 py-2"
+                  placeholder="usuario@vaporsur.com"
+                  className="modern-input pr-10 py-2.5"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#adb5bd] pointer-events-none">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                   <Mail className="w-4 h-4" />
                 </div>
               </div>
@@ -136,16 +141,19 @@ function LoginForm() {
 
             {/* Password input group */}
             <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                Contraseña
+              </label>
               <div className="relative">
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Contraseña..."
-                  className="form-control-lte pr-10 py-2"
+                  placeholder="••••••••••••"
+                  className="modern-input pr-10 py-2.5"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#adb5bd] pointer-events-none">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                   <Lock className="w-4 h-4" />
                 </div>
               </div>
@@ -158,41 +166,41 @@ function LoginForm() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded-[0.2rem] text-[#007bff] focus:ring-[#007bff] border-[#ced4da]"
+                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
                 />
-                <span className="text-xs text-[#6c757d] dark:text-[#ced4da]">Recordarme</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400">Recordarme</span>
               </label>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn-lte-primary px-4 py-2 font-bold text-xs"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Verificando...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Ingresar</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
             </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full btn-modern-primary py-2.5 px-4 font-semibold text-xs mt-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Verificando credenciales...</span>
+                </>
+              ) : (
+                <>
+                  <span>Ingresar a la Plataforma</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-[#dee2e6] dark:border-[#4b545c] text-center text-xs text-[#6c757d] dark:text-[#ced4da]">
-            <p>¿Problemas para acceder a su cuenta?</p>
-            <p className="font-semibold text-[#007bff] hover:underline cursor-pointer mt-0.5">
-              Contactar al Administrador del Sistema
+          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+            <p>¿Problemas para acceder a tu cuenta?</p>
+            <p className="font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer mt-1">
+              Contactar al Administrador de Planta
             </p>
           </div>
         </div>
 
-        <div className="lte-card-footer text-center py-2 text-[11px] text-[#6c757d] dark:text-[#ced4da]">
-          MaintAI LTE · Versión 3.4.0 Cogeneración
+        <div className="modern-card-footer text-center py-3 text-[11px] text-slate-400">
+          Refinería Bahía Norte · Supervisión de Activos
         </div>
       </div>
     </div>
@@ -201,8 +209,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#e9ecef] dark:bg-[#1a2226]">
-      <Suspense fallback={<div className="text-xs text-[#6c757d]">Cargando acceso...</div>}>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-[#090d16]">
+      <Suspense fallback={<div className="text-xs text-slate-400">Cargando acceso...</div>}>
         <LoginForm />
       </Suspense>
     </div>

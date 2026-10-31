@@ -50,28 +50,28 @@ export default function EquiposPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar equipo o tag..."
-          className="form-control-lte text-xs pr-8"
+          className="modern-input text-xs pr-8 py-1.5"
         />
-        <Search className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6c757d] pointer-events-none" />
+        <Search className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
       </div>
 
       <button
         onClick={loadEquipos}
         disabled={loading}
-        className="btn-lte-default text-xs"
+        className="btn-modern-default text-xs"
         title="Recargar"
       >
-        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#007bff]' : ''}`} />
+        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
       </button>
     </div>
   );
 
   return (
-    <div className="space-y-4">
-      {/* Content Header AdminLTE */}
+    <div className="space-y-5">
+      {/* Content Header */}
       <ContentHeader
         title="Equipos e Instalaciones"
-        subtitle="Monitoreo de frecuencia de averías, tiempos promedio y fecha de última intervención."
+        subtitle="Monitoreo de frecuencia de averías, tiempos promedio y fecha de última intervención"
         breadcrumbs={[
           { label: 'Inicio', href: '/dashboard' },
           { label: 'Equipos', active: true },
@@ -79,15 +79,17 @@ export default function EquiposPage() {
         actions={actions}
       />
 
-      {/* Equipment Table Card - AdminLTE Card Outline */}
-      <div className="lte-card border-t-[3px] border-t-[#007bff]">
-        <div className="lte-card-header">
+      {/* Equipment Table Card */}
+      <div className="modern-card">
+        <div className="modern-card-header">
           <div className="flex items-center gap-2">
-            <Wrench className="w-4 h-4 text-[#007bff]" />
-            <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+            <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <Wrench className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-slate-800 dark:text-slate-100">
               Inventario de Equipos Activos
             </span>
-            <span className="bg-[#007bff] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
+            <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md">
               {filteredEquipos.length}
             </span>
           </div>
@@ -95,16 +97,16 @@ export default function EquiposPage() {
 
         <div className="p-0">
           {loading ? (
-            <div className="p-4">
+            <div className="p-5">
               <TableSkeleton rows={6} cols={5} />
             </div>
           ) : filteredEquipos.length === 0 ? (
-            <div className="p-10 text-center text-[#6c757d] dark:text-[#adb5bd]">
-              <AlertTriangle className="w-8 h-8 text-[#ffc107] mx-auto mb-2 opacity-80" />
-              <p className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+            <div className="p-12 text-center text-slate-400">
+              <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2 opacity-80" />
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                 No se encontraron equipos registrados
               </p>
-              <p className="text-xs text-[#6c757d] dark:text-[#adb5bd] mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Los equipos aparecerán automáticamente al registrar intervenciones en Telegram.
               </p>
             </div>
@@ -112,51 +114,51 @@ export default function EquiposPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#f4f6f9] dark:bg-[#2c3338] text-[#495057] dark:text-[#ced4da] font-semibold border-b border-[#dee2e6] dark:border-[#4b545c]">
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
-                      Equipo / Código Identificador
+                  <tr className="bg-slate-50/70 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200/80 dark:border-slate-800">
+                    <th className="py-3 px-4">
+                      Equipo e Identificador
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Total de Fallas Reportadas
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Duración Promedio de Atención
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Última Intervención
                     </th>
-                    <th className="py-2.5 px-3 text-right">Historial Completo</th>
+                    <th className="py-3 px-4 text-right">Historial Completo</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#dee2e6] dark:divide-[#4b545c]">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredEquipos.map((eq, idx) => (
                     <tr
                       key={idx}
-                      className="even:bg-[#f8f9fa] dark:even:bg-[#2f353a] hover:bg-[#e9ecef]/60 dark:hover:bg-[#3f474e]/50 transition-colors"
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                     >
-                      <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
-                        <div className="font-bold text-[#212529] dark:text-[#f8f9fa] text-sm">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                           {eq.equipo}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
-                        <span className="bg-[#ffc107] text-[#1f2d3d] text-xs font-bold px-2 py-0.5 rounded-[0.25rem]">
+                      <td className="py-3 px-4">
+                        <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-semibold px-2.5 py-0.5 rounded-md">
                           {eq.total_fallas} falla{eq.total_fallas === 1 ? '' : 's'}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-[#495057] dark:text-[#ced4da] border-r border-[#dee2e6] dark:border-[#4b545c]">
-                        <span className="flex items-center gap-1 font-medium">
-                          <Clock className="w-3.5 h-3.5 text-[#17a2b8]" />
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                           {formatMinutos(eq.duracion_promedio_min)}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-[#495057] dark:text-[#ced4da] whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                         {formatFechaHoraLima(eq.ultimo_reporte)}
                       </td>
-                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
                         <Link
                           href={`/equipos/${encodeURIComponent(eq.equipo)}`}
-                          className="btn-lte-primary text-xs px-2.5 py-1"
+                          className="btn-modern-primary text-xs px-2.5 py-1"
                         >
                           <span>Ver Historial</span>
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -169,7 +171,7 @@ export default function EquiposPage() {
             </div>
           )}
         </div>
-        <div className="lte-card-footer">
+        <div className="modern-card-footer">
           Central Cogeneración · Supervisión de activos de planta
         </div>
       </div>

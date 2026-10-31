@@ -4,99 +4,130 @@
 
 @layer base {
   :root {
-    --background: #f4f6f9;
-    --foreground: #212529;
+    --background: #f8fafc;
+    --foreground: #0f172a;
     --card: #ffffff;
-    --card-foreground: #212529;
-    --border: #dee2e6;
-    --ring: #007bff;
+    --card-foreground: #0f172a;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --border: #e2e8f0;
+    --ring: #2563eb;
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+    color-scheme: light;
   }
 
   .dark {
-    --background: #1e282c;
-    --foreground: #ced4da;
-    --card: #343a40;
-    --card-foreground: #f8f9fa;
-    --border: #4b545c;
+    --background: #090d16;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --border: #1e293b;
     --ring: #3b82f6;
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: var(--border);
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     font-size: 0.875rem;
-    font-weight: 400;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* AdminLTE Card and Component Utilities */
-.lte-card {
-  @apply bg-white dark:bg-[#343a40] border border-[#dee2e6] dark:border-[#4b545c] rounded-[0.25rem] shadow-sm transition-all;
+/* Modern Card Utilities (Backward compatible with previous lte-card classes) */
+.lte-card,
+.modern-card {
+  @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-xl shadow-xs transition-all duration-200 overflow-hidden;
 }
 
-.lte-card-header {
-  @apply px-4 py-3 border-b border-[#dee2e6] dark:border-[#4b545c] flex items-center justify-between font-semibold text-[#212529] dark:text-[#f8f9fa];
+.lte-card-header,
+.modern-card-header {
+  @apply px-5 py-3.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100 text-sm;
 }
 
-.lte-card-body {
-  @apply p-4;
+.lte-card-body,
+.modern-card-body {
+  @apply p-5;
 }
 
-.lte-card-footer {
-  @apply px-4 py-3 bg-[#f8f9fa] dark:bg-[#384047] border-t border-[#dee2e6] dark:border-[#4b545c] text-xs text-[#6c757d] dark:text-[#ced4da];
+.lte-card-footer,
+.modern-card-footer {
+  @apply px-5 py-3 bg-slate-50/70 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400;
 }
 
-/* AdminLTE Buttons */
-.btn-lte {
-  @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-[0.25rem] text-sm font-medium transition-colors cursor-pointer border select-none disabled:opacity-60 disabled:cursor-not-allowed shadow-sm;
+/* Modern Button Utilities (Backward compatible with btn-lte) */
+.btn-lte,
+.btn-modern {
+  @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-xs active:scale-[0.98];
 }
 
-.btn-lte-primary {
-  @apply btn-lte bg-[#007bff] hover:bg-[#0069d9] text-white border-[#007bff] active:bg-[#0062cc];
+.btn-lte-primary,
+.btn-modern-primary {
+  @apply btn-lte bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 hover:border-blue-700 shadow-xs;
 }
 
-.btn-lte-success {
-  @apply btn-lte bg-[#28a745] hover:bg-[#218838] text-white border-[#28a745] active:bg-[#1e7e34];
+.btn-lte-success,
+.btn-modern-success {
+  @apply btn-lte bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 hover:border-emerald-700;
 }
 
-.btn-lte-danger {
-  @apply btn-lte bg-[#dc3545] hover:bg-[#c82333] text-white border-[#dc3545] active:bg-[#bd2130];
+.btn-lte-danger,
+.btn-modern-danger {
+  @apply btn-lte bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 hover:border-rose-700;
 }
 
-.btn-lte-warning {
-  @apply btn-lte bg-[#ffc107] hover:bg-[#e0a800] text-[#1f2d3d] border-[#ffc107] font-semibold;
+.btn-lte-warning,
+.btn-modern-warning {
+  @apply btn-lte bg-amber-500 hover:bg-amber-600 text-slate-950 border border-amber-500 font-semibold;
 }
 
-.btn-lte-info {
-  @apply btn-lte bg-[#17a2b8] hover:bg-[#138496] text-white border-[#17a2b8];
+.btn-lte-info,
+.btn-modern-info {
+  @apply btn-lte bg-cyan-600 hover:bg-cyan-700 text-white border border-cyan-600;
 }
 
-.btn-lte-default {
-  @apply btn-lte bg-white dark:bg-[#343a40] hover:bg-[#e2e6ea] dark:hover:bg-[#3f474e] text-[#495057] dark:text-[#ced4da] border-[#ced4da] dark:border-[#6c757d];
+.btn-lte-default,
+.btn-modern-default {
+  @apply btn-lte bg-white dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80;
 }
 
-/* AdminLTE Form Inputs */
-.form-control-lte {
-  @apply w-full px-3 py-1.5 text-sm bg-white dark:bg-[#343a40] text-[#495057] dark:text-[#ced4da] border border-[#ced4da] dark:border-[#6c757d] rounded-[0.25rem] placeholder-[#6c757d] focus:outline-none focus:border-[#80bdff] focus:ring-2 focus:ring-[#80bdff]/30 transition-all;
+/* Modern Form Controls */
+.form-control-lte,
+.modern-input {
+  @apply w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 rounded-lg placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all;
 }
 
-/* Custom scrollbars */
+/* Subtle modern scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #adb5bd;
-  border-radius: 4px;
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #495057;
+  background: #334155;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #6c757d;
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }

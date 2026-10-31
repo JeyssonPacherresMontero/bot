@@ -230,7 +230,7 @@ export default function ReporteDetallePage() {
       if (error) {
         alert(`Error al validar reporte: ${error.message}`);
       } else {
-        alert('Reporte marcado como validado (revisado).');
+        alert('Reporte marcado como validado.');
         loadReporte();
       }
     } catch (err: unknown) {
@@ -330,7 +330,7 @@ export default function ReporteDetallePage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 bg-[#e9ecef] dark:bg-[#343a40] rounded-[0.25rem] animate-pulse" />
+        <div className="h-8 w-48 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
         <TableSkeleton rows={6} cols={4} />
       </div>
     );
@@ -338,15 +338,15 @@ export default function ReporteDetallePage() {
 
   if (!reporte) {
     return (
-      <div className="p-12 text-center lte-card border-t-[3px] border-t-[#dc3545]">
-        <AlertTriangle className="w-12 h-12 text-[#ffc107] mx-auto mb-3" />
-        <h2 className="text-base font-bold text-[#212529] dark:text-[#f8f9fa]">
+      <div className="p-12 text-center modern-card">
+        <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
           Reporte no encontrado
         </h2>
-        <p className="text-xs text-[#6c757d] dark:text-[#ced4da] mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           El reporte solicitado no existe o no cuentas con los permisos necesarios.
         </p>
-        <Link href="/reportes" className="btn-lte-primary text-xs mt-4">
+        <Link href="/reportes" className="btn-modern-primary text-xs mt-4">
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Volver al listado</span>
         </Link>
@@ -358,8 +358,8 @@ export default function ReporteDetallePage() {
   const demorado = isReporteDemorado(reporte.created_at, reporte.estado);
 
   const headerActions = (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <Link href="/reportes" className="btn-lte-default text-xs">
+    <div className="flex flex-wrap items-center gap-2">
+      <Link href="/reportes" className="btn-modern-default text-xs">
         <ArrowLeft className="w-3.5 h-3.5" />
         <span>Volver</span>
       </Link>
@@ -367,7 +367,7 @@ export default function ReporteDetallePage() {
       <button
         onClick={handleSaveChanges}
         disabled={saving || actionLoading}
-        className="btn-lte-primary text-xs"
+        className="btn-modern-primary text-xs"
       >
         {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
         <span>Guardar cambios</span>
@@ -377,7 +377,7 @@ export default function ReporteDetallePage() {
         <button
           onClick={handleValidate}
           disabled={actionLoading || saving}
-          className="btn-lte-success text-xs"
+          className="btn-modern-success text-xs"
         >
           <CheckCheck className="w-3.5 h-3.5" />
           <span>Validar reporte</span>
@@ -391,7 +391,7 @@ export default function ReporteDetallePage() {
             setShowRejectModal(true);
           }}
           disabled={actionLoading || saving}
-          className="btn-lte-danger text-xs"
+          className="btn-modern-danger text-xs"
         >
           <XCircle className="w-3.5 h-3.5" />
           <span>Rechazar</span>
@@ -402,7 +402,7 @@ export default function ReporteDetallePage() {
         <button
           onClick={handleReopen}
           disabled={actionLoading || saving}
-          className="btn-lte-warning text-xs"
+          className="btn-modern-warning text-xs"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Reabrir</span>
@@ -413,8 +413,8 @@ export default function ReporteDetallePage() {
         <button
           onClick={handleDelete}
           disabled={actionLoading || saving}
-          className="btn-lte-danger text-xs"
-          title="Eliminar reporte (Solo Admin)"
+          className="btn-modern-danger text-xs px-2"
+          title="Eliminar reporte para administradores"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -423,8 +423,8 @@ export default function ReporteDetallePage() {
   );
 
   return (
-    <div className="space-y-4">
-      {/* Content Header AdminLTE */}
+    <div className="space-y-5">
+      {/* Content Header */}
       <ContentHeader
         title={`Reporte #${formatReporteNumero(reporte.numero)}`}
         subtitle={`Registrado el ${formatFechaHoraLima(reporte.created_at)} por ${reporte.tecnico_nombre || 'Técnico desconocido'}`}
@@ -436,74 +436,76 @@ export default function ReporteDetallePage() {
         actions={headerActions}
       />
 
-      {/* Origin & Metadata Strip - AdminLTE Callout Style */}
-      <div className="lte-card border-l-4 border-l-[#17a2b8] p-3 text-xs flex flex-wrap items-center justify-between gap-4">
+      {/* Origin & Metadata Strip */}
+      <div className="modern-card p-4 text-xs flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#495057] dark:text-[#ced4da]">Estado:</span>
+            <span className="font-medium text-slate-500 dark:text-slate-400">Estado:</span>
             <EstadoBadge estado={reporte.estado} isDemorado={demorado} />
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#495057] dark:text-[#ced4da]">Origen:</span>
+            <span className="font-medium text-slate-500 dark:text-slate-400">Origen:</span>
             <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
           </div>
-          <div className="flex items-center gap-1.5 text-[#6c757d] dark:text-[#adb5bd]">
-            <Clock className="w-3.5 h-3.5 text-[#17a2b8]" />
+          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>Tiempo IA:</span>
-            <span className="font-bold text-[#212529] dark:text-[#f8f9fa]">
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
               {formatSegundos(reporte.tiempo_procesamiento_ms ? Math.round(reporte.tiempo_procesamiento_ms / 1000) : null)}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-[#6c757d] dark:text-[#adb5bd]">
-            <Sparkles className="w-3.5 h-3.5 text-[#28a745]" />
+          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Confianza:</span>
-            <span className="font-bold text-[#28a745]">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
               {formatConfianza(reporte.confianza)}
             </span>
           </div>
         </div>
 
         {reporte.revisado_en && (
-          <div className="flex items-center gap-1 text-[#28a745] font-semibold text-xs">
+          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
             <ShieldCheck className="w-4 h-4" />
             <span>Validado el {formatFechaHoraLima(reporte.revisado_en)}</span>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main 2 Columns: Transcriptions & Form */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Section: "Lo que dijo el técnico" - Card Outline Info */}
-          <div className="lte-card border-t-[3px] border-t-[#17a2b8]">
-            <div className="lte-card-header">
+        <div className="lg:col-span-2 space-y-5">
+          {/* Section: Relato Original del Técnico */}
+          <div className="modern-card">
+            <div className="modern-card-header">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#17a2b8]" />
-                <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+                <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <span className="font-semibold text-slate-800 dark:text-slate-100">
                   Relato Original del Técnico
                 </span>
               </div>
-              <span className="text-xs text-[#6c757d] dark:text-[#adb5bd]">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {reporte.origen === 'audio' ? 'Transcripción Whisper' : 'Texto directo Telegram'}
               </span>
             </div>
 
-            <div className="lte-card-body space-y-3">
-              <div className="p-3 bg-[#f8f9fa] dark:bg-[#2c3338] rounded-[0.25rem] border border-[#dee2e6] dark:border-[#4b545c] text-xs">
-                <p className="font-bold text-[#495057] dark:text-[#ced4da] uppercase tracking-wider text-[10px] mb-1">
+            <div className="modern-card-body space-y-3">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200/80 dark:border-slate-800 text-xs">
+                <p className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] mb-1.5">
                   Texto Transcrito:
                 </p>
-                <p className="text-[#212529] dark:text-[#f8f9fa] leading-relaxed whitespace-pre-wrap">
+                <p className="text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
                   {reporte.texto_original || 'Sin texto original registrado.'}
                 </p>
               </div>
 
               {reporte.texto_correccion && (
-                <div className="p-3 bg-[#fff3cd] dark:bg-[#ffc107]/15 rounded-[0.25rem] border border-[#ffeeba] dark:border-[#ffc107]/40 text-xs">
-                  <p className="font-bold text-[#856404] dark:text-[#ffc107] uppercase tracking-wider text-[10px] mb-1">
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200/80 dark:border-amber-800/60 text-xs">
+                  <p className="font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[10px] mb-1.5">
                     Corrección posterior enviada por el técnico:
                   </p>
-                  <p className="text-[#856404] dark:text-[#ffeeba] leading-relaxed whitespace-pre-wrap">
+                  <p className="text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-wrap">
                     {reporte.texto_correccion}
                   </p>
                 </div>
@@ -511,56 +513,56 @@ export default function ReporteDetallePage() {
             </div>
           </div>
 
-          {/* Section: Formulario editable de campos extraídos - Card Outline Primary */}
-          <div className="lte-card border-t-[3px] border-t-[#007bff]">
-            <div className="lte-card-header">
+          {/* Section: Formulario editable de campos extraídos */}
+          <div className="modern-card">
+            <div className="modern-card-header">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
-                  Campos Extraídos por MaintAI
+                <span className="font-semibold text-slate-800 dark:text-slate-100">
+                  Campos Estructurados de la Intervención
                 </span>
               </div>
               {faltantes.length > 0 && (
-                <span className="bg-[#ffc107] text-[#1f2d3d] text-xs font-bold px-2 py-0.5 rounded-[0.2rem] flex items-center gap-1">
+                <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Faltantes: {faltantes.join(', ')}</span>
+                  <span>Pendientes: {faltantes.join(', ')}</span>
                 </span>
               )}
             </div>
 
-            <div className="lte-card-body space-y-4">
+            <div className="modern-card-body space-y-4">
               {/* Fields Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
                 {/* Equipo */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                    Equipo {faltantes.includes('equipo') && <span className="text-[#dc3545] font-bold">(*Faltante)</span>}
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Equipo {faltantes.includes('equipo') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">Requerido</span>}
                   </label>
                   <input
                     type="text"
                     value={equipo}
                     onChange={(e) => setEquipo(e.target.value)}
                     placeholder="Ej. Turbina de vapor TV-01"
-                    className={`form-control-lte ${faltantes.includes('equipo') ? 'border-[#dc3545] bg-[#dc3545]/5' : ''}`}
+                    className={`modern-input ${faltantes.includes('equipo') ? 'border-rose-400 dark:border-rose-700 bg-rose-50/20' : ''}`}
                   />
                 </div>
 
                 {/* Codigo Equipo */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                    Código de Equipo / Tag
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Código o Tag de Equipo
                   </label>
                   <input
                     type="text"
                     value={codigoEquipo}
                     onChange={(e) => setCodigoEquipo(e.target.value)}
                     placeholder="Ej. P-101A, TV-01, CALD-2"
-                    className="form-control-lte font-mono"
+                    className="modern-input font-mono"
                   />
                 </div>
 
                 {/* Area */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Área de Planta
                   </label>
                   <input
@@ -568,19 +570,19 @@ export default function ReporteDetallePage() {
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
                     placeholder="Ej. Sala de Turbinas, Condensados"
-                    className="form-control-lte"
+                    className="modern-input"
                   />
                 </div>
 
                 {/* Tipo Mantenimiento */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Tipo de Mantenimiento
                   </label>
                   <select
                     value={tipoMantenimiento}
                     onChange={(e) => setTipoMantenimiento(e.target.value as TipoMantenimiento)}
-                    className="form-control-lte"
+                    className="modern-input"
                   >
                     <option value="">Seleccione tipo...</option>
                     <option value="correctivo">Correctivo</option>
@@ -593,13 +595,13 @@ export default function ReporteDetallePage() {
 
                 {/* Prioridad */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Prioridad
                   </label>
                   <select
                     value={prioridad}
                     onChange={(e) => setPrioridad(e.target.value as PrioridadReporte)}
-                    className="form-control-lte"
+                    className="modern-input"
                   >
                     <option value="">Seleccione prioridad...</option>
                     <option value="critica">Crítica</option>
@@ -611,35 +613,35 @@ export default function ReporteDetallePage() {
 
                 {/* Numero OT */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                    Número de Orden de Trabajo (OT)
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Número de Orden de Trabajo
                   </label>
                   <input
                     type="text"
                     value={numeroOt}
                     onChange={(e) => setNumeroOt(e.target.value)}
                     placeholder="Ej. OT-2026-442"
-                    className="form-control-lte font-mono"
+                    className="modern-input font-mono"
                   />
                 </div>
 
                 {/* Fecha Intervención */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Fecha de Intervención
                   </label>
                   <input
                     type="date"
                     value={fechaIntervencion}
                     onChange={(e) => setFechaIntervencion(e.target.value)}
-                    className="form-control-lte"
+                    className="modern-input"
                   />
                 </div>
 
                 {/* Duración en minutos */}
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                    Duración Estimada (minutos)
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Duración Estimada en Minutos
                   </label>
                   <input
                     type="number"
@@ -649,28 +651,28 @@ export default function ReporteDetallePage() {
                       setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))
                     }
                     placeholder="Ej. 60"
-                    className="form-control-lte"
+                    className="modern-input"
                   />
                 </div>
               </div>
 
               {/* Falla (Full Width) */}
               <div className="text-xs">
-                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                  Falla / Síntoma Observado {faltantes.includes('falla') && <span className="text-[#dc3545] font-bold">(*Faltante)</span>}
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  Falla Observada {faltantes.includes('falla') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">Requerido</span>}
                 </label>
                 <textarea
                   rows={2}
                   value={falla}
                   onChange={(e) => setFalla(e.target.value)}
                   placeholder="Descripción de la anomalía o falla reportada..."
-                  className={`form-control-lte ${faltantes.includes('falla') ? 'border-[#dc3545] bg-[#dc3545]/5' : ''}`}
+                  className={`modern-input ${faltantes.includes('falla') ? 'border-rose-400 dark:border-rose-700 bg-rose-50/20' : ''}`}
                 />
               </div>
 
               {/* Causa Probable */}
               <div className="text-xs">
-                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Causa Probable Determinada
                 </label>
                 <textarea
@@ -678,23 +680,28 @@ export default function ReporteDetallePage() {
                   value={causaProbable}
                   onChange={(e) => setCausaProbable(e.target.value)}
                   placeholder="Origen probable determinado tras la inspección..."
-                  className="form-control-lte"
+                  className="modern-input"
                 />
               </div>
 
               {/* Actividades (Editable list) */}
-              <div className="space-y-2 pt-2 border-t border-[#dee2e6] dark:border-[#4b545c] text-xs">
+              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
                 <div className="flex items-center justify-between">
-                  <label className="font-semibold text-[#495057] dark:text-[#ced4da] flex items-center gap-1.5">
-                    <span>Actividades Realizadas ({actividades.length})</span>
+                  <div className="flex items-center gap-2">
+                    <label className="font-semibold text-slate-800 dark:text-slate-200">
+                      Actividades Realizadas
+                    </label>
+                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                      {actividades.length}
+                    </span>
                     {faltantes.includes('actividades') && (
-                      <span className="text-[#dc3545] font-bold">(*Faltante)</span>
+                      <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px]">Requerido</span>
                     )}
-                  </label>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddActividad}
-                    className="btn-lte-primary text-xs py-1 px-2"
+                    className="btn-modern-primary text-xs py-1 px-2.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Añadir actividad</span>
@@ -702,23 +709,23 @@ export default function ReporteDetallePage() {
                 </div>
 
                 {actividades.length === 0 ? (
-                  <p className="text-[#adb5bd] italic py-1">No se han registrado actividades.</p>
+                  <p className="text-slate-400 italic py-1">No se han registrado actividades.</p>
                 ) : (
                   <div className="space-y-2">
                     {actividades.map((act, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <span className="text-[#adb5bd] font-mono text-xs w-4">{index + 1}.</span>
+                        <span className="text-slate-400 font-mono text-xs w-4">{index + 1}.</span>
                         <input
                           type="text"
                           value={act}
                           onChange={(e) => handleUpdateActividad(index, e.target.value)}
                           placeholder="Ej. Desmontaje y cambio de sello mecánico..."
-                          className="form-control-lte flex-1"
+                          className="modern-input flex-1"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveActividad(index)}
-                          className="btn-lte-danger py-1 px-2"
+                          className="btn-modern-danger py-1.5 px-2"
                           title="Eliminar"
                         >
                           <Trash className="w-3.5 h-3.5" />
@@ -730,15 +737,20 @@ export default function ReporteDetallePage() {
               </div>
 
               {/* Repuestos (Editable table) */}
-              <div className="space-y-2 pt-2 border-t border-[#dee2e6] dark:border-[#4b545c] text-xs">
+              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
                 <div className="flex items-center justify-between">
-                  <label className="font-semibold text-[#495057] dark:text-[#ced4da]">
-                    Repuestos y Materiales Empleados ({repuestos.length})
-                  </label>
+                  <div className="flex items-center gap-2">
+                    <label className="font-semibold text-slate-800 dark:text-slate-200">
+                      Repuestos Empleados
+                    </label>
+                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                      {repuestos.length}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddRepuesto}
-                    className="btn-lte-primary text-xs py-1 px-2"
+                    className="btn-modern-primary text-xs py-1 px-2.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Añadir repuesto</span>
@@ -746,7 +758,7 @@ export default function ReporteDetallePage() {
                 </div>
 
                 {repuestos.length === 0 ? (
-                  <p className="text-[#adb5bd] italic py-1">No se indicaron repuestos utilizados.</p>
+                  <p className="text-slate-400 italic py-1">No se indicaron repuestos utilizados.</p>
                 ) : (
                   <div className="space-y-2">
                     {repuestos.map((rep, index) => (
@@ -757,7 +769,7 @@ export default function ReporteDetallePage() {
                             value={rep.nombre}
                             onChange={(e) => handleUpdateRepuesto(index, 'nombre', e.target.value)}
                             placeholder="Nombre del repuesto..."
-                            className="form-control-lte"
+                            className="modern-input"
                           />
                         </div>
                         <div className="col-span-2">
@@ -773,7 +785,7 @@ export default function ReporteDetallePage() {
                               )
                             }
                             placeholder="Cant."
-                            className="form-control-lte"
+                            className="modern-input"
                           />
                         </div>
                         <div className="col-span-3">
@@ -787,15 +799,15 @@ export default function ReporteDetallePage() {
                                 e.target.value.trim() ? e.target.value : null
                               )
                             }
-                            placeholder="Código / Tag"
-                            className="form-control-lte font-mono"
+                            placeholder="Código o Tag"
+                            className="modern-input font-mono"
                           />
                         </div>
                         <div className="col-span-1 text-right">
                           <button
                             type="button"
                             onClick={() => handleRemoveRepuesto(index)}
-                            className="btn-lte-danger py-1 px-2"
+                            className="btn-modern-danger py-1.5 px-2"
                             title="Eliminar"
                           >
                             <Trash className="w-3.5 h-3.5" />
@@ -808,8 +820,8 @@ export default function ReporteDetallePage() {
               </div>
 
               {/* Observaciones */}
-              <div className="text-xs pt-2 border-t border-[#dee2e6] dark:border-[#4b545c]">
-                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
+              <div className="text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Observaciones Generales
                 </label>
                 <textarea
@@ -817,29 +829,29 @@ export default function ReporteDetallePage() {
                   value={observaciones}
                   onChange={(e) => setObservaciones(e.target.value)}
                   placeholder="Notas adicionales o recomendaciones para el próximo turno..."
-                  className="form-control-lte"
+                  className="modern-input"
                 />
               </div>
 
               {/* Comentario Supervisor */}
-              <div className="text-xs pt-2 border-t border-[#dee2e6] dark:border-[#4b545c]">
-                <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                  Comentario de Supervisión (Notificación al Técnico)
+              <div className="text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  Comentario de Supervisión para el Técnico
                 </label>
                 <textarea
                   rows={2}
                   value={comentarioSupervisor}
                   onChange={(e) => setComentarioSupervisor(e.target.value)}
                   placeholder="Comentarios u observaciones de supervisión que se envían al técnico..."
-                  className="form-control-lte"
+                  className="modern-input"
                 />
               </div>
             </div>
-            <div className="lte-card-footer flex justify-end">
+            <div className="modern-card-footer flex justify-end">
               <button
                 onClick={handleSaveChanges}
                 disabled={saving || actionLoading}
-                className="btn-lte-primary text-xs"
+                className="btn-modern-primary text-xs px-4 py-2"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Guardar Cambios del Formulario</span>
@@ -849,41 +861,43 @@ export default function ReporteDetallePage() {
         </div>
 
         {/* Sidebar Column: AI JSON & Other Reports of Same Equipment */}
-        <div className="space-y-4">
-          {/* Collapsible raw_ia - Card Outline Purple */}
-          <div className="lte-card border-t-[3px] border-t-[#6f42c1]">
-            <div className="lte-card-header">
+        <div className="space-y-5">
+          {/* Collapsible raw_ia */}
+          <div className="modern-card">
+            <div className="modern-card-header">
               <button
                 onClick={() => setShowRawIa(!showRawIa)}
-                className="w-full flex items-center justify-between text-left text-xs font-bold text-[#212529] dark:text-[#f8f9fa]"
+                className="w-full flex items-center justify-between text-left text-xs font-semibold text-slate-800 dark:text-slate-100"
               >
                 <span className="flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-[#6f42c1]" />
-                  Extracción Cruda de IA (JSON)
+                  <div className="p-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <Bot className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Datos Estructurados del Modelo</span>
                 </span>
-                {showRawIa ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                {showRawIa ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
               </button>
             </div>
 
             {showRawIa && (
-              <div className="lte-card-body p-2">
-                <pre className="p-3 rounded-[0.25rem] bg-[#212529] text-[#20c997] text-[11px] font-mono overflow-x-auto max-h-96">
+              <div className="modern-card-body p-3">
+                <pre className="p-3 rounded-lg bg-slate-950 text-emerald-400 text-[11px] font-mono overflow-x-auto max-h-96 border border-slate-800">
                   {JSON.stringify(reporte.raw_ia || {}, null, 2)}
                 </pre>
               </div>
             )}
           </div>
 
-          {/* Otros reportes del mismo equipo - Card Outline Warning */}
-          <div className="lte-card border-t-[3px] border-t-[#ffc107]">
-            <div className="lte-card-header">
-              <h3 className="text-xs font-bold text-[#212529] dark:text-[#f8f9fa]">
+          {/* Otros reportes del mismo equipo */}
+          <div className="modern-card">
+            <div className="modern-card-header">
+              <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                 Historial del mismo equipo
               </h3>
               {reporte.equipo && (
                 <Link
                   href={`/equipos/${encodeURIComponent(reporte.codigo_equipo || reporte.equipo)}`}
-                  className="text-[11px] font-bold text-[#007bff] hover:underline flex items-center gap-1"
+                  className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                 >
                   Ver todo
                   <ExternalLink className="w-3 h-3" />
@@ -891,9 +905,9 @@ export default function ReporteDetallePage() {
               )}
             </div>
 
-            <div className="lte-card-body p-2 space-y-2">
+            <div className="modern-card-body p-3 space-y-2">
               {otrosReportesEquipo.length === 0 ? (
-                <p className="text-xs text-[#adb5bd] italic p-2">
+                <p className="text-xs text-slate-400 italic p-2">
                   No hay otros reportes registrados para este equipo.
                 </p>
               ) : (
@@ -901,18 +915,18 @@ export default function ReporteDetallePage() {
                   <Link
                     key={o.id}
                     href={`/reportes/${o.id}`}
-                    className="block p-2.5 rounded-[0.25rem] border border-[#dee2e6] dark:border-[#4b545c] bg-[#f8f9fa] dark:bg-[#2c3338] hover:bg-[#e9ecef] dark:hover:bg-[#384047] transition-colors"
+                    className="block p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
                   >
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono font-bold text-[#007bff]">
+                      <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                         {formatReporteNumero(o.numero)}
                       </span>
                       <EstadoBadge estado={o.estado} />
                     </div>
-                    <p className="text-xs font-medium text-[#212529] dark:text-[#f8f9fa] mt-1 line-clamp-1">
+                    <p className="text-xs font-medium text-slate-800 dark:text-slate-200 mt-1 line-clamp-1">
                       {o.falla || 'Sin falla reportada'}
                     </p>
-                    <p className="text-[10px] text-[#6c757d] dark:text-[#adb5bd] mt-0.5">
+                    <p className="text-[10px] text-slate-400 mt-0.5">
                       {formatFechaHoraLima(o.created_at)} · {o.tecnico_nombre || 'Técnico'}
                     </p>
                   </Link>
@@ -923,33 +937,33 @@ export default function ReporteDetallePage() {
         </div>
       </div>
 
-      {/* Reject Confirmation Modal - AdminLTE Modal Style */}
+      {/* Reject Confirmation Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="w-full max-w-md lte-card border-t-[4px] border-t-[#dc3545] shadow-lte-lg">
-            <div className="lte-card-header bg-[#dc3545] text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="w-full max-w-md modern-card shadow-dropdown border border-slate-200 dark:border-slate-800">
+            <div className="modern-card-header bg-rose-50 dark:bg-rose-950/40 border-b border-rose-100 dark:border-rose-900/50">
               <div className="flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-white" />
-                <h3 className="text-sm font-bold text-white">
+                <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                <h3 className="text-sm font-semibold text-rose-900 dark:text-rose-100">
                   Rechazar Reporte #{formatReporteNumero(reporte.numero)}
                 </h3>
               </div>
               <button
                 onClick={() => setShowRejectModal(false)}
-                className="text-white hover:opacity-80"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-lg leading-none"
               >
                 &times;
               </button>
             </div>
 
-            <div className="lte-card-body space-y-3">
-              <p className="text-xs text-[#6c757d] dark:text-[#ced4da]">
-                Indica de manera obligatoria el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram para que envíe la corrección.
+            <div className="modern-card-body space-y-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Indica el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram para que envíe la corrección correspondiente.
               </p>
 
               <div>
-                <label className="block text-xs font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                  Motivo del rechazo <span className="text-[#dc3545]">*</span>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  Motivo del rechazo <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   required
@@ -957,16 +971,16 @@ export default function ReporteDetallePage() {
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   placeholder="Ej. El código de equipo no corresponde; favor de indicar el tag correcto..."
-                  className="form-control-lte"
+                  className="modern-input"
                 />
               </div>
             </div>
 
-            <div className="lte-card-footer flex items-center justify-end gap-2">
+            <div className="modern-card-footer flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowRejectModal(false)}
-                className="btn-lte-default text-xs"
+                className="btn-modern-default text-xs"
               >
                 Cancelar
               </button>
@@ -974,7 +988,7 @@ export default function ReporteDetallePage() {
                 type="button"
                 onClick={handleConfirmReject}
                 disabled={!rejectReason.trim() || actionLoading}
-                className="btn-lte-danger text-xs"
+                className="btn-modern-danger text-xs"
               >
                 {actionLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>Confirmar Rechazo</span>

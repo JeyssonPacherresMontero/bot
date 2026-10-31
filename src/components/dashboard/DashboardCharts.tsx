@@ -31,21 +31,32 @@ interface DashboardChartsProps {
   distribucionEstado: { name: string; value: number }[];
 }
 
-const COLORS_PIE = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
+// Low visual fatigue color psychology palette
+const COLORS_PIE = ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6'];
+
 const PRIORIDAD_COLORS: Record<string, string> = {
-  crítica: '#dc3545',
-  critica: '#dc3545',
-  alta: '#fd7e14',
-  media: '#17a2b8',
-  baja: '#6c757d',
+  crítica: '#f43f5e',
+  critica: '#f43f5e',
+  alta: '#f97316',
+  media: '#3b82f6',
+  baja: '#64748b',
 };
 
 const ESTADO_COLORS: Record<string, string> = {
-  pendiente: '#ffc107',
-  corregido: '#fd7e14',
-  confirmado: '#007bff',
-  revisado: '#28a745',
-  rechazado: '#dc3545',
+  pendiente: '#f59e0b',
+  corregido: '#f97316',
+  confirmado: '#3b82f6',
+  revisado: '#10b981',
+  rechazado: '#f43f5e',
+};
+
+const tooltipStyle = {
+  backgroundColor: '#0f172a',
+  borderRadius: '8px',
+  color: '#f8fafc',
+  fontSize: '12px',
+  border: '1px solid #1e293b',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
 };
 
 export function DashboardCharts({
@@ -66,8 +77,8 @@ export function DashboardCharts({
   if (!isMounted) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
-        <div className="h-72 bg-[#e9ecef] dark:bg-[#343a40] rounded-[0.25rem] animate-pulse" />
-        <div className="h-72 bg-[#e9ecef] dark:bg-[#343a40] rounded-[0.25rem] animate-pulse" />
+        <div className="h-72 bg-slate-100 dark:bg-slate-800/50 rounded-xl animate-pulse" />
+        <div className="h-72 bg-slate-100 dark:bg-slate-800/50 rounded-xl animate-pulse" />
       </div>
     );
   }
@@ -76,20 +87,22 @@ export function DashboardCharts({
     <div className="space-y-4">
       {/* Row 1: Reportes por día y Fallas por Equipo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Reportes por día - Card Outline Primary */}
-        <div className="lte-card border-t-[3px] border-t-[#007bff]">
-          <div className="lte-card-header">
+        {/* Reportes por día */}
+        <div className="modern-card">
+          <div className="modern-card-header">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-[#007bff]" />
-              <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+              <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <BarChart3 className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
                 Tendencia de Reportes por Día
               </span>
             </div>
-            <span className="text-[11px] font-semibold bg-[#007bff]/10 text-[#007bff] dark:bg-[#007bff]/20 dark:text-[#66b0ff] px-2 py-0.5 rounded-[0.2rem]">
+            <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
               Volumen Diario
             </span>
           </div>
-          <div className="lte-card-body">
+          <div className="modern-card-body">
             <div className="h-64 w-full">
               {reportesPorDia.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -97,55 +110,51 @@ export function DashboardCharts({
                     data={reportesPorDia}
                     margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.06} />
                     <XAxis
                       dataKey="dia"
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       angle={-25}
                       textAnchor="end"
                       interval={0}
                     />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#343a40',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        border: '1px solid #4b545c',
-                      }}
+                      contentStyle={tooltipStyle}
                       formatter={(value) => [`${value} reportes`, 'Total']}
                       labelFormatter={(label) => `Fecha: ${label}`}
                     />
-                    <Bar dataKey="total" fill="#007bff" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#adb5bd]">
+                <div className="h-full flex items-center justify-center text-xs text-slate-400">
                   No hay datos para este período
                 </div>
               )}
             </div>
           </div>
-          <div className="lte-card-footer">
+          <div className="modern-card-footer">
             Volumen generado por el bot de Telegram en los últimos días
           </div>
         </div>
 
-        {/* Fallas por Equipo - Card Outline Info */}
-        <div className="lte-card border-t-[3px] border-t-[#17a2b8]">
-          <div className="lte-card-header">
+        {/* Fallas por Equipo */}
+        <div className="modern-card">
+          <div className="modern-card-header">
             <div className="flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-[#17a2b8]" />
-              <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+              <div className="p-1.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                <Wrench className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
                 Top 10 Fallas por Equipo
               </span>
             </div>
-            <span className="text-[11px] font-semibold bg-[#17a2b8]/10 text-[#17a2b8] dark:bg-[#17a2b8]/20 dark:text-[#38d4eb] px-2 py-0.5 rounded-[0.2rem]">
+            <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
               Incidencias
             </span>
           </div>
-          <div className="lte-card-body">
+          <div className="modern-card-body">
             <div className="h-64 w-full">
               {fallasPorEquipo.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -154,35 +163,29 @@ export function DashboardCharts({
                     layout="vertical"
                     margin={{ top: 5, right: 20, left: 40, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.06} />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
                     <YAxis
                       dataKey="equipo"
                       type="category"
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       width={90}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#343a40',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        border: '1px solid #4b545c',
-                      }}
+                      contentStyle={tooltipStyle}
                       formatter={(value) => [`${value} fallas`, 'Incidencias']}
                     />
-                    <Bar dataKey="total_fallas" fill="#17a2b8" radius={[0, 2, 2, 0]} />
+                    <Bar dataKey="total_fallas" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#adb5bd]">
+                <div className="h-full flex items-center justify-center text-xs text-slate-400">
                   Sin fallas registradas
                 </div>
               )}
             </div>
           </div>
-          <div className="lte-card-footer">
+          <div className="modern-card-footer">
             Equipos con mayor frecuencia de reportes correctivos y preventivos
           </div>
         </div>
@@ -190,20 +193,22 @@ export function DashboardCharts({
 
       {/* Row 2: Repuestos y Productividad Técnicos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Repuestos más usados - Card Outline Warning */}
-        <div className="lte-card border-t-[3px] border-t-[#ffc107]">
-          <div className="lte-card-header">
+        {/* Repuestos más usados */}
+        <div className="modern-card">
+          <div className="modern-card-header">
             <div className="flex items-center gap-2">
-              <Package className="w-4 h-4 text-[#ffc107]" />
-              <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+              <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Package className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
                 Top 10 Repuestos más Consumidos
               </span>
             </div>
-            <span className="text-[11px] font-semibold bg-[#ffc107]/20 text-[#856404] dark:text-[#ffc107] px-2 py-0.5 rounded-[0.2rem]">
+            <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
               Materiales
             </span>
           </div>
-          <div className="lte-card-body">
+          <div className="modern-card-body">
             <div className="h-64 w-full">
               {repuestosMasUsados.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -212,53 +217,49 @@ export function DashboardCharts({
                     layout="vertical"
                     margin={{ top: 5, right: 20, left: 40, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.06} />
+                    <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
                     <YAxis
                       dataKey="repuesto"
                       type="category"
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 11, fill: '#64748b' }}
                       width={90}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#343a40',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        border: '1px solid #4b545c',
-                      }}
+                      contentStyle={tooltipStyle}
                       formatter={(value) => [`${value} unidades`, 'Total consumido']}
                     />
-                    <Bar dataKey="unidades" fill="#ffc107" radius={[0, 2, 2, 0]} />
+                    <Bar dataKey="unidades" fill="#f59e0b" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#adb5bd]">
+                <div className="h-full flex items-center justify-center text-xs text-slate-400">
                   Sin repuestos registrados en este período
                 </div>
               )}
             </div>
           </div>
-          <div className="lte-card-footer">
+          <div className="modern-card-footer">
             Consumo total de repuestos y materiales extraído por IA
           </div>
         </div>
 
-        {/* Reportes por técnico - Card Outline Purple */}
-        <div className="lte-card border-t-[3px] border-t-[#6f42c1]">
-          <div className="lte-card-header">
+        {/* Productividad por Técnico - removed parenthesis */}
+        <div className="modern-card">
+          <div className="modern-card-header">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#6f42c1]" />
-              <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
-                Reportes por Técnico (Productividad)
+              <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <Users className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                Productividad por Técnico
               </span>
             </div>
-            <span className="text-[11px] font-semibold bg-[#6f42c1]/10 text-[#6f42c1] dark:bg-[#6f42c1]/20 dark:text-[#a370f7] px-2 py-0.5 rounded-[0.2rem]">
-              Equipo Humano
+            <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
+              Equipo Técnico
             </span>
           </div>
-          <div className="lte-card-body">
+          <div className="modern-card-body">
             <div className="h-64 w-full">
               {reportesPorTecnico.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -266,30 +267,24 @@ export function DashboardCharts({
                     data={reportesPorTecnico.slice(0, 8)}
                     margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis dataKey="tecnico" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.06} />
+                    <XAxis dataKey="tecnico" tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#343a40',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        border: '1px solid #4b545c',
-                      }}
+                      contentStyle={tooltipStyle}
                       formatter={(value) => [`${value} reportes`, 'Total']}
                     />
-                    <Bar dataKey="total" fill="#6f42c1" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="total" fill="#6366f1" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#adb5bd]">
+                <div className="h-full flex items-center justify-center text-xs text-slate-400">
                   Sin registros de técnicos
                 </div>
               )}
             </div>
           </div>
-          <div className="lte-card-footer">
+          <div className="modern-card-footer">
             Cantidad de órdenes de trabajo enviadas por cada técnico
           </div>
         </div>
@@ -298,22 +293,26 @@ export function DashboardCharts({
       {/* Row 3: Distribuciones circulares */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Tipo de Mantenimiento */}
-        <div className="lte-card border-t-[3px] border-t-[#28a745]">
-          <div className="lte-card-header">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#212529] dark:text-[#f8f9fa]">
-              <PieIcon className="w-3.5 h-3.5 text-[#28a745]" />
-              <span>Tipo de Mantenimiento</span>
+        <div className="modern-card">
+          <div className="modern-card-header">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <PieIcon className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                Tipo de Mantenimiento
+              </span>
             </div>
           </div>
-          <div className="lte-card-body">
+          <div className="modern-card-body">
             <div className="h-44 w-full">
               {distribucionTipo.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={distribucionTipo}
-                      innerRadius={40}
-                      outerRadius={60}
+                      innerRadius={42}
+                      outerRadius={64}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -321,95 +320,83 @@ export function DashboardCharts({
                         <Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#343a40',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        border: '1px solid #4b545c',
-                      }}
-                    />
+                    <Tooltip contentStyle={tooltipStyle} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#adb5bd]">
+                <div className="h-full flex items-center justify-center text-xs text-slate-400">
                   Sin datos
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap gap-1.5 justify-center text-[10px] text-[#6c757d] dark:text-[#ced4da] mt-2">
+            <div className="flex flex-wrap gap-1.5 justify-center text-[10px] text-slate-500 dark:text-slate-400 mt-2">
               {distribucionTipo.map((d, i) => (
                 <span
                   key={d.name}
-                  className="inline-flex items-center gap-1 bg-[#f4f6f9] dark:bg-[#3f474e] px-1.5 py-0.5 rounded-[0.2rem]"
+                  className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50 px-2 py-0.5 rounded-md"
                 >
                   <span
-                    className="w-2 h-2 rounded-full"
+                    className="w-1.5 h-1.5 rounded-full"
                     style={{ backgroundColor: COLORS_PIE[i % COLORS_PIE.length] }}
                   />
-                  <span className="capitalize">{d.name}: <b>{d.value}</b></span>
+                  <span className="capitalize">{d.name}: <strong className="text-slate-700 dark:text-slate-300">{d.value}</strong></span>
                 </span>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Prioridad */}
-        <div className="lte-card border-t-[3px] border-t-[#dc3545]">
-          <div className="lte-card-header">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#212529] dark:text-[#f8f9fa]">
-              <PieIcon className="w-3.5 h-3.5 text-[#dc3545]" />
-              <span>Criticidad / Prioridad</span>
+        {/* Prioridad - removed slash */}
+        <div className="modern-card">
+          <div className="modern-card-header">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <PieIcon className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                Distribución por Prioridad
+              </span>
             </div>
           </div>
-          <div className="lte-card-body">
+          <div className="modern-card-body">
             <div className="h-44 w-full">
               {distribucionPrioridad.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={distribucionPrioridad}
-                      innerRadius={40}
-                      outerRadius={60}
+                      innerRadius={42}
+                      outerRadius={64}
                       paddingAngle={3}
                       dataKey="value"
                     >
                       {distribucionPrioridad.map((entry) => (
                         <Cell
                           key={`cell-${entry.name}`}
-                          fill={PRIORIDAD_COLORS[entry.name.toLowerCase()] || '#6c757d'}
+                          fill={PRIORIDAD_COLORS[entry.name.toLowerCase()] || '#64748b'}
                         />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#343a40',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        border: '1px solid #4b545c',
-                      }}
-                    />
+                    <Tooltip contentStyle={tooltipStyle} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#adb5bd]">
+                <div className="h-full flex items-center justify-center text-xs text-slate-400">
                   Sin datos
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap gap-1.5 justify-center text-[10px] text-[#6c757d] dark:text-[#ced4da] mt-2">
+            <div className="flex flex-wrap gap-1.5 justify-center text-[10px] text-slate-500 dark:text-slate-400 mt-2">
               {distribucionPrioridad.map((d) => (
                 <span
                   key={d.name}
-                  className="inline-flex items-center gap-1 bg-[#f4f6f9] dark:bg-[#3f474e] px-1.5 py-0.5 rounded-[0.2rem]"
+                  className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50 px-2 py-0.5 rounded-md"
                 >
                   <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: PRIORIDAD_COLORS[d.name.toLowerCase()] || '#6c757d' }}
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: PRIORIDAD_COLORS[d.name.toLowerCase()] || '#64748b' }}
                   />
-                  <span className="capitalize">{d.name}: <b>{d.value}</b></span>
+                  <span className="capitalize">{d.name}: <strong className="text-slate-700 dark:text-slate-300">{d.value}</strong></span>
                 </span>
               ))}
             </div>
@@ -417,60 +404,56 @@ export function DashboardCharts({
         </div>
 
         {/* Flujo de Estados */}
-        <div className="lte-card border-t-[3px] border-t-[#007bff]">
-          <div className="lte-card-header">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#212529] dark:text-[#f8f9fa]">
-              <PieIcon className="w-3.5 h-3.5 text-[#007bff]" />
-              <span>Flujo de Estados</span>
+        <div className="modern-card">
+          <div className="modern-card-header">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <PieIcon className="w-4 h-4" />
+              </div>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                Flujo de Estados
+              </span>
             </div>
           </div>
-          <div className="lte-card-body">
+          <div className="modern-card-body">
             <div className="h-44 w-full">
               {distribucionEstado.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={distribucionEstado}
-                      innerRadius={40}
-                      outerRadius={60}
+                      innerRadius={42}
+                      outerRadius={64}
                       paddingAngle={3}
                       dataKey="value"
                     >
                       {distribucionEstado.map((entry) => (
                         <Cell
                           key={`cell-${entry.name}`}
-                          fill={ESTADO_COLORS[entry.name.toLowerCase()] || '#6c757d'}
+                          fill={ESTADO_COLORS[entry.name.toLowerCase()] || '#64748b'}
                         />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#343a40',
-                        borderRadius: '4px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        border: '1px solid #4b545c',
-                      }}
-                    />
+                    <Tooltip contentStyle={tooltipStyle} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-[#adb5bd]">
+                <div className="h-full flex items-center justify-center text-xs text-slate-400">
                   Sin datos
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap gap-1.5 justify-center text-[10px] text-[#6c757d] dark:text-[#ced4da] mt-2">
+            <div className="flex flex-wrap gap-1.5 justify-center text-[10px] text-slate-500 dark:text-slate-400 mt-2">
               {distribucionEstado.map((d) => (
                 <span
                   key={d.name}
-                  className="inline-flex items-center gap-1 bg-[#f4f6f9] dark:bg-[#3f474e] px-1.5 py-0.5 rounded-[0.2rem]"
+                  className="inline-flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50 px-2 py-0.5 rounded-md"
                 >
                   <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: ESTADO_COLORS[d.name.toLowerCase()] || '#6c757d' }}
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: ESTADO_COLORS[d.name.toLowerCase()] || '#64748b' }}
                   />
-                  <span className="capitalize">{d.name}: <b>{d.value}</b></span>
+                  <span className="capitalize">{d.name}: <strong className="text-slate-700 dark:text-slate-300">{d.value}</strong></span>
                 </span>
               ))}
             </div>

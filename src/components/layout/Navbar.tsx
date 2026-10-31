@@ -7,8 +7,6 @@ import {
   Sun,
   Moon,
   LogOut,
-  ShieldCheck,
-  UserCheck,
   Menu,
   Bell,
 } from 'lucide-react';
@@ -25,13 +23,13 @@ export function Navbar({
   const { user, perfil, theme, toggleTheme, signOut, isAdmin } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 flex h-[57px] w-full items-center justify-between border-b border-[#dee2e6] dark:border-[#4b545c] bg-white dark:bg-[#343a40] px-4">
-      {/* Left items: Hamburger + Quick links */}
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 sm:px-6">
+      {/* Left items: Menu toggle & Context */}
       <div className="flex items-center gap-3">
         {/* Mobile menu button */}
         <button
           onClick={onToggleSidebarMobile}
-          className="lg:hidden p-1.5 text-[#495057] dark:text-[#ced4da] hover:text-[#007bff] rounded-[0.25rem] hover:bg-[#e9ecef] dark:hover:bg-[#4b545c] transition-colors"
+          className="lg:hidden p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           aria-label="Abrir menú"
         >
           <Menu className="w-5 h-5" />
@@ -40,81 +38,42 @@ export function Navbar({
         {/* Desktop collapse toggle */}
         <button
           onClick={onToggleCollapseDesktop}
-          className="hidden lg:flex p-1.5 text-[#495057] dark:text-[#ced4da] hover:text-[#007bff] rounded-[0.25rem] hover:bg-[#e9ecef] dark:hover:bg-[#4b545c] transition-colors"
-          title="Colapsar / Expandir Barra Lateral"
-          aria-label="Colapsar barra lateral"
+          className="hidden lg:flex p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="Alternar menú lateral"
+          aria-label="Alternar menú lateral"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-4 h-4" />
         </button>
 
-        {/* AdminLTE style nav links */}
-        <nav className="hidden sm:flex items-center space-x-1 text-sm font-medium">
-          <Link
-            href="/dashboard"
-            className="px-3 py-1.5 text-[#495057] dark:text-[#ced4da] hover:text-[#007bff] rounded-[0.25rem] transition-colors"
-          >
-            Inicio
-          </Link>
-          <Link
-            href="/reportes"
-            className="px-3 py-1.5 text-[#495057] dark:text-[#ced4da] hover:text-[#007bff] rounded-[0.25rem] transition-colors"
-          >
-            Reportes
-          </Link>
-          <Link
-            href="/equipos"
-            className="px-3 py-1.5 text-[#495057] dark:text-[#ced4da] hover:text-[#007bff] rounded-[0.25rem] transition-colors"
-          >
-            Equipos
-          </Link>
-        </nav>
-
-        {/* Plant Badge */}
-        <div className="hidden xl:flex items-center gap-1.5 pl-3 border-l border-[#dee2e6] dark:border-[#4b545c] text-xs text-[#6c757d] dark:text-[#ced4da]">
-          <span className="font-semibold text-[#343a40] dark:text-[#f8f9fa]">
-            Vaporsur Energía S.A.C.
+        {/* Plant Context Tag */}
+        <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+          <span className="font-medium text-slate-700 dark:text-slate-300">
+            Planta Cogeneración
           </span>
-          <span>·</span>
-          <span className="bg-[#28a745] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
-            Refinería Bahía Norte
+          <span className="text-slate-300 dark:text-slate-700">·</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            Bahía Norte
           </span>
         </div>
       </div>
 
-      {/* Right items: Notification, Theme, User, Logout */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Role badge */}
-        {perfil && (
-          <div
-            className={`hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-bold text-white ${
-              isAdmin ? 'bg-[#6f42c1]' : 'bg-[#007bff]'
-            }`}
-          >
-            {isAdmin ? (
-              <ShieldCheck className="w-3.5 h-3.5" />
-            ) : (
-              <UserCheck className="w-3.5 h-3.5" />
-            )}
-            <span>{isAdmin ? 'ADMINISTRADOR' : 'SUPERVISOR'}</span>
-          </div>
-        )}
-
-        {/* Notification bell */}
+      {/* Right items: Notification, Theme, User Profile */}
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Notification bell with subtle indicator */}
         <Link
           href="/reportes?estado=pendiente"
-          className="relative p-1.5 text-[#495057] dark:text-[#ced4da] hover:text-[#007bff] rounded-[0.25rem] hover:bg-[#e9ecef] dark:hover:bg-[#4b545c] transition-colors"
+          className="relative p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           title="Ver reportes pendientes"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute -top-0.5 -right-0.5 bg-[#ffc107] text-[#1f2d3d] text-[10px] font-black px-1 rounded-full leading-tight">
-            !
-          </span>
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
         </Link>
 
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="p-1.5 text-[#495057] dark:text-[#ced4da] hover:text-[#007bff] rounded-[0.25rem] hover:bg-[#e9ecef] dark:hover:bg-[#4b545c] transition-colors"
+          className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           title={theme === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
           aria-label="Alternar tema"
         >
@@ -125,30 +84,29 @@ export function Navbar({
           )}
         </button>
 
-        {/* User preview */}
-        <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-[#dee2e6] dark:border-[#4b545c]">
-          <div className="w-7 h-7 rounded-full bg-[#007bff] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+        {/* User preview and Sign out */}
+        <div className="flex items-center gap-2 pl-2 sm:pl-3 ml-1 border-l border-slate-200 dark:border-slate-800">
+          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center font-semibold text-xs shadow-xs">
             {(perfil?.nombre || user?.email || 'U').charAt(0).toUpperCase()}
           </div>
-          <div className="text-left hidden lg:block leading-tight">
-            <span className="text-xs font-semibold text-[#212529] dark:text-[#f8f9fa] block truncate max-w-[120px]">
+          <div className="text-left hidden md:block leading-tight pr-1">
+            <span className="text-xs font-medium text-slate-800 dark:text-slate-200 block truncate max-w-[130px]">
               {perfil?.nombre || user?.email?.split('@')[0]}
             </span>
-            <span className="text-[10px] text-[#6c757d] dark:text-[#adb5bd]">
-              {isAdmin ? 'Admin' : 'Supervisor'}
+            <span className="text-[10px] text-slate-400">
+              {isAdmin ? 'Administrador' : 'Supervisor'}
             </span>
           </div>
-        </div>
 
-        {/* Logout button */}
-        <button
-          onClick={signOut}
-          className="btn-lte bg-[#dc3545] hover:bg-[#c82333] text-white border-[#dc3545] text-xs px-2.5 py-1 rounded-[0.25rem] transition-colors ml-1"
-          title="Cerrar sesión"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Salir</span>
-        </button>
+          <button
+            onClick={signOut}
+            className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors ml-1"
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -40,7 +40,6 @@ function ReportesContent() {
   const { user } = useAuth();
   const supabase = createClient();
 
-  // Parse initial query params (e.g. from dashboard ?estado=pendiente,corregido)
   const initialEstadoParam = searchParams.get('estado');
   const initialEstados: EstadoReporte[] = initialEstadoParam
     ? (initialEstadoParam.split(',') as EstadoReporte[])
@@ -65,20 +64,16 @@ function ReportesContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [exporting, setExporting] = useState<boolean>(false);
 
-  // Batch selection
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchLoading, setBatchLoading] = useState<boolean>(false);
 
-  // Realtime notification banner
   const [newReporteNotice, setNewReporteNotice] = useState<string | null>(null);
 
-  // Fetch reportes
   const loadReportes = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase.from('reportes').select('*', { count: 'exact' });
 
-      // Search text across multiple columns (ilike or or())
       if (filtros.busqueda.trim()) {
         const term = filtros.busqueda.trim();
         query = query.or(
@@ -86,27 +81,22 @@ function ReportesContent() {
         );
       }
 
-      // Filter by status (multi)
       if (filtros.estados.length > 0) {
         query = query.in('estado', filtros.estados);
       }
 
-      // Filter by priority
       if (filtros.prioridad) {
         query = query.eq('prioridad', filtros.prioridad);
       }
 
-      // Filter by maintenance type
       if (filtros.tipo) {
         query = query.eq('tipo_mantenimiento', filtros.tipo);
       }
 
-      // Filter by origin
       if (filtros.origen) {
         query = query.eq('origen', filtros.origen);
       }
 
-      // Filter by date range
       if (filtros.fechaDesde) {
         query = query.gte('created_at', `${filtros.fechaDesde}T00:00:00Z`);
       }
@@ -114,15 +104,12 @@ function ReportesContent() {
         query = query.lte('created_at', `${filtros.fechaHasta}T23:59:59Z`);
       }
 
-      // Filter by missing fields
       if (filtros.soloFaltantes) {
         query = query.not('campos_faltantes', 'eq', '{}');
       }
 
-      // Sorting
       query = query.order(sortColumn, { ascending: sortAsc });
 
-      // Pagination
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
       query = query.range(from, to);
@@ -146,7 +133,6 @@ function ReportesContent() {
     loadReportes();
   }, [loadReportes]);
 
-  // Realtime subscription for INSERT in reportes
   useEffect(() => {
     const channel = supabase
       .channel('realtime_reportes_channel')
@@ -156,7 +142,7 @@ function ReportesContent() {
         (payload) => {
           const newRep = payload.new as Reporte;
           setNewReporteNotice(
-            `Nuevo reporte recibido: #${formatReporteNumero(newRep.numero)} - ${newRep.equipo || 'Equipo'} (${newRep.tecnico_nombre || 'Técnico'})`
+            `Nuevo reporte recibido: #${formatReporteNumero(newRep.numero)} · ${newRep.equipo || 'Equipo'} · ${newRep.tecnico_nombre || 'Técnico'}`
           );
         }
       )
@@ -167,7 +153,6 @@ function ReportesContent() {
     };
   }, [supabase]);
 
-  // Sort handler
   const handleSort = (column: string) => {
     if (sortColumn === column) {
       setSortAsc(!sortAsc);
@@ -178,7 +163,6 @@ function ReportesContent() {
     setPage(1);
   };
 
-  // Selection handlers
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelectedIds(reportes.map((r) => r.id));
@@ -193,7 +177,6 @@ function ReportesContent() {
     );
   };
 
-  // Batch validate selected
   const handleBatchValidate = async () => {
     if (selectedIds.length === 0) return;
     const confirmVal = confirm(
@@ -228,7 +211,6 @@ function ReportesContent() {
     }
   };
 
-  // Export filtered to CSV
   const handleExportCSV = async () => {
     setExporting(true);
     try {
@@ -275,7 +257,7 @@ function ReportesContent() {
         <button
           onClick={handleBatchValidate}
           disabled={batchLoading}
-          className="btn-lte-primary text-xs"
+          className="btn-modern-primary text-xs"
         >
           {batchLoading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -289,7 +271,7 @@ function ReportesContent() {
       <button
         onClick={handleExportCSV}
         disabled={exporting || totalCount === 0}
-        className="btn-lte-success text-xs"
+        className="btn-modern-success text-xs"
       >
         {exporting ? (
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -302,22 +284,22 @@ function ReportesContent() {
       <button
         onClick={() => loadReportes()}
         disabled={loading}
-        className="btn-lte-default text-xs"
+        className="btn-modern-default text-xs"
         title="Recargar"
       >
-        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#007bff]' : ''}`} />
+        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
         <span className="hidden sm:inline">Recargar</span>
       </button>
     </div>
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Realtime Alert Banner */}
       {newReporteNotice && (
-        <div className="p-3 rounded-[0.25rem] bg-[#28a745] text-white flex items-center justify-between shadow-lte border border-[#1e7e34]">
-          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
-            <BellRing className="w-4 h-4 text-[#ffc107] shrink-0" />
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 flex items-center justify-between border border-emerald-200 dark:border-emerald-800/60 shadow-xs">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-medium">
+            <BellRing className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{newReporteNotice}</span>
           </div>
           <button
@@ -325,17 +307,17 @@ function ReportesContent() {
               setNewReporteNotice(null);
               loadReportes();
             }}
-            className="btn-lte bg-white text-[#155724] hover:bg-[#e9ecef] text-xs font-bold py-1 px-2.5 rounded-[0.2rem]"
+            className="btn-modern bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-1 px-3"
           >
-            Actualizar
+            Actualizar lista
           </button>
         </div>
       )}
 
-      {/* Content Header AdminLTE */}
+      {/* Content Header */}
       <ContentHeader
         title="Registro de Reportes"
-        subtitle={`${totalCount} reporte${totalCount === 1 ? '' : 's'} en total según los filtros aplicados.`}
+        subtitle={`${totalCount} reporte${totalCount === 1 ? '' : 's'} registrados según los criterios activos`}
         breadcrumbs={[
           { label: 'Inicio', href: '/dashboard' },
           { label: 'Reportes', active: true },
@@ -365,34 +347,34 @@ function ReportesContent() {
         }}
       />
 
-      {/* Reports Table Card - AdminLTE Card Outline */}
-      <div className="lte-card border-t-[3px] border-t-[#007bff]">
-        <div className="lte-card-header">
+      {/* Reports Table Card */}
+      <div className="modern-card">
+        <div className="modern-card-header">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+            <span className="font-semibold text-slate-800 dark:text-slate-100">
               Listado de Órdenes de Trabajo y Reportes
             </span>
-            <span className="bg-[#007bff] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
+            <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md">
               Total: {totalCount}
             </span>
           </div>
-          <span className="text-xs text-[#6c757d] dark:text-[#ced4da]">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             Página {page} de {totalPages}
           </span>
         </div>
 
         <div className="p-0">
           {loading ? (
-            <div className="p-4">
+            <div className="p-5">
               <TableSkeleton rows={8} cols={9} />
             </div>
           ) : reportes.length === 0 ? (
-            <div className="p-10 text-center text-[#6c757d] dark:text-[#adb5bd]">
-              <AlertCircle className="w-8 h-8 text-[#ffc107] mx-auto mb-2 opacity-80" />
-              <h3 className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+            <div className="p-12 text-center text-slate-400">
+              <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2 opacity-80" />
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                 No se encontraron reportes
               </h3>
-              <p className="text-xs text-[#6c757d] dark:text-[#adb5bd] mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Prueba cambiando o limpiando los filtros de búsqueda.
               </p>
             </div>
@@ -400,75 +382,75 @@ function ReportesContent() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#f4f6f9] dark:bg-[#2c3338] text-[#495057] dark:text-[#ced4da] font-semibold border-b border-[#dee2e6] dark:border-[#4b545c]">
-                    <th className="py-2.5 px-3 w-8 border-r border-[#dee2e6] dark:border-[#4b545c] text-center">
+                  <tr className="bg-slate-50/70 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200/80 dark:border-slate-800">
+                    <th className="py-3 px-4 w-8 text-center">
                       <input
                         type="checkbox"
                         checked={
                           reportes.length > 0 && selectedIds.length === reportes.length
                         }
                         onChange={handleSelectAll}
-                        className="w-3.5 h-3.5 rounded text-[#007bff] focus:ring-[#007bff] border-[#ced4da]"
+                        className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
                       />
                     </th>
                     <th
-                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
                       onClick={() => handleSort('numero')}
                     >
                       <div className="flex items-center gap-1">
                         <span>N.º</span>
-                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
                       </div>
                     </th>
                     <th
-                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
                       onClick={() => handleSort('created_at')}
                     >
                       <div className="flex items-center gap-1">
                         <span>Fecha</span>
-                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
                       </div>
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Técnico
                     </th>
                     <th
-                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
                       onClick={() => handleSort('equipo')}
                     >
                       <div className="flex items-center gap-1">
-                        <span>Equipo / Código</span>
-                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                        <span>Equipo e Identificador</span>
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
                       </div>
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Falla
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Tipo
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Prioridad
                     </th>
                     <th
-                      className="py-2.5 px-3 cursor-pointer hover:bg-[#e9ecef] dark:hover:bg-[#3f474e] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
                       onClick={() => handleSort('estado')}
                     >
                       <div className="flex items-center gap-1">
                         <span>Estado</span>
-                        <ArrowUpDown className="w-3 h-3 text-[#adb5bd]" />
+                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
                       </div>
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Confianza
                     </th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                    <th className="py-3 px-4">
                       Origen
                     </th>
-                    <th className="py-2.5 px-3 text-right">Detalle</th>
+                    <th className="py-3 px-4 text-right">Detalle</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#dee2e6] dark:divide-[#4b545c]">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {reportes.map((r) => {
                     const demorado = isReporteDemorado(r.created_at, r.estado);
                     const isSelected = selectedIds.includes(r.id);
@@ -476,71 +458,71 @@ function ReportesContent() {
                     return (
                       <tr
                         key={r.id}
-                        className={`hover:bg-[#e9ecef]/60 dark:hover:bg-[#3f474e]/50 transition-colors ${
+                        className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
                           demorado
-                            ? 'bg-[#fff3cd]/50 dark:bg-[#ffc107]/10'
+                            ? 'bg-amber-50/40 dark:bg-amber-950/20'
                             : isSelected
-                            ? 'bg-[#e8f4fd] dark:bg-[#007bff]/15'
-                            : 'even:bg-[#f8f9fa] dark:even:bg-[#2f353a]'
+                            ? 'bg-blue-50/50 dark:bg-blue-950/30'
+                            : ''
                         }`}
                       >
-                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c] text-center">
+                        <td className="py-3 px-4 text-center">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectRow(r.id)}
-                            className="w-3.5 h-3.5 rounded text-[#007bff] focus:ring-[#007bff] border-[#ced4da]"
+                            className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
                           />
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-[#007bff] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 font-mono font-bold text-blue-600 dark:text-blue-400">
                           {formatReporteNumero(r.numero)}
                         </td>
-                        <td className="py-2.5 px-3 text-[#495057] dark:text-[#ced4da] whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           {formatFechaHoraLima(r.created_at)}
                         </td>
-                        <td className="py-2.5 px-3 font-medium text-[#212529] dark:text-[#f8f9fa] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">
                           {r.tecnico_nombre || 'Sin nombre'}
                         </td>
-                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
-                          <div className="font-semibold text-[#212529] dark:text-[#f8f9fa]">
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-slate-900 dark:text-slate-100">
                             {r.equipo || 'Sin equipo'}
                           </div>
                           {r.codigo_equipo && (
-                            <div className="text-[10px] font-mono text-[#6c757d] dark:text-[#adb5bd]">
+                            <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                               {r.codigo_equipo}
                             </div>
                           )}
                         </td>
                         <td
-                          className="py-2.5 px-3 max-w-xs truncate text-[#495057] dark:text-[#ced4da] border-r border-[#dee2e6] dark:border-[#4b545c]"
+                          className="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-300"
                           title={r.falla || ''}
                         >
                           {r.falla || '—'}
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <TipoBadge tipo={r.tipo_mantenimiento} />
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <PrioridadBadge prioridad={r.prioridad} />
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <EstadoBadge estado={r.estado} isDemorado={demorado} />
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
-                          <span className="font-medium text-[#495057] dark:text-[#ced4da]">
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <span className="font-medium text-slate-700 dark:text-slate-300">
                             {formatConfianza(r.confianza)}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 whitespace-nowrap">
                           <OrigenBadge
                             origen={r.origen}
                             duracionSeg={r.audio_duracion_seg}
                           />
                         </td>
-                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
                           <Link
                             href={`/reportes/${r.id}`}
-                            className="btn-lte-primary text-xs px-2.5 py-1"
+                            className="btn-modern-primary text-xs px-2.5 py-1"
                           >
                             <span>Ver</span>
                             <ExternalLink className="w-3 h-3" />
@@ -556,30 +538,30 @@ function ReportesContent() {
         </div>
 
         {/* Server Pagination Footer */}
-        <div className="lte-card-footer flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-[#6c757d] dark:text-[#ced4da]">
+        <div className="modern-card-footer flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Mostrando página{' '}
-            <span className="font-bold text-[#212529] dark:text-[#f8f9fa]">{page}</span> de{' '}
-            <span className="font-bold text-[#212529] dark:text-[#f8f9fa]">{totalPages}</span> (
-            {totalCount} reportes en total)
+            <span className="font-semibold text-slate-900 dark:text-slate-100">{page}</span> de{' '}
+            <span className="font-semibold text-slate-900 dark:text-slate-100">{totalPages}</span> ·{' '}
+            {totalCount} reportes en total
           </p>
 
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="btn-lte-default text-xs px-2.5 py-1"
+              className="btn-modern-default text-xs px-3 py-1.5"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Anterior</span>
             </button>
-            <span className="px-2 py-1 bg-[#007bff] text-white text-xs font-bold rounded-[0.25rem]">
+            <span className="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-xs">
               {page}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="btn-lte-default text-xs px-2.5 py-1"
+              className="btn-modern-default text-xs px-3 py-1.5"
             >
               <span>Siguiente</span>
               <ChevronRight className="w-3.5 h-3.5" />

@@ -18,8 +18,6 @@ import {
   ShieldAlert,
   Loader2,
   RefreshCw,
-  Copy,
-  Check,
 } from 'lucide-react';
 
 export default function UsuariosPage() {
@@ -36,7 +34,6 @@ export default function UsuariosPage() {
   const [rol, setRol] = useState<RolUsuario>('supervisor');
   const [activo, setActivo] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const loadPerfiles = useCallback(async () => {
     setLoading(true);
@@ -64,12 +61,12 @@ export default function UsuariosPage() {
 
   if (!authLoading && !isAdmin) {
     return (
-      <div className="p-8 text-center lte-card border-t-[3px] border-t-[#dc3545]">
-        <ShieldAlert className="w-10 h-10 text-[#dc3545] mx-auto mb-2" />
-        <h2 className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+      <div className="p-10 text-center modern-card border border-rose-200 dark:border-rose-900/50">
+        <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto mb-2" />
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Acceso Restringido
         </h2>
-        <p className="text-xs text-[#6c757d] dark:text-[#ced4da] mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Solo los administradores del sistema pueden gestionar los perfiles de usuario.
         </p>
       </div>
@@ -131,22 +128,10 @@ export default function UsuariosPage() {
     }
   };
 
-  const sqlProcedureText = `-- 1. Crea el usuario en Supabase > Authentication > Users > Add User
--- 2. Ejecuta este SQL en Supabase > SQL Editor vinculando el correo:
-insert into public.perfiles (id, nombre, rol, activo)
-select id, 'Nombre y Apellido', 'supervisor', true
-from auth.users where email = 'supervisor@vaporsur.com';`;
-
-  const copySqlToClipboard = () => {
-    navigator.clipboard.writeText(sqlProcedureText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const actions = (
     <button
       onClick={loadPerfiles}
-      className="btn-lte-default text-xs"
+      className="btn-modern-default text-xs"
       title="Recargar"
     >
       <RefreshCw className="w-3.5 h-3.5" />
@@ -155,11 +140,11 @@ from auth.users where email = 'supervisor@vaporsur.com';`;
   );
 
   return (
-    <div className="space-y-4">
-      {/* Content Header AdminLTE */}
+    <div className="space-y-5">
+      {/* Content Header */}
       <ContentHeader
         title="Gestión de Usuarios y Perfiles"
-        subtitle="Control de acceso y asignación de roles (Supervisor / Administrador) para el panel de MaintAI LTE."
+        subtitle="Control de acceso y asignación de roles para el panel de MaintAI"
         breadcrumbs={[
           { label: 'Inicio', href: '/dashboard' },
           { label: 'Gestión Usuarios', active: true },
@@ -167,41 +152,29 @@ from auth.users where email = 'supervisor@vaporsur.com';`;
         actions={actions}
       />
 
-      {/* Instructions on creating new users - AdminLTE Callout Style */}
-      <div className="lte-card border-l-4 border-l-[#17a2b8] p-3 text-xs space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[#17a2b8] font-bold uppercase tracking-wider">
-            <Info className="w-4 h-4" />
-            <span>Procedimiento para dar de alta un nuevo usuario</span>
-          </div>
-          <button
-            onClick={copySqlToClipboard}
-            className="btn-lte-default text-xs py-0.5 px-2 font-medium"
-          >
-            {copied ? <Check className="w-3 h-3 text-[#28a745]" /> : <Copy className="w-3 h-3" />}
-            <span>{copied ? 'Copiado' : 'Copiar SQL'}</span>
-          </button>
+      {/* Enterprise Policy Notice (Replaces raw SQL block) */}
+      <div className="modern-card p-4 text-xs bg-slate-50/50 dark:bg-slate-900/50 border-slate-200/80 dark:border-slate-800 space-y-2">
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-semibold">
+          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span>Política de Autorización y Nuevos Accesos</span>
         </div>
 
-        <p className="text-[#6c757d] dark:text-[#ced4da] leading-relaxed">
-          Por seguridad institucional, las credenciales se generan directamente en el panel de{' '}
-          <strong>Supabase Authentication</strong>. Una vez creado el usuario con su correo, se le asigna su perfil en <code className="font-mono bg-[#e9ecef] dark:bg-[#4b545c] px-1 py-0.5 rounded text-[#007bff]">public.perfiles</code>:
+        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+          Las credenciales de acceso institucional se administran de forma segura a través del proveedor de autenticación centralizado. Al dar de alta un nuevo colaborador en la consola de seguridad, su perfil de acceso como <strong>Supervisor</strong> o <strong>Administrador</strong> se sincronizará automáticamente para su gestión en esta tabla.
         </p>
-
-        <pre className="p-2.5 rounded-[0.25rem] bg-[#212529] font-mono text-[11px] text-[#20c997] overflow-x-auto">
-          {sqlProcedureText}
-        </pre>
       </div>
 
-      {/* Users Table - AdminLTE Card Outline */}
-      <div className="lte-card border-t-[3px] border-t-[#6f42c1]">
-        <div className="lte-card-header">
+      {/* Users Table */}
+      <div className="modern-card">
+        <div className="modern-card-header">
           <div className="flex items-center gap-2">
-            <UserCog className="w-4 h-4 text-[#6f42c1]" />
-            <span className="text-sm font-bold text-[#212529] dark:text-[#f8f9fa]">
+            <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <UserCog className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-slate-800 dark:text-slate-100">
               Usuarios Registrados en el Sistema
             </span>
-            <span className="bg-[#6f42c1] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-[0.2rem]">
+            <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md">
               {perfiles.length}
             </span>
           </div>
@@ -209,87 +182,86 @@ from auth.users where email = 'supervisor@vaporsur.com';`;
 
         <div className="p-0">
           {loading ? (
-            <div className="p-4">
+            <div className="p-5">
               <TableSkeleton rows={5} cols={6} />
             </div>
           ) : perfiles.length === 0 ? (
-            <div className="p-10 text-center text-xs text-[#adb5bd]">
+            <div className="p-12 text-center text-xs text-slate-400">
               No se encontraron perfiles registrados.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#f4f6f9] dark:bg-[#2c3338] text-[#495057] dark:text-[#ced4da] font-semibold border-b border-[#dee2e6] dark:border-[#4b545c]">
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Nombre</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Identificador (UUID)</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Rol Asignado</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Estado</th>
-                    <th className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">Fecha de Alta</th>
-                    <th className="py-2.5 px-3 text-right">Editar</th>
+                  <tr className="bg-slate-50/70 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200/80 dark:border-slate-800">
+                    <th className="py-3 px-4">Nombre Completo</th>
+                    <th className="py-3 px-4">Identificador Único de Cuenta</th>
+                    <th className="py-3 px-4">Rol Asignado</th>
+                    <th className="py-3 px-4">Estado</th>
+                    <th className="py-3 px-4">Fecha de Alta</th>
+                    <th className="py-3 px-4 text-right">Editar</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#dee2e6] dark:divide-[#4b545c]">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {perfiles.map((p) => {
                     const isAdminRole = p.rol === 'admin';
                     return (
                       <tr
                         key={p.id}
-                        className="even:bg-[#f8f9fa] dark:even:bg-[#2f353a] hover:bg-[#e9ecef]/60 dark:hover:bg-[#3f474e]/50 transition-colors"
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                       >
-                        <td className="py-2.5 px-3 font-semibold text-[#212529] dark:text-[#f8f9fa] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
                           {p.nombre}
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-[#6c757d] dark:text-[#adb5bd] text-[11px] border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 font-mono text-slate-500 dark:text-slate-400 text-[11px]">
                           {p.id}
                         </td>
-                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4">
                           <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-bold text-white ${
-                              isAdminRole ? 'bg-[#6f42c1]' : 'bg-[#007bff]'
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold ${
+                              isAdminRole
+                                ? 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20'
+                                : 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20'
                             }`}
                           >
                             {isAdminRole ? (
-                              <ShieldCheck className="w-3 h-3" />
+                              <ShieldCheck className="w-3.5 h-3.5" />
                             ) : (
-                              <UserCheck className="w-3 h-3" />
+                              <UserCheck className="w-3.5 h-3.5" />
                             )}
-                            <span>{isAdminRole ? 'ADMINISTRADOR' : 'SUPERVISOR'}</span>
+                            <span>{isAdminRole ? 'Administrador' : 'Supervisor'}</span>
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4">
                           <button
                             onClick={() => handleToggleActivo(p)}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.25rem] text-xs font-semibold cursor-pointer ${
-                              p.activo
-                                ? 'bg-[#28a745] text-white'
-                                : 'bg-[#6c757d] text-white'
-                            }`}
-                            title="Clic para cambiar estado de activación"
+                            className="inline-flex items-center gap-1.5 cursor-pointer text-xs transition-opacity hover:opacity-80"
+                            title="Haz clic para activar o desactivar usuario"
                           >
                             {p.activo ? (
-                              <>
-                                <CheckCircle className="w-3 h-3" />
-                                <span>Activo</span>
-                              </>
+                              <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md font-medium">
+                                <CheckCircle className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                Activo
+                              </span>
                             ) : (
-                              <>
-                                <XCircle className="w-3 h-3" />
-                                <span>Inactivo</span>
-                              </>
+                              <span className="inline-flex items-center gap-1 text-rose-700 dark:text-rose-300 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-md font-medium">
+                                <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                                Inactivo
+                              </span>
                             )}
                           </button>
                         </td>
-                        <td className="py-2.5 px-3 text-[#6c757d] dark:text-[#ced4da] whitespace-nowrap border-r border-[#dee2e6] dark:border-[#4b545c]">
+                        <td className="py-3 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                           {formatFechaHoraLima(p.created_at)}
                         </td>
-                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
                           <button
                             onClick={() => handleOpenEdit(p)}
-                            className="btn-lte-default text-xs p-1"
-                            title="Editar perfil"
+                            className="btn-modern-default py-1 px-2.5 text-xs"
+                            title="Editar usuario"
                           >
-                            <Edit2 className="w-3.5 h-3.5 text-[#007bff]" />
+                            <Edit2 className="w-3 h-3" />
+                            <span>Editar</span>
                           </button>
                         </td>
                       </tr>
@@ -300,85 +272,92 @@ from auth.users where email = 'supervisor@vaporsur.com';`;
             </div>
           )}
         </div>
-        <div className="lte-card-footer">
-          Perfiles autorizados para la interfaz web de supervisión MaintAI LTE
-        </div>
       </div>
 
-      {/* Edit Profile Modal - AdminLTE Modal Style */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="w-full max-w-md lte-card border-t-[4px] border-t-[#6f42c1] shadow-lte-lg">
-            <div className="lte-card-header bg-[#6f42c1] text-white">
-              <h3 className="text-sm font-bold text-white">
-                Modificar Perfil de Usuario
+      {/* Edit Profile Modal */}
+      {showModal && selectedPerfil && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="w-full max-w-md modern-card shadow-dropdown">
+            <div className="modern-card-header">
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100">
+                Editar Perfil de Usuario
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-white hover:opacity-80"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-lg leading-none"
               >
                 &times;
               </button>
             </div>
 
             <form onSubmit={handleSaveModal}>
-              <div className="lte-card-body space-y-3 text-xs">
+              <div className="modern-card-body space-y-4">
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                    Nombre Completo
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Identificador de Cuenta
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedPerfil.id}
+                    className="modern-input font-mono opacity-60 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Nombre Completo <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
-                    className="form-control-lte"
+                    className="modern-input"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#495057] dark:text-[#ced4da] mb-1">
-                    Rol de Acceso
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Rol en la Plataforma
                   </label>
                   <select
                     value={rol}
                     onChange={(e) => setRol(e.target.value as RolUsuario)}
-                    className="form-control-lte"
+                    className="modern-input"
                   >
-                    <option value="supervisor">Supervisor (Ver, editar, validar y rechazar reportes)</option>
-                    <option value="admin">Administrador (Acceso total, técnicos Telegram y usuarios)</option>
+                    <option value="supervisor">Supervisor (Revisión y validación de reportes)</option>
+                    <option value="admin">Administrador (Control total del sistema)</option>
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="checkbox"
-                    id="chkPerfilActivo"
-                    checked={activo}
-                    onChange={(e) => setActivo(e.target.checked)}
-                    className="w-4 h-4 rounded-[0.2rem] text-[#007bff] focus:ring-[#007bff] border-[#ced4da]"
-                  />
-                  <label
-                    htmlFor="chkPerfilActivo"
-                    className="font-semibold text-[#495057] dark:text-[#ced4da] cursor-pointer"
-                  >
-                    Perfil Activo (Habilitado para ingresar al sistema)
+                <div className="pt-2">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={activo}
+                      onChange={(e) => setActivo(e.target.checked)}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
+                    />
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Usuario activo con permiso para iniciar sesión
+                    </span>
                   </label>
                 </div>
               </div>
 
-              <div className="lte-card-footer flex items-center justify-end gap-2">
+              <div className="modern-card-footer flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="btn-lte-default text-xs"
+                  className="btn-modern-default text-xs"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="btn-lte-primary text-xs"
+                  className="btn-modern-primary text-xs"
                 >
                   {formLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Guardar Cambios</span>
