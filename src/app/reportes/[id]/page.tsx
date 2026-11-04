@@ -5,10 +5,16 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/contexts/toast-context';
 import { EstadoBadge } from '@/components/badges/EstadoBadge';
 import { OrigenBadge } from '@/components/badges/OrigenBadge';
 import { ContentHeader } from '@/components/layout/ContentHeader';
-import { TableSkeleton } from '@/components/ui/Skeleton';
+import { DetailSkeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
 import {
   formatReporteNumero,
   formatFechaHoraLima,
@@ -36,7 +42,6 @@ import {
   Trash,
   Bot,
   ExternalLink,
-  Loader2,
   FileText,
   Clock,
   Sparkles,
@@ -48,6 +53,7 @@ export default function ReporteDetallePage() {
   const router = useRouter();
   const id = params?.id as string;
   const { user, isAdmin } = useAuth();
+  const toast = useToast();
   const supabase = createClient();
 
   const [reporte, setReporte] = useState<Reporte | null>(null);
@@ -73,9 +79,12 @@ export default function ReporteDetallePage() {
   const [observaciones, setObservaciones] = useState('');
   const [comentarioSupervisor, setComentarioSupervisor] = useState('');
 
-  // Modals
+  // Dialog states
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [showValidateConfirm, setShowValidateConfirm] = useState(false);
+  const [showReopenConfirm, setShowReopenConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Load Report Data
   const loadReporte = useCallback(async () => {
@@ -127,10 +136,11 @@ export default function ReporteDetallePage() {
       }
     } catch (err) {
       console.error('Error:', err);
+      toast.error('Error al cargar la información del reporte');
     } finally {
       setLoading(false);
     }
-  }, [id, supabase]);
+  }, [id, supabase, toast]);
 
   useEffect(() => {
     loadReporte();
@@ -195,14 +205,14 @@ export default function ReporteDetallePage() {
       const { error } = await supabase.from('reportes').update(payload).eq('id', reporte.id);
 
       if (error) {
-        alert(`Error al guardar cambios: ${error.message}`);
+        toast.error('Error al guardar cambios', error.message);
       } else {
-        alert('Cambios guardados con éxito.');
+        toast.success('Cambios guardados con éxito');
         loadReporte();
       }
     } catch (err: unknown) {
       const error = err as Error;
-      alert(`Error inesperado: ${error.message}`);
+      toast.error('Error inesperado', error.message);
     } finally {
       setSaving(false);
     }
@@ -211,9 +221,6 @@ export default function ReporteDetallePage() {
   // Validate (Revisado)
   const handleValidate = async () => {
     if (!reporte) return;
-    const confirmVal = confirm('¿Confirmas la validación de este reporte de mantenimiento?');
-    if (!confirmVal) return;
-
     setActionLoading(true);
     try {
       const nowIso = new Date().toISOString();
@@ -228,14 +235,15 @@ export default function ReporteDetallePage() {
         .eq('id', reporte.id);
 
       if (error) {
-        alert(`Error al validar reporte: ${error.message}`);
+        toast.error('Error al validar reporte', error.message);
       } else {
-        alert('Reporte marcado como validado.');
+        toast.success('Reporte validado exitosamente');
+        setShowValidateConfirm(false);
         loadReporte();
       }
     } catch (err: unknown) {
       const error = err as Error;
-      alert(`Error inesperado: ${error.message}`);
+      toast.error('Error inesperado', error.message);
     } finally {
       setActionLoading(false);
     }
@@ -258,15 +266,18 @@ export default function ReporteDetallePage() {
         .eq('id', reporte.id);
 
       if (error) {
-        alert(`Error al rechazar reporte: ${error.message}`);
+        toast.error('Error al rechazar reporte', error.message);
       } else {
         setShowRejectModal(false);
-        alert('Reporte rechazado. El aviso ha sido registrado.');
+        toast.success(
+          'Reporte rechazado',
+          'El motivo ha sido registrado para notificación al técnico.'
+        );
         loadReporte();
       }
     } catch (err: unknown) {
       const error = err as Error;
-      alert(`Error inesperado: ${error.message}`);
+      toast.error('Error inesperado', error.message);
     } finally {
       setActionLoading(false);
     }
@@ -275,9 +286,6 @@ export default function ReporteDetallePage() {
   // Reopen (Pendiente)
   const handleReopen = async () => {
     if (!reporte) return;
-    const confirmReopen = confirm('¿Deseas reabrir este reporte y devolverlo a estado pendiente?');
-    if (!confirmReopen) return;
-
     setActionLoading(true);
     try {
       const { error } = await supabase
@@ -288,14 +296,15 @@ export default function ReporteDetallePage() {
         .eq('id', reporte.id);
 
       if (error) {
-        alert(`Error al reabrir reporte: ${error.message}`);
+        toast.error('Error al reabrir reporte', error.message);
       } else {
-        alert('Reporte reabierto en estado pendiente.');
+        toast.success('Reporte reabierto en estado pendiente');
+        setShowReopenConfirm(false);
         loadReporte();
       }
     } catch (err: unknown) {
       const error = err as Error;
-      alert(`Error inesperado: ${error.message}`);
+      toast.error('Error inesperado', error.message);
     } finally {
       setActionLoading(false);
     }
@@ -304,53 +313,39 @@ export default function ReporteDetallePage() {
   // Delete (Admin only)
   const handleDelete = async () => {
     if (!reporte || !isAdmin) return;
-    const confirmDel = confirm(
-      '¿Estás seguro de que deseas eliminar este reporte de forma permanente? Esta acción no se puede deshacer.'
-    );
-    if (!confirmDel) return;
-
     setActionLoading(true);
     try {
       const { error } = await supabase.from('reportes').delete().eq('id', reporte.id);
 
       if (error) {
-        alert(`Error al eliminar reporte: ${error.message}`);
+        toast.error('Error al eliminar reporte', error.message);
       } else {
-        alert('Reporte eliminado.');
+        toast.success('Reporte eliminado con éxito');
         router.push('/reportes');
       }
     } catch (err: unknown) {
       const error = err as Error;
-      alert(`Error: ${error.message}`);
+      toast.error('Error', error.message);
     } finally {
       setActionLoading(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-8 w-48 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
-        <TableSkeleton rows={6} cols={4} />
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!reporte) {
     return (
-      <div className="p-12 text-center modern-card">
-        <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-          Reporte no encontrado
-        </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          El reporte solicitado no existe o no cuentas con los permisos necesarios.
-        </p>
-        <Link href="/reportes" className="btn-modern-primary text-xs mt-4">
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Volver al listado</span>
-        </Link>
-      </div>
+      <EmptyState
+        icon={AlertTriangle}
+        title="Reporte no encontrado"
+        description="El reporte solicitado no existe o fue eliminado del sistema."
+        actionLabel="Volver al listado"
+        actionIcon={<ArrowLeft className="w-4 h-4" />}
+        onAction={() => router.push('/reportes')}
+        className="py-16"
+      />
     );
   }
 
@@ -359,65 +354,72 @@ export default function ReporteDetallePage() {
 
   const headerActions = (
     <div className="flex flex-wrap items-center gap-2">
-      <Link href="/reportes" className="btn-modern-default text-xs">
-        <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Volver</span>
+      <Link href="/reportes">
+        <Button variant="outline" size="sm" leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}>
+          <span>Volver</span>
+        </Button>
       </Link>
 
-      <button
+      <Button
+        variant="primary"
+        size="sm"
         onClick={handleSaveChanges}
-        disabled={saving || actionLoading}
-        className="btn-modern-primary text-xs"
+        isLoading={saving}
+        disabled={actionLoading}
+        leftIcon={<Save className="w-3.5 h-3.5" />}
       >
-        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
         <span>Guardar cambios</span>
-      </button>
+      </Button>
 
       {reporte.estado !== 'revisado' && (
-        <button
-          onClick={handleValidate}
+        <Button
+          variant="success"
+          size="sm"
+          onClick={() => setShowValidateConfirm(true)}
           disabled={actionLoading || saving}
-          className="btn-modern-success text-xs"
+          leftIcon={<CheckCheck className="w-3.5 h-3.5" />}
         >
-          <CheckCheck className="w-3.5 h-3.5" />
-          <span>Validar reporte</span>
-        </button>
+          <span>Validar</span>
+        </Button>
       )}
 
       {reporte.estado !== 'rechazado' && (
-        <button
+        <Button
+          variant="danger"
+          size="sm"
           onClick={() => {
             setRejectReason(reporte.comentario_supervisor || '');
             setShowRejectModal(true);
           }}
           disabled={actionLoading || saving}
-          className="btn-modern-danger text-xs"
+          leftIcon={<XCircle className="w-3.5 h-3.5" />}
         >
-          <XCircle className="w-3.5 h-3.5" />
           <span>Rechazar</span>
-        </button>
+        </Button>
       )}
 
       {(reporte.estado === 'revisado' || reporte.estado === 'rechazado') && (
-        <button
-          onClick={handleReopen}
+        <Button
+          variant="warning"
+          size="sm"
+          onClick={() => setShowReopenConfirm(true)}
           disabled={actionLoading || saving}
-          className="btn-modern-warning text-xs"
+          leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
         >
-          <RotateCcw className="w-3.5 h-3.5" />
           <span>Reabrir</span>
-        </button>
+        </Button>
       )}
 
       {isAdmin && (
-        <button
-          onClick={handleDelete}
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => setShowDeleteConfirm(true)}
           disabled={actionLoading || saving}
-          className="btn-modern-danger text-xs px-2"
-          title="Eliminar reporte para administradores"
+          aria-label="Eliminar reporte (Solo administradores)"
         >
           <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -437,61 +439,61 @@ export default function ReporteDetallePage() {
       />
 
       {/* Origin & Metadata Strip */}
-      <div className="modern-card p-4 text-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-500 dark:text-slate-400">Estado:</span>
-            <EstadoBadge estado={reporte.estado} isDemorado={demorado} />
+      <Card className="p-4 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-slate-500 dark:text-slate-400">Estado:</span>
+              <EstadoBadge estado={reporte.estado} isDemorado={demorado} />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-slate-500 dark:text-slate-400">Origen:</span>
+              <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Tiempo IA:</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                {formatSegundos(reporte.tiempo_procesamiento_ms ? Math.round(reporte.tiempo_procesamiento_ms / 1000) : null)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Confianza:</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                {formatConfianza(reporte.confianza)}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-500 dark:text-slate-400">Origen:</span>
-            <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
-          </div>
-          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-            <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>Tiempo IA:</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
-              {formatSegundos(reporte.tiempo_procesamiento_ms ? Math.round(reporte.tiempo_procesamiento_ms / 1000) : null)}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Confianza:</span>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-              {formatConfianza(reporte.confianza)}
-            </span>
-          </div>
-        </div>
 
-        {reporte.revisado_en && (
-          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Validado el {formatFechaHoraLima(reporte.revisado_en)}</span>
-          </div>
-        )}
-      </div>
+          {reporte.revisado_en && (
+            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Validado el {formatFechaHoraLima(reporte.revisado_en)}</span>
+            </div>
+          )}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Main 2 Columns: Transcriptions & Form */}
         <div className="lg:col-span-2 space-y-5">
           {/* Section: Relato Original del Técnico */}
-          <div className="modern-card">
-            <div className="modern-card-header">
+          <Card>
+            <CardHeader>
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
                   <FileText className="w-4 h-4" />
                 </div>
-                <span className="font-semibold text-slate-800 dark:text-slate-100">
-                  Relato Original del Técnico
-                </span>
+                <CardTitle>Relato Original del Técnico</CardTitle>
               </div>
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 {reporte.origen === 'audio' ? 'Transcripción Whisper' : 'Texto directo Telegram'}
               </span>
-            </div>
+            </CardHeader>
 
-            <div className="modern-card-body space-y-3">
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200/80 dark:border-slate-800 text-xs">
+            <CardContent className="space-y-3">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200/80 dark:border-slate-800 text-xs">
                 <p className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] mb-1.5">
                   Texto Transcrito:
                 </p>
@@ -501,7 +503,7 @@ export default function ReporteDetallePage() {
               </div>
 
               {reporte.texto_correccion && (
-                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200/80 dark:border-amber-800/60 text-xs">
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-800/60 text-xs">
                   <p className="font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[10px] mb-1.5">
                     Corrección posterior enviada por el técnico:
                   </p>
@@ -510,16 +512,14 @@ export default function ReporteDetallePage() {
                   </p>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Section: Formulario editable de campos extraídos */}
-          <div className="modern-card">
-            <div className="modern-card-header">
+          <Card>
+            <CardHeader>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-800 dark:text-slate-100">
-                  Campos Estructurados de la Intervención
-                </span>
+                <CardTitle>Campos Estructurados de la Intervención</CardTitle>
               </div>
               {faltantes.length > 0 && (
                 <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1.5">
@@ -527,17 +527,18 @@ export default function ReporteDetallePage() {
                   <span>Pendientes: {faltantes.join(', ')}</span>
                 </span>
               )}
-            </div>
+            </CardHeader>
 
-            <div className="modern-card-body space-y-4">
+            <CardContent className="space-y-4">
               {/* Fields Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
                 {/* Equipo */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Equipo {faltantes.includes('equipo') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">Requerido</span>}
+                  <label htmlFor="campo-equipo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    Equipo {faltantes.includes('equipo') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">* Requerido</span>}
                   </label>
                   <input
+                    id="campo-equipo"
                     type="text"
                     value={equipo}
                     onChange={(e) => setEquipo(e.target.value)}
@@ -548,10 +549,11 @@ export default function ReporteDetallePage() {
 
                 {/* Codigo Equipo */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="campo-codigo-equipo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Código o Tag de Equipo
                   </label>
                   <input
+                    id="campo-codigo-equipo"
                     type="text"
                     value={codigoEquipo}
                     onChange={(e) => setCodigoEquipo(e.target.value)}
@@ -562,10 +564,11 @@ export default function ReporteDetallePage() {
 
                 {/* Area */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="campo-area" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Área de Planta
                   </label>
                   <input
+                    id="campo-area"
                     type="text"
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
@@ -576,10 +579,11 @@ export default function ReporteDetallePage() {
 
                 {/* Tipo Mantenimiento */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="campo-tipo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Tipo de Mantenimiento
                   </label>
                   <select
+                    id="campo-tipo"
                     value={tipoMantenimiento}
                     onChange={(e) => setTipoMantenimiento(e.target.value as TipoMantenimiento)}
                     className="modern-input"
@@ -595,10 +599,11 @@ export default function ReporteDetallePage() {
 
                 {/* Prioridad */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="campo-prioridad" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Prioridad
                   </label>
                   <select
+                    id="campo-prioridad"
                     value={prioridad}
                     onChange={(e) => setPrioridad(e.target.value as PrioridadReporte)}
                     className="modern-input"
@@ -613,10 +618,11 @@ export default function ReporteDetallePage() {
 
                 {/* Numero OT */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="campo-ot" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Número de Orden de Trabajo
                   </label>
                   <input
+                    id="campo-ot"
                     type="text"
                     value={numeroOt}
                     onChange={(e) => setNumeroOt(e.target.value)}
@@ -627,10 +633,11 @@ export default function ReporteDetallePage() {
 
                 {/* Fecha Intervención */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="campo-fecha-intervencion" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Fecha de Intervención
                   </label>
                   <input
+                    id="campo-fecha-intervencion"
                     type="date"
                     value={fechaIntervencion}
                     onChange={(e) => setFechaIntervencion(e.target.value)}
@@ -640,10 +647,11 @@ export default function ReporteDetallePage() {
 
                 {/* Duración en minutos */}
                 <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="campo-duracion" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Duración Estimada en Minutos
                   </label>
                   <input
+                    id="campo-duracion"
                     type="number"
                     min="0"
                     value={duracionMinutos}
@@ -656,12 +664,13 @@ export default function ReporteDetallePage() {
                 </div>
               </div>
 
-              {/* Falla (Full Width) */}
+              {/* Falla */}
               <div className="text-xs">
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Falla Observada {faltantes.includes('falla') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">Requerido</span>}
+                <label htmlFor="campo-falla" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  Falla Observada {faltantes.includes('falla') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">* Requerido</span>}
                 </label>
                 <textarea
+                  id="campo-falla"
                   rows={2}
                   value={falla}
                   onChange={(e) => setFalla(e.target.value)}
@@ -672,10 +681,11 @@ export default function ReporteDetallePage() {
 
               {/* Causa Probable */}
               <div className="text-xs">
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                <label htmlFor="campo-causa" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Causa Probable Determinada
                 </label>
                 <textarea
+                  id="campo-causa"
                   rows={2}
                   value={causaProbable}
                   onChange={(e) => setCausaProbable(e.target.value)}
@@ -684,7 +694,7 @@ export default function ReporteDetallePage() {
                 />
               </div>
 
-              {/* Actividades (Editable list) */}
+              {/* Actividades */}
               <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -695,17 +705,18 @@ export default function ReporteDetallePage() {
                       {actividades.length}
                     </span>
                     {faltantes.includes('actividades') && (
-                      <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px]">Requerido</span>
+                      <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px]">* Requerido</span>
                     )}
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="primary"
+                    size="xs"
                     onClick={handleAddActividad}
-                    className="btn-modern-primary text-xs py-1 px-2.5"
+                    leftIcon={<Plus className="w-3.5 h-3.5" />}
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Añadir actividad</span>
-                  </button>
+                    Añadir actividad
+                  </Button>
                 </div>
 
                 {actividades.length === 0 ? (
@@ -725,10 +736,10 @@ export default function ReporteDetallePage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveActividad(index)}
-                          className="btn-modern-danger py-1.5 px-2"
-                          title="Eliminar"
+                          className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                          aria-label={`Eliminar actividad ${index + 1}`}
                         >
-                          <Trash className="w-3.5 h-3.5" />
+                          <Trash className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -736,7 +747,7 @@ export default function ReporteDetallePage() {
                 )}
               </div>
 
-              {/* Repuestos (Editable table) */}
+              {/* Repuestos */}
               <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -747,14 +758,15 @@ export default function ReporteDetallePage() {
                       {repuestos.length}
                     </span>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="primary"
+                    size="xs"
                     onClick={handleAddRepuesto}
-                    className="btn-modern-primary text-xs py-1 px-2.5"
+                    leftIcon={<Plus className="w-3.5 h-3.5" />}
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Añadir repuesto</span>
-                  </button>
+                    Añadir repuesto
+                  </Button>
                 </div>
 
                 {repuestos.length === 0 ? (
@@ -807,10 +819,10 @@ export default function ReporteDetallePage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveRepuesto(index)}
-                            className="btn-modern-danger py-1.5 px-2"
-                            title="Eliminar"
+                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                            aria-label={`Eliminar repuesto ${index + 1}`}
                           >
-                            <Trash className="w-3.5 h-3.5" />
+                            <Trash className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -821,10 +833,11 @@ export default function ReporteDetallePage() {
 
               {/* Observaciones */}
               <div className="text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                <label htmlFor="campo-observaciones" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Observaciones Generales
                 </label>
                 <textarea
+                  id="campo-observaciones"
                   rows={2}
                   value={observaciones}
                   onChange={(e) => setObservaciones(e.target.value)}
@@ -835,10 +848,11 @@ export default function ReporteDetallePage() {
 
               {/* Comentario Supervisor */}
               <div className="text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                <label htmlFor="campo-comentario-sup" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Comentario de Supervisión para el Técnico
                 </label>
                 <textarea
+                  id="campo-comentario-sup"
                   rows={2}
                   value={comentarioSupervisor}
                   onChange={(e) => setComentarioSupervisor(e.target.value)}
@@ -846,68 +860,68 @@ export default function ReporteDetallePage() {
                   className="modern-input"
                 />
               </div>
-            </div>
-            <div className="modern-card-footer flex justify-end">
-              <button
+            </CardContent>
+
+            <CardFooter className="flex justify-end">
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={handleSaveChanges}
-                disabled={saving || actionLoading}
-                className="btn-modern-primary text-xs px-4 py-2"
+                isLoading={saving}
+                leftIcon={<Save className="w-3.5 h-3.5" />}
               >
-                <Save className="w-3.5 h-3.5" />
-                <span>Guardar Cambios del Formulario</span>
-              </button>
-            </div>
-          </div>
+                Guardar Cambios del Formulario
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
 
         {/* Sidebar Column: AI JSON & Other Reports of Same Equipment */}
         <div className="space-y-5">
           {/* Collapsible raw_ia */}
-          <div className="modern-card">
-            <div className="modern-card-header">
+          <Card>
+            <CardHeader className="p-3.5">
               <button
                 onClick={() => setShowRawIa(!showRawIa)}
-                className="w-full flex items-center justify-between text-left text-xs font-semibold text-slate-800 dark:text-slate-100"
+                className="w-full flex items-center justify-between text-left text-xs font-semibold text-slate-800 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
               >
                 <span className="flex items-center gap-2">
-                  <div className="p-1 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <div className="p-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                     <Bot className="w-3.5 h-3.5" />
                   </div>
                   <span>Datos Estructurados del Modelo</span>
                 </span>
                 {showRawIa ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
               </button>
-            </div>
+            </CardHeader>
 
             {showRawIa && (
-              <div className="modern-card-body p-3">
-                <pre className="p-3 rounded-lg bg-slate-950 text-emerald-400 text-[11px] font-mono overflow-x-auto max-h-96 border border-slate-800">
+              <CardContent className="p-3">
+                <pre className="p-3 rounded-xl bg-slate-950 text-emerald-400 text-[11px] font-mono overflow-x-auto max-h-96 border border-slate-800">
                   {JSON.stringify(reporte.raw_ia || {}, null, 2)}
                 </pre>
-              </div>
+              </CardContent>
             )}
-          </div>
+          </Card>
 
           {/* Otros reportes del mismo equipo */}
-          <div className="modern-card">
-            <div className="modern-card-header">
-              <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                Historial del mismo equipo
-              </h3>
+          <Card>
+            <CardHeader>
+              <CardTitle>Historial del mismo equipo</CardTitle>
               {reporte.equipo && (
                 <Link
                   href={`/equipos/${encodeURIComponent(reporte.codigo_equipo || reporte.equipo)}`}
-                  className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
                 >
                   Ver todo
                   <ExternalLink className="w-3 h-3" />
                 </Link>
               )}
-            </div>
+            </CardHeader>
 
-            <div className="modern-card-body p-3 space-y-2">
+            <CardContent className="p-3 space-y-2">
               {otrosReportesEquipo.length === 0 ? (
-                <p className="text-xs text-slate-400 italic p-2">
+                <p className="text-xs text-slate-400 italic p-2 text-center">
                   No hay otros reportes registrados para este equipo.
                 </p>
               ) : (
@@ -915,7 +929,7 @@ export default function ReporteDetallePage() {
                   <Link
                     key={o.id}
                     href={`/reportes/${o.id}`}
-                    className="block p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                    className="block p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
@@ -932,71 +946,91 @@ export default function ReporteDetallePage() {
                   </Link>
                 ))
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Reject Confirmation Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-md modern-card shadow-dropdown border border-slate-200 dark:border-slate-800">
-            <div className="modern-card-header bg-rose-50 dark:bg-rose-950/40 border-b border-rose-100 dark:border-rose-900/50">
-              <div className="flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-                <h3 className="text-sm font-semibold text-rose-900 dark:text-rose-100">
-                  Rechazar Reporte #{formatReporteNumero(reporte.numero)}
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowRejectModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-lg leading-none"
-              >
-                &times;
-              </button>
-            </div>
+      {/* Accessible Reject Modal */}
+      <Modal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        title={`Rechazar Reporte #${formatReporteNumero(reporte.numero)}`}
+        description="Indica el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram para que envíe la corrección correspondiente."
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="modal-reject-reason" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              Motivo del rechazo <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              id="modal-reject-reason"
+              required
+              rows={3}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Ej. El código de equipo no corresponde; favor de indicar el tag correcto..."
+              className="modern-input"
+            />
+          </div>
 
-            <div className="modern-card-body space-y-3">
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Indica el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram para que envíe la corrección correspondiente.
-              </p>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Motivo del rechazo <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Ej. El código de equipo no corresponde; favor de indicar el tag correcto..."
-                  className="modern-input"
-                />
-              </div>
-            </div>
-
-            <div className="modern-card-footer flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowRejectModal(false)}
-                className="btn-modern-default text-xs"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmReject}
-                disabled={!rejectReason.trim() || actionLoading}
-                className="btn-modern-danger text-xs"
-              >
-                {actionLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Confirmar Rechazo</span>
-              </button>
-            </div>
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowRejectModal(false)}
+              disabled={actionLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleConfirmReject}
+              disabled={!rejectReason.trim()}
+              isLoading={actionLoading}
+            >
+              Confirmar Rechazo
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
+
+      {/* Validate Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showValidateConfirm}
+        onClose={() => setShowValidateConfirm(false)}
+        onConfirm={handleValidate}
+        title="Validar Reporte"
+        message={`¿Confirmas la validación técnica del reporte #${formatReporteNumero(reporte.numero)}? Se registrará como revisado.`}
+        confirmLabel="Validar Reporte"
+        variant="primary"
+        isLoading={actionLoading}
+      />
+
+      {/* Reopen Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showReopenConfirm}
+        onClose={() => setShowReopenConfirm(false)}
+        onConfirm={handleReopen}
+        title="Reabrir Reporte"
+        message={`¿Deseas devolver el reporte #${formatReporteNumero(reporte.numero)} a estado pendiente para su posterior corrección?`}
+        confirmLabel="Reabrir a Pendiente"
+        variant="warning"
+        isLoading={actionLoading}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Eliminar Reporte"
+        message={`¿Estás seguro de que deseas eliminar permanentemente el reporte #${formatReporteNumero(reporte.numero)}? Esta acción es irreversible.`}
+        confirmLabel="Eliminar Definitivamente"
+        variant="danger"
+        isLoading={actionLoading}
+      />
     </div>
   );
 }

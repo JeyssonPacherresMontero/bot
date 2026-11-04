@@ -3,7 +3,9 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Cpu, AlertCircle, Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardFooter } from '@/components/ui/Card';
+import { Cpu, AlertCircle, Lock, Mail, ArrowRight } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
@@ -81,12 +83,12 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-[380px] sm:max-w-[420px] select-none">
+    <div className="w-full max-w-[390px] sm:max-w-[430px] select-none">
       {/* Brand Logo Header */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-xs">
-            <Cpu className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="w-11 h-11 rounded-2xl bg-blue-600/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-xs">
+            <Cpu className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Maint<span className="text-blue-600 dark:text-blue-400">AI</span>
@@ -98,12 +100,12 @@ function LoginForm() {
       </div>
 
       {/* Modern Card */}
-      <div className="modern-card shadow-card">
-        <div className="p-6 sm:p-8">
+      <Card className="shadow-modal border-slate-200/90 dark:border-slate-800">
+        <CardContent className="p-6 sm:p-8">
           <div className="mb-6 text-center">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               Iniciar Sesión
-            </h2>
+            </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Ingresa tus credenciales institucionales para acceder al sistema
             </p>
@@ -111,7 +113,10 @@ function LoginForm() {
 
           {/* Error notification */}
           {errorMsg && (
-            <div className="mb-5 p-3.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2.5 text-xs">
+            <div
+              role="alert"
+              className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2.5 text-xs animate-slide-in-up"
+            >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
               <div className="flex-1 font-medium leading-relaxed">{errorMsg}</div>
             </div>
@@ -121,13 +126,15 @@ function LoginForm() {
           <form onSubmit={handleLogin} className="space-y-4 text-xs">
             {/* Email input group */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              <label htmlFor="login-email" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Correo Electrónico
               </label>
               <div className="relative">
                 <input
+                  id="login-email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="usuario@vaporsur.com"
@@ -141,13 +148,15 @@ function LoginForm() {
 
             {/* Password input group */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              <label htmlFor="login-password" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Contraseña
               </label>
               <div className="relative">
                 <input
+                  id="login-password"
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
@@ -159,10 +168,11 @@ function LoginForm() {
               </div>
             </div>
 
-            {/* Remember me & Sign In */}
+            {/* Remember me */}
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
+              <label htmlFor="login-remember" className="flex items-center gap-2 cursor-pointer select-none">
                 <input
+                  id="login-remember"
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
@@ -172,23 +182,16 @@ function LoginForm() {
               </label>
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full btn-modern-primary py-2.5 px-4 font-semibold text-xs mt-2"
+              variant="primary"
+              size="md"
+              isLoading={isLoading}
+              className="w-full mt-2 font-semibold"
+              rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Verificando credenciales...</span>
-                </>
-              ) : (
-                <>
-                  <span>Ingresar a la Plataforma</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+              Ingresar a la Plataforma
+            </Button>
           </form>
 
           <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
@@ -197,12 +200,12 @@ function LoginForm() {
               Contactar al Administrador de Planta
             </p>
           </div>
-        </div>
+        </CardContent>
 
-        <div className="modern-card-footer text-center py-3 text-[11px] text-slate-400">
+        <CardFooter className="justify-center text-center py-3 text-[11px] text-slate-400">
           Refinería Bahía Norte · Supervisión de Activos
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

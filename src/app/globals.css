@@ -35,6 +35,12 @@
     border-color: var(--border);
   }
 
+  /* Accessible focus defaults */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
@@ -44,70 +50,83 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
   }
 }
 
-/* Modern Card Utilities (Backward compatible with previous lte-card classes) */
+/* Accessibility: respect user prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Modern Card Utilities */
 .lte-card,
 .modern-card {
-  @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-xl shadow-xs transition-all duration-200 overflow-hidden;
+  @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-xl shadow-card transition-all duration-200 overflow-hidden;
 }
 
 .lte-card-header,
 .modern-card-header {
-  @apply px-5 py-3.5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between font-semibold text-slate-900 dark:text-slate-100 text-sm;
+  @apply px-4 sm:px-5 py-3.5 border-b border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 font-semibold text-slate-900 dark:text-slate-100 text-sm;
 }
 
 .lte-card-body,
 .modern-card-body {
-  @apply p-5;
+  @apply p-4 sm:p-5;
 }
 
 .lte-card-footer,
 .modern-card-footer {
-  @apply px-5 py-3 bg-slate-50/70 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400;
+  @apply px-4 sm:px-5 py-3 bg-slate-50/70 dark:bg-slate-950/40 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400;
 }
 
-/* Modern Button Utilities (Backward compatible with btn-lte) */
+/* Button Foundation Utilities (Fully backwards-compatible with existing classes) */
 .btn-lte,
 .btn-modern {
-  @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-xs active:scale-[0.98];
+  @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-xs active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-900;
 }
 
 .btn-lte-primary,
 .btn-modern-primary {
-  @apply btn-lte bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 hover:border-blue-700 shadow-xs;
+  @apply btn-modern bg-blue-600 hover:bg-blue-700 text-white border border-blue-600 hover:border-blue-700 active:bg-blue-800;
 }
 
 .btn-lte-success,
 .btn-modern-success {
-  @apply btn-lte bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 hover:border-emerald-700;
+  @apply btn-modern bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600 hover:border-emerald-700 active:bg-emerald-800;
 }
 
 .btn-lte-danger,
 .btn-modern-danger {
-  @apply btn-lte bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 hover:border-rose-700;
+  @apply btn-modern bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 hover:border-rose-700 active:bg-rose-800;
 }
 
 .btn-lte-warning,
 .btn-modern-warning {
-  @apply btn-lte bg-amber-500 hover:bg-amber-600 text-slate-950 border border-amber-500 font-semibold;
+  @apply btn-modern bg-amber-500 hover:bg-amber-600 text-slate-950 border border-amber-500 font-semibold active:bg-amber-700;
 }
 
 .btn-lte-info,
 .btn-modern-info {
-  @apply btn-lte bg-cyan-600 hover:bg-cyan-700 text-white border border-cyan-600;
+  @apply btn-modern bg-cyan-600 hover:bg-cyan-700 text-white border border-cyan-600 active:bg-cyan-800;
 }
 
 .btn-lte-default,
 .btn-modern-default {
-  @apply btn-lte bg-white dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80;
+  @apply btn-modern bg-white dark:bg-slate-800/90 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 active:bg-slate-100 dark:active:bg-slate-700;
 }
 
 /* Modern Form Controls */
 .form-control-lte,
 .modern-input {
-  @apply w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 rounded-lg placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all;
+  @apply w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 rounded-lg placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-150 disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 disabled:cursor-not-allowed;
 }
 
 /* Subtle modern scrollbar */

@@ -12,6 +12,7 @@ import {
   UserCog,
   Search,
   Cpu,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -70,6 +71,7 @@ export function Sidebar({ onNavigate, collapsed = false }: SidebarProps) {
 
   return (
     <aside
+      aria-label="Navegación principal"
       className={cn(
         'bg-slate-900 text-slate-300 border-r border-slate-800 flex flex-col justify-between shrink-0 h-full select-none transition-all duration-200',
         collapsed ? 'w-16' : 'w-64'
@@ -84,9 +86,10 @@ export function Sidebar({ onNavigate, collapsed = false }: SidebarProps) {
           {!collapsed && (
             <Link
               href="/dashboard"
-              className="flex flex-col hover:opacity-90 transition-opacity"
+              onClick={onNavigate}
+              className="flex flex-col hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
             >
-              <div className="flex items-center gap-1.5 leading-none">
+              <div className="flex items-center gap-1 leading-none">
                 <span className="font-semibold text-base tracking-tight text-white">Maint</span>
                 <span className="font-bold text-base tracking-tight text-blue-400">AI</span>
               </div>
@@ -97,7 +100,7 @@ export function Sidebar({ onNavigate, collapsed = false }: SidebarProps) {
           )}
         </div>
 
-        {/* User Panel - Integrated single-tone look */}
+        {/* User Panel */}
         {!collapsed && (
           <div className="px-4 py-3.5 border-b border-slate-800/60 flex items-center gap-3 shrink-0">
             <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-slate-200 flex items-center justify-center font-semibold text-xs shrink-0 shadow-xs">
@@ -108,14 +111,14 @@ export function Sidebar({ onNavigate, collapsed = false }: SidebarProps) {
                 {perfil?.nombre || user?.email?.split('@')[0] || 'Supervisor'}
               </span>
               <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block shadow-xs" />
                 <span className="text-slate-400">{isAdmin ? 'Administrador' : 'Supervisor'}</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Sidebar Search - Subtle & monochromatic */}
+        {/* Sidebar Search */}
         {!collapsed && (
           <div className="px-3 pt-3 pb-1 shrink-0">
             <div className="relative">
@@ -124,15 +127,26 @@ export function Sidebar({ onNavigate, collapsed = false }: SidebarProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar en menú..."
+                aria-label="Buscar en menú lateral"
                 className="w-full bg-slate-950/60 text-slate-200 placeholder-slate-500 text-xs px-3 py-1.5 pr-8 rounded-lg border border-slate-800 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
               />
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {searchTerm ? (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              )}
             </div>
           </div>
         )}
 
         {/* Navigation list */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
           {navSections.map((sec, sIdx) => {
             const visibleItems = sec.items.filter((item) => {
               if (item.adminOnly && !isAdmin) return false;
@@ -166,10 +180,11 @@ export function Sidebar({ onNavigate, collapsed = false }: SidebarProps) {
                       href={item.href}
                       onClick={onNavigate}
                       title={collapsed ? item.label : undefined}
+                      aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 group',
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
                         isActive
-                          ? 'bg-blue-600/15 text-blue-400 font-semibold border border-blue-500/20 shadow-xs'
+                          ? 'bg-blue-600/15 text-blue-400 font-semibold border border-blue-500/25 shadow-xs'
                           : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100',
                         collapsed && 'justify-center px-0'
                       )}
@@ -189,17 +204,17 @@ export function Sidebar({ onNavigate, collapsed = false }: SidebarProps) {
               </div>
             );
           })}
-        </div>
+        </nav>
       </div>
 
-      {/* Sidebar Footer info - Single tone and clean */}
+      {/* Sidebar Footer info */}
       {!collapsed && (
-        <div className="p-3 m-3 rounded-lg bg-slate-950/50 border border-slate-800 text-xs text-slate-400 shrink-0">
+        <div className="p-3 m-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 shrink-0">
           <div className="flex items-center justify-between mb-1">
-            <span className="font-medium text-slate-300 text-[11px] truncate">
+            <span className="font-semibold text-slate-300 text-[11px] truncate">
               Vaporsur Cogeneración
             </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           </div>
           <p className="text-[10px] text-slate-500 truncate">Refinería Bahía Norte</p>
           <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px]">

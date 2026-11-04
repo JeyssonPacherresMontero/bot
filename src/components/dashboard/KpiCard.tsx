@@ -22,35 +22,35 @@ export function KpiCard({
   trend,
   href = '#',
 }: KpiCardProps) {
-  // Psychological soft palette (restful on eyes, high contrast readable numbers)
+  // Balanced industrial SaaS palette (ergonomic contrast)
   const variantThemes = {
     primary: {
       iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
-      badgeBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+      badgeBg: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
     },
     info: {
       iconBg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
-      badgeBg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+      badgeBg: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
     },
     success: {
       iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
-      badgeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      badgeBg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
     },
     warning: {
       iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
-      badgeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+      badgeBg: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
     },
     danger: {
       iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
-      badgeBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+      badgeBg: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
     },
     purple: {
       iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20',
-      badgeBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+      badgeBg: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300',
     },
     default: {
       iconBg: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20',
-      badgeBg: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+      badgeBg: 'bg-slate-500/10 text-slate-700 dark:text-slate-300',
     },
   };
 
@@ -58,22 +58,22 @@ export function KpiCard({
 
   const cardContent = (
     <div className="p-4 sm:p-5 flex flex-col justify-between h-full">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 gap-2">
         <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
           {title}
         </span>
-        <div className={cn('p-2 rounded-lg shrink-0', currentTheme.iconBg)}>
+        <div className={cn('p-2 rounded-xl shrink-0 transition-transform group-hover:scale-105', currentTheme.iconBg)}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
 
       <div>
         <div className="flex items-baseline gap-2">
-          <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-sans">
+          <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 tabular-nums">
             {value}
           </h3>
           {trend && (
-            <span className={cn('text-[11px] font-semibold px-1.5 py-0.5 rounded', currentTheme.badgeBg)}>
+            <span className={cn('text-[11px] font-semibold px-1.5 py-0.5 rounded-md', currentTheme.badgeBg)}>
               {trend}
             </span>
           )}
@@ -87,15 +87,15 @@ export function KpiCard({
 
       {href && href !== '#' && (
         <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-          <span>Ver detalles</span>
-          <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+          <span className="font-medium">Ver detalles</span>
+          <ArrowUpRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
         </div>
       )}
     </div>
   );
 
   const baseClasses =
-    'relative overflow-hidden rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 group flex flex-col justify-between';
+    'relative overflow-hidden rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 group flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500';
 
   if (href && href !== '#') {
     return (

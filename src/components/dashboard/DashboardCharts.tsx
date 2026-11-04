@@ -20,6 +20,7 @@ import type {
   VReportesPorTecnico,
 } from '@/types/database.types';
 import { BarChart3, Wrench, Package, Users, PieChart as PieIcon } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 interface DashboardChartsProps {
   reportesPorDia: VReportesPorDia[];
@@ -77,8 +78,8 @@ export function DashboardCharts({
   if (!isMounted) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
-        <div className="h-72 bg-slate-100 dark:bg-slate-800/50 rounded-xl animate-pulse" />
-        <div className="h-72 bg-slate-100 dark:bg-slate-800/50 rounded-xl animate-pulse" />
+        <CardSkeleton className="h-72" />
+        <CardSkeleton className="h-72" />
       </div>
     );
   }

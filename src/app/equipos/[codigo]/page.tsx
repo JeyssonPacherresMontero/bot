@@ -9,6 +9,9 @@ import { PrioridadBadge } from '@/components/badges/PrioridadBadge';
 import { TipoBadge } from '@/components/badges/TipoBadge';
 import { ContentHeader } from '@/components/layout/ContentHeader';
 import { TableSkeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/Button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import {
   formatReporteNumero,
   formatFechaHoraLima,
@@ -21,6 +24,7 @@ import {
   Layers,
   Repeat,
   Package,
+  Wrench,
 } from 'lucide-react';
 
 export default function EquipoDetallePage() {
@@ -98,9 +102,10 @@ export default function EquipoDetallePage() {
     }, [reportes]);
 
   const actions = (
-    <Link href="/equipos" className="btn-modern-default text-xs">
-      <ArrowLeft className="w-3.5 h-3.5" />
-      <span>Volver a Equipos</span>
+    <Link href="/equipos">
+      <Button variant="outline" size="sm" leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}>
+        <span>Volver a Equipos</span>
+      </Button>
     </Link>
   );
 
@@ -124,36 +129,39 @@ export default function EquipoDetallePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Timeline of interventions */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="modern-card">
-              <div className="modern-card-header">
+            <Card>
+              <CardHeader>
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
                     <Layers className="w-4 h-4" />
                   </div>
-                  <span className="font-semibold text-slate-800 dark:text-slate-100">
-                    Línea de Tiempo de Intervenciones
-                  </span>
+                  <CardTitle>
+                    <span>Línea de Tiempo de Intervenciones</span>
+                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md ml-1">
+                      {reportes.length} Reportes
+                    </span>
+                  </CardTitle>
                 </div>
-                <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md">
-                  {reportes.length} Reportes
-                </span>
-              </div>
+              </CardHeader>
 
-              <div className="modern-card-body">
+              <CardContent>
                 {reportes.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-400">
-                    No hay reportes registrados para este equipo.
-                  </div>
+                  <EmptyState
+                    icon={Wrench}
+                    title="Sin historial para este equipo"
+                    description="No se han registrado reportes ni intervenciones técnicas asociadas a este tag."
+                    className="py-8"
+                  />
                 ) : (
                   <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
                     {reportes.map((r) => (
                       <div key={r.id} className="relative">
                         {/* Timeline node */}
-                        <div className="absolute -left-6 top-2 w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-white dark:ring-slate-900" />
+                        <div className="absolute -left-6 top-3 w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-white dark:ring-slate-900" />
 
-                        <div className="p-4 rounded-xl bg-slate-50/60 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
+                        <div className="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800 space-y-2.5 hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <span className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
                                 {formatReporteNumero(r.numero)}
                               </span>
@@ -202,7 +210,7 @@ export default function EquipoDetallePage() {
 
                             <Link
                               href={`/reportes/${r.id}`}
-                              className="btn-modern-primary text-xs px-2.5 py-1"
+                              className="btn-modern-primary text-xs px-2.5 py-1 focus-visible:ring-2"
                             >
                               <span>Abrir reporte</span>
                               <ExternalLink className="w-3 h-3" />
@@ -213,28 +221,28 @@ export default function EquipoDetallePage() {
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Col: Recurrent Failures & Replaced Parts */}
           <div className="space-y-4">
             {/* Fallas recurrentes */}
-            <div className="modern-card">
-              <div className="modern-card-header">
+            <Card>
+              <CardHeader className="p-3.5">
                 <div className="flex items-center gap-2">
-                  <div className="p-1 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <div className="p-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     <Repeat className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  <CardTitle className="text-xs uppercase tracking-wider">
                     Fallas Recurrentes
-                  </span>
+                  </CardTitle>
                 </div>
-              </div>
+              </CardHeader>
 
-              <div className="modern-card-body p-3">
+              <CardContent className="p-3">
                 {recurrentFailures.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic p-2">No hay fallas registradas.</p>
+                  <p className="text-xs text-slate-400 italic p-2 text-center">No hay fallas registradas.</p>
                 ) : (
                   <div className="space-y-2">
                     {recurrentFailures.slice(0, 8).map((rf, idx) => (
@@ -252,25 +260,25 @@ export default function EquipoDetallePage() {
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Repuestos consumidos */}
-            <div className="modern-card">
-              <div className="modern-card-header">
+            <Card>
+              <CardHeader className="p-3.5">
                 <div className="flex items-center gap-2">
-                  <div className="p-1 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                  <div className="p-1 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
                     <Package className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  <CardTitle className="text-xs uppercase tracking-wider">
                     Repuestos Consumidos
-                  </span>
+                  </CardTitle>
                 </div>
-              </div>
+              </CardHeader>
 
-              <div className="modern-card-body p-3">
+              <CardContent className="p-3">
                 {repuestosConsumidos.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic p-2">Sin consumos de repuestos.</p>
+                  <p className="text-xs text-slate-400 italic p-2 text-center">Sin consumos de repuestos.</p>
                 ) : (
                   <div className="space-y-2">
                     {repuestosConsumidos.slice(0, 8).map((rep, idx) => (
@@ -282,14 +290,14 @@ export default function EquipoDetallePage() {
                           {rep.nombre}
                         </span>
                         <span className="text-[11px] font-semibold text-sky-700 dark:text-sky-300 shrink-0">
-                          {rep.totalUnidades} unidades · {rep.veces} registros
+                          {rep.totalUnidades} u. · {rep.veces} reg.
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/contexts/toast-context';
 import { EstadoBadge } from '@/components/badges/EstadoBadge';
 import { PrioridadBadge } from '@/components/badges/PrioridadBadge';
 import { TipoBadge } from '@/components/badges/TipoBadge';
@@ -12,6 +13,10 @@ import { OrigenBadge } from '@/components/badges/OrigenBadge';
 import { FiltrosReportes, type FiltrosReportesState } from '@/components/reportes/FiltrosReportes';
 import { ContentHeader } from '@/components/layout/ContentHeader';
 import { TableSkeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Card, CardHeader, CardTitle, CardFooter } from '@/components/ui/Card';
 import { exportReportesToCSV } from '@/lib/export-csv';
 import {
   formatReporteNumero,
@@ -29,7 +34,6 @@ import {
   BellRing,
   AlertCircle,
   RefreshCw,
-  Loader2,
   FileSpreadsheet,
 } from 'lucide-react';
 
@@ -38,6 +42,7 @@ const PAGE_SIZE = 25;
 function ReportesContent() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const toast = useToast();
   const supabase = createClient();
 
   const initialEstadoParam = searchParams.get('estado');
@@ -66,6 +71,7 @@ function ReportesContent() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchLoading, setBatchLoading] = useState<boolean>(false);
+  const [showBatchConfirm, setShowBatchConfirm] = useState<boolean>(false);
 
   const [newReporteNotice, setNewReporteNotice] = useState<string | null>(null);
 
@@ -118,16 +124,18 @@ function ReportesContent() {
 
       if (error) {
         console.error('Error al cargar reportes:', error);
+        toast.error('Error al cargar la lista de reportes', error.message);
       } else {
         setReportes((data as Reporte[]) || []);
         setTotalCount(count || 0);
       }
     } catch (err) {
       console.error('Error general cargando reportes:', err);
+      toast.error('Error de conexión al cargar reportes');
     } finally {
       setLoading(false);
     }
-  }, [filtros, page, sortColumn, sortAsc, supabase]);
+  }, [filtros, page, sortColumn, sortAsc, supabase, toast]);
 
   useEffect(() => {
     loadReportes();
@@ -179,11 +187,6 @@ function ReportesContent() {
 
   const handleBatchValidate = async () => {
     if (selectedIds.length === 0) return;
-    const confirmVal = confirm(
-      `¿Deseas validar y marcar como 'Revisado' los ${selectedIds.length} reportes seleccionados?`
-    );
-    if (!confirmVal) return;
-
     setBatchLoading(true);
     try {
       const nowIso = new Date().toISOString();
@@ -198,14 +201,19 @@ function ReportesContent() {
         .in('id', selectedIds);
 
       if (error) {
-        alert(`Error al validar en lote: ${error.message}`);
+        toast.error('Error al validar en lote', error.message);
       } else {
+        toast.success(
+          'Validación en lote exitosa',
+          `Se marcaron ${selectedIds.length} reportes como revisados.`
+        );
         setSelectedIds([]);
+        setShowBatchConfirm(false);
         loadReportes();
       }
     } catch (err: unknown) {
       const error = err as Error;
-      alert(`Error inesperado: ${error.message}`);
+      toast.error('Error inesperado', error.message);
     } finally {
       setBatchLoading(false);
     }
@@ -234,16 +242,17 @@ function ReportesContent() {
 
       const { data, error } = await query;
       if (error) {
-        alert(`Error al exportar: ${error.message}`);
+        toast.error('Error al exportar datos', error.message);
       } else if (data) {
         exportReportesToCSV(
           data as Reporte[],
           `reportes_maintai_${new Date().toISOString().slice(0, 10)}.csv`
         );
+        toast.success('Archivo CSV exportado exitosamente');
       }
     } catch (err: unknown) {
       const error = err as Error;
-      alert(`Error al exportar CSV: ${error.message}`);
+      toast.error('Error al exportar CSV', error.message);
     } finally {
       setExporting(false);
     }
@@ -252,44 +261,39 @@ function ReportesContent() {
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const actions = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {selectedIds.length > 0 && (
-        <button
-          onClick={handleBatchValidate}
-          disabled={batchLoading}
-          className="btn-modern-primary text-xs"
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => setShowBatchConfirm(true)}
+          leftIcon={<CheckCheck className="w-3.5 h-3.5" />}
         >
-          {batchLoading ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <CheckCheck className="w-3.5 h-3.5" />
-          )}
-          <span>Validar {selectedIds.length}</span>
-        </button>
+          <span>Validar ({selectedIds.length})</span>
+        </Button>
       )}
 
-      <button
+      <Button
+        variant="success"
+        size="sm"
         onClick={handleExportCSV}
-        disabled={exporting || totalCount === 0}
-        className="btn-modern-success text-xs"
+        isLoading={exporting}
+        disabled={totalCount === 0}
+        leftIcon={<FileSpreadsheet className="w-3.5 h-3.5" />}
       >
-        {exporting ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <FileSpreadsheet className="w-3.5 h-3.5" />
-        )}
         <span>Exportar CSV</span>
-      </button>
+      </Button>
 
-      <button
+      <Button
+        variant="outline"
+        size="sm"
         onClick={() => loadReportes()}
-        disabled={loading}
-        className="btn-modern-default text-xs"
-        title="Recargar"
+        isLoading={loading}
+        leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+        aria-label="Recargar listado"
       >
-        <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
         <span className="hidden sm:inline">Recargar</span>
-      </button>
+      </Button>
     </div>
   );
 
@@ -297,20 +301,24 @@ function ReportesContent() {
     <div className="space-y-5">
       {/* Realtime Alert Banner */}
       {newReporteNotice && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 flex items-center justify-between border border-emerald-200 dark:border-emerald-800/60 shadow-xs">
+        <div
+          role="status"
+          className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-3 border border-emerald-200 dark:border-emerald-800/60 shadow-xs animate-slide-in-up"
+        >
           <div className="flex items-center gap-2.5 text-xs sm:text-sm font-medium">
             <BellRing className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{newReporteNotice}</span>
           </div>
-          <button
+          <Button
+            size="xs"
+            variant="success"
             onClick={() => {
               setNewReporteNotice(null);
               loadReportes();
             }}
-            className="btn-modern bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-1 px-3"
           >
             Actualizar lista
-          </button>
+          </Button>
         </div>
       )}
 
@@ -348,20 +356,20 @@ function ReportesContent() {
       />
 
       {/* Reports Table Card */}
-      <div className="modern-card">
-        <div className="modern-card-header">
+      <Card>
+        <CardHeader>
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-800 dark:text-slate-100">
-              Listado de Órdenes de Trabajo y Reportes
-            </span>
-            <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md">
-              Total: {totalCount}
-            </span>
+            <CardTitle>
+              <span>Listado de Órdenes de Trabajo y Reportes</span>
+              <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md ml-1">
+                Total: {totalCount}
+              </span>
+            </CardTitle>
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400">
             Página {page} de {totalPages}
           </span>
-        </div>
+        </CardHeader>
 
         <div className="p-0">
           {loading ? (
@@ -369,176 +377,250 @@ function ReportesContent() {
               <TableSkeleton rows={8} cols={9} />
             </div>
           ) : reportes.length === 0 ? (
-            <div className="p-12 text-center text-slate-400">
-              <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2 opacity-80" />
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                No se encontraron reportes
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Prueba cambiando o limpiando los filtros de búsqueda.
-              </p>
-            </div>
+            <EmptyState
+              icon={AlertCircle}
+              title="No se encontraron reportes"
+              description="No hay intervenciones que coincidan con los criterios seleccionados. Prueba modificando los filtros de búsqueda."
+              actionLabel="Limpiar filtros"
+              onAction={() => {
+                setFiltros({
+                  busqueda: '',
+                  estados: [],
+                  prioridad: '',
+                  tipo: '',
+                  origen: '',
+                  soloFaltantes: false,
+                  fechaDesde: '',
+                  fechaHasta: '',
+                });
+                setPage(1);
+              }}
+              className="py-12"
+            />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/70 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200/80 dark:border-slate-800">
-                    <th className="py-3 px-4 w-8 text-center">
-                      <input
-                        type="checkbox"
-                        checked={
-                          reportes.length > 0 && selectedIds.length === reportes.length
-                        }
-                        onChange={handleSelectAll}
-                        className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
-                      />
-                    </th>
-                    <th
-                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
-                      onClick={() => handleSort('numero')}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span>N.º</span>
-                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                      </div>
-                    </th>
-                    <th
-                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
-                      onClick={() => handleSort('created_at')}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span>Fecha</span>
-                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                      </div>
-                    </th>
-                    <th className="py-3 px-4">
-                      Técnico
-                    </th>
-                    <th
-                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
-                      onClick={() => handleSort('equipo')}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span>Equipo e Identificador</span>
-                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                      </div>
-                    </th>
-                    <th className="py-3 px-4">
-                      Falla
-                    </th>
-                    <th className="py-3 px-4">
-                      Tipo
-                    </th>
-                    <th className="py-3 px-4">
-                      Prioridad
-                    </th>
-                    <th
-                      className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
-                      onClick={() => handleSort('estado')}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span>Estado</span>
-                        <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                      </div>
-                    </th>
-                    <th className="py-3 px-4">
-                      Confianza
-                    </th>
-                    <th className="py-3 px-4">
-                      Origen
-                    </th>
-                    <th className="py-3 px-4 text-right">Detalle</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {reportes.map((r) => {
-                    const demorado = isReporteDemorado(r.created_at, r.estado);
-                    const isSelected = selectedIds.includes(r.id);
-
-                    return (
-                      <tr
-                        key={r.id}
-                        className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
-                          demorado
-                            ? 'bg-amber-50/40 dark:bg-amber-950/20'
-                            : isSelected
-                            ? 'bg-blue-50/50 dark:bg-blue-950/30'
-                            : ''
-                        }`}
+            <>
+              {/* Desktop Table View (>= md) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200/80 dark:border-slate-800">
+                      <th className="py-3 px-4 w-8 text-center">
+                        <input
+                          type="checkbox"
+                          aria-label="Seleccionar todos los reportes de la página"
+                          checked={
+                            reportes.length > 0 && selectedIds.length === reportes.length
+                          }
+                          onChange={handleSelectAll}
+                          className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
+                        />
+                      </th>
+                      <th
+                        className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => handleSort('numero')}
                       >
-                        <td className="py-3 px-4 text-center">
+                        <div className="flex items-center gap-1">
+                          <span>N.º</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                        </div>
+                      </th>
+                      <th
+                        className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => handleSort('created_at')}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>Fecha</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                        </div>
+                      </th>
+                      <th className="py-3 px-4">Técnico</th>
+                      <th
+                        className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => handleSort('equipo')}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>Equipo</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                        </div>
+                      </th>
+                      <th className="py-3 px-4">Falla</th>
+                      <th className="py-3 px-4">Tipo</th>
+                      <th className="py-3 px-4">Prioridad</th>
+                      <th
+                        className="py-3 px-4 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => handleSort('estado')}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>Estado</span>
+                          <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                        </div>
+                      </th>
+                      <th className="py-3 px-4">Confianza</th>
+                      <th className="py-3 px-4">Origen</th>
+                      <th className="py-3 px-4 text-right">Detalle</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {reportes.map((r) => {
+                      const demorado = isReporteDemorado(r.created_at, r.estado);
+                      const isSelected = selectedIds.includes(r.id);
+
+                      return (
+                        <tr
+                          key={r.id}
+                          className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
+                            demorado
+                              ? 'bg-amber-50/40 dark:bg-amber-950/20'
+                              : isSelected
+                              ? 'bg-blue-50/50 dark:bg-blue-950/30'
+                              : ''
+                          }`}
+                        >
+                          <td className="py-3 px-4 text-center">
+                            <input
+                              type="checkbox"
+                              aria-label={`Seleccionar reporte ${formatReporteNumero(r.numero)}`}
+                              checked={isSelected}
+                              onChange={() => handleSelectRow(r.id)}
+                              className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
+                            />
+                          </td>
+                          <td className="py-3 px-4 font-mono font-bold text-blue-600 dark:text-blue-400">
+                            {formatReporteNumero(r.numero)}
+                          </td>
+                          <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                            {formatFechaHoraLima(r.created_at)}
+                          </td>
+                          <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">
+                            {r.tecnico_nombre || 'Sin nombre'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-slate-900 dark:text-slate-100">
+                              {r.equipo || 'Sin equipo'}
+                            </div>
+                            {r.codigo_equipo && (
+                              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                                {r.codigo_equipo}
+                              </div>
+                            )}
+                          </td>
+                          <td
+                            className="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-300"
+                            title={r.falla || ''}
+                          >
+                            {r.falla || '—'}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <TipoBadge tipo={r.tipo_mantenimiento} />
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <PrioridadBadge prioridad={r.prioridad} />
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <EstadoBadge estado={r.estado} isDemorado={demorado} />
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <span className="font-medium text-slate-700 dark:text-slate-300">
+                              {formatConfianza(r.confianza)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <OrigenBadge
+                              origen={r.origen}
+                              duracionSeg={r.audio_duracion_seg}
+                            />
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <Link
+                              href={`/reportes/${r.id}`}
+                              className="btn-modern-primary text-xs px-2.5 py-1 focus-visible:ring-2"
+                            >
+                              <span>Ver</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card List (< md) */}
+              <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800 p-3 space-y-3">
+                {reportes.map((r) => {
+                  const demorado = isReporteDemorado(r.created_at, r.estado);
+                  const isSelected = selectedIds.includes(r.id);
+
+                  return (
+                    <div
+                      key={r.id}
+                      className={`p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-2.5 ${
+                        demorado
+                          ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-300/50'
+                          : isSelected
+                          ? 'bg-blue-50/40 dark:bg-blue-950/30 border-blue-300'
+                          : 'bg-white dark:bg-slate-900'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectRow(r.id)}
-                            className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
+                            aria-label={`Seleccionar reporte ${formatReporteNumero(r.numero)}`}
+                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500/20 border-slate-300"
                           />
-                        </td>
-                        <td className="py-3 px-4 font-mono font-bold text-blue-600 dark:text-blue-400">
-                          {formatReporteNumero(r.numero)}
-                        </td>
-                        <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                          {formatFechaHoraLima(r.created_at)}
-                        </td>
-                        <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-100">
-                          {r.tecnico_nombre || 'Sin nombre'}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-900 dark:text-slate-100">
-                            {r.equipo || 'Sin equipo'}
-                          </div>
-                          {r.codigo_equipo && (
-                            <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                              {r.codigo_equipo}
-                            </div>
-                          )}
-                        </td>
-                        <td
-                          className="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-300"
-                          title={r.falla || ''}
-                        >
-                          {r.falla || '—'}
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <TipoBadge tipo={r.tipo_mantenimiento} />
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <PrioridadBadge prioridad={r.prioridad} />
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <EstadoBadge estado={r.estado} isDemorado={demorado} />
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="font-medium text-slate-700 dark:text-slate-300">
-                            {formatConfianza(r.confianza)}
+                          <span className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">
+                            {formatReporteNumero(r.numero)}
                           </span>
-                        </td>
-                        <td className="py-3 px-4 whitespace-nowrap">
-                          <OrigenBadge
-                            origen={r.origen}
-                            duracionSeg={r.audio_duracion_seg}
-                          />
-                        </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <Link
-                            href={`/reportes/${r.id}`}
-                            className="btn-modern-primary text-xs px-2.5 py-1"
-                          >
-                            <span>Ver</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <EstadoBadge estado={r.estado} isDemorado={demorado} />
+                      </div>
+
+                      <div>
+                        <div className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                          {r.equipo || 'Sin equipo especificado'}
+                        </div>
+                        {r.codigo_equipo && (
+                          <div className="text-[11px] font-mono text-slate-500">
+                            Tag: {r.codigo_equipo}
+                          </div>
+                        )}
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
+                          {r.falla || 'Sin falla reportada.'}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <TipoBadge tipo={r.tipo_mantenimiento} />
+                        <PrioridadBadge prioridad={r.prioridad} />
+                        <OrigenBadge origen={r.origen} duracionSeg={r.audio_duracion_seg} />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500">
+                        <span className="truncate max-w-[150px]">
+                          {r.tecnico_nombre || 'Técnico'} · {formatFechaHoraLima(r.created_at)}
+                        </span>
+                        <Link
+                          href={`/reportes/${r.id}`}
+                          className="btn-modern-primary text-xs px-3 py-1.5"
+                        >
+                          <span>Ver Ficha</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
 
         {/* Server Pagination Footer */}
-        <div className="modern-card-footer flex flex-col sm:flex-row items-center justify-between gap-3">
+        <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Mostrando página{' '}
             <span className="font-semibold text-slate-900 dark:text-slate-100">{page}</span> de{' '}
@@ -546,29 +628,45 @@ function ReportesContent() {
             {totalCount} reportes en total
           </p>
 
-          <div className="flex items-center gap-1.5">
-            <button
+          <div className="flex items-center gap-1.5" role="navigation" aria-label="Paginación de resultados">
+            <Button
+              variant="outline"
+              size="xs"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="btn-modern-default text-xs px-3 py-1.5"
+              leftIcon={<ChevronLeft className="w-3.5 h-3.5" />}
+              aria-label="Página anterior"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span>Anterior</span>
-            </button>
+              Anterior
+            </Button>
             <span className="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-xs">
               {page}
             </span>
-            <button
+            <Button
+              variant="outline"
+              size="xs"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="btn-modern-default text-xs px-3 py-1.5"
+              rightIcon={<ChevronRight className="w-3.5 h-3.5" />}
+              aria-label="Página siguiente"
             >
-              <span>Siguiente</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+              Siguiente
+            </Button>
           </div>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
+
+      {/* Batch Validation Accessible Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={showBatchConfirm}
+        onClose={() => setShowBatchConfirm(false)}
+        onConfirm={handleBatchValidate}
+        title="Validación en Lote"
+        message={`¿Estás seguro de que deseas marcar como 'Revisados' los ${selectedIds.length} reportes seleccionados? Se registrará tu usuario como supervisor de revisión.`}
+        confirmLabel={`Validar ${selectedIds.length} Reportes`}
+        variant="primary"
+        isLoading={batchLoading}
+      />
     </div>
   );
 }
