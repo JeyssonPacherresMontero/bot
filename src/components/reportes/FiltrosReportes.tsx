@@ -34,11 +34,11 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
   };
 
   const estadosDisponibles: { id: EstadoReporte; label: string; activeColor: string }[] = [
-    { id: 'pendiente', label: 'Pendiente', activeColor: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30' },
-    { id: 'corregido', label: 'Corregido', activeColor: 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30' },
-    { id: 'confirmado', label: 'Confirmado', activeColor: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30' },
-    { id: 'revisado', label: 'Revisado', activeColor: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' },
-    { id: 'rechazado', label: 'Rechazado', activeColor: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30' },
+    { id: 'confirmado', label: 'Confirmados (Por revisar)', activeColor: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/40 font-semibold' },
+    { id: 'revisado', label: 'Revisados', activeColor: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-semibold' },
+    { id: 'rechazado', label: 'Rechazados', activeColor: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/40 font-semibold' },
+    { id: 'pendiente', label: 'Pendiente (Histórico)', activeColor: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40' },
+    { id: 'corregido', label: 'Corregido (Histórico)', activeColor: 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/40' },
   ];
 
   const activeFiltersCount =
@@ -99,7 +99,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
       </div>
 
       <div className="modern-card-body space-y-4">
-        {/* Search Input - Always visible */}
+        {/* Search Input */}
         <div>
           <label
             htmlFor="filtro-busqueda-general"
@@ -113,7 +113,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
               type="text"
               value={filtros.busqueda}
               onChange={(e) => onChange({ ...filtros, busqueda: e.target.value })}
-              placeholder="Buscar por equipo, tag P-101A, falla, técnico u orden de trabajo..."
+              placeholder="Buscar por equipo, código/tag, área de planta, falla, técnico u OT..."
               className="modern-input pr-8 py-2"
             />
             {filtros.busqueda && (
@@ -128,9 +128,8 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
           </div>
         </div>
 
-        {/* Extended filters (collapsible on mobile, always visible on sm:) */}
+        {/* Extended filters */}
         <div className={`${mobileExpanded ? 'block' : 'hidden'} sm:block space-y-4`}>
-          {/* Filters Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1 text-xs">
             {/* Prioridad */}
             <div>
@@ -192,8 +191,8 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
                 className="modern-input py-2"
               >
                 <option value="">Audio y Texto</option>
-                <option value="audio">Solo Audio</option>
-                <option value="texto">Solo Texto</option>
+                <option value="audio">Solo Audio Telegram</option>
+                <option value="texto">Solo Texto Telegram</option>
               </select>
             </div>
 
@@ -203,7 +202,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
                 htmlFor="filtro-desde"
                 className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5"
               >
-                Desde
+                Fecha Desde
               </label>
               <input
                 id="filtro-desde"
@@ -211,8 +210,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
                 value={filtros.fechaDesde}
                 onChange={(e) => onChange({ ...filtros, fechaDesde: e.target.value })}
                 className="modern-input py-2"
-              >
-              </input>
+              />
             </div>
 
             {/* Fecha Hasta */}
@@ -221,7 +219,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
                 htmlFor="filtro-hasta"
                 className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5"
               >
-                Hasta
+                Fecha Hasta
               </label>
               <input
                 id="filtro-hasta"
@@ -229,8 +227,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
                 value={filtros.fechaHasta}
                 onChange={(e) => onChange({ ...filtros, fechaHasta: e.target.value })}
                 className="modern-input py-2"
-              >
-              </input>
+              />
             </div>
           </div>
 
@@ -247,10 +244,10 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
                     key={item.id}
                     onClick={() => toggleEstado(item.id)}
                     aria-pressed={isSelected}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                    className={`px-3 py-1 rounded-lg text-xs transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                       isSelected
                         ? item.activeColor
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium'
                     }`}
                   >
                     {item.label}
@@ -272,7 +269,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
               />
               <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                Con datos pendientes de completar
+                Con datos faltantes según IA
               </span>
             </label>
           </div>

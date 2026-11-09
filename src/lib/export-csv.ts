@@ -24,6 +24,7 @@ export function exportReportesToCSV(reportes: Reporte[], filename = 'reportes_ma
     'Observaciones',
     'Origen',
     'Comentario Supervisor',
+    'Revisado En',
   ];
 
   const escapeCSV = (val: unknown): string => {
@@ -58,6 +59,7 @@ export function exportReportesToCSV(reportes: Reporte[], filename = 'reportes_ma
     escapeCSV(r.observaciones || ''),
     escapeCSV(r.origen || ''),
     escapeCSV(r.comentario_supervisor || ''),
+    escapeCSV(r.revisado_en ? formatFechaHoraLima(r.revisado_en) : ''),
   ]);
 
   const csvContent =

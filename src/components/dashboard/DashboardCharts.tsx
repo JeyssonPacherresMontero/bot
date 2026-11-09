@@ -32,7 +32,6 @@ interface DashboardChartsProps {
   distribucionEstado: { name: string; value: number }[];
 }
 
-// Low visual fatigue color psychology palette
 const COLORS_PIE = ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6'];
 
 const PRIORIDAD_COLORS: Record<string, string> = {
@@ -44,11 +43,21 @@ const PRIORIDAD_COLORS: Record<string, string> = {
 };
 
 const ESTADO_COLORS: Record<string, string> = {
-  pendiente: '#f59e0b',
-  corregido: '#f97316',
   confirmado: '#3b82f6',
   revisado: '#10b981',
   rechazado: '#f43f5e',
+  pendiente: '#f59e0b',
+  corregido: '#f97316',
+  borrador: '#64748b',
+  editando: '#8b5cf6',
+};
+
+const ESTADO_LABELS: Record<string, string> = {
+  confirmado: 'Confirmados (Por revisar)',
+  revisado: 'Revisados',
+  rechazado: 'Rechazados',
+  pendiente: 'Pendientes (Histórico)',
+  corregido: 'Corregidos (Histórico)',
 };
 
 const tooltipStyle = {
@@ -84,6 +93,13 @@ export function DashboardCharts({
     );
   }
 
+  // Prepara datos de repuestos sin inventar unidades
+  const formattedRepuestos = repuestosMasUsados.slice(0, 10).map((r) => ({
+    repuesto: r.repuesto,
+    veces: r.veces,
+    unidades: r.unidades_informadas !== undefined ? r.unidades_informadas : r.unidades,
+  }));
+
   return (
     <div className="space-y-4">
       {/* Row 1: Reportes por día y Fallas por Equipo */}
@@ -100,7 +116,7 @@ export function DashboardCharts({
               </span>
             </div>
             <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
-              Volumen Diario
+              Volumen en Período
             </span>
           </div>
           <div className="modern-card-body">
@@ -122,7 +138,7 @@ export function DashboardCharts({
                     <YAxis tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
                     <Tooltip
                       contentStyle={tooltipStyle}
-                      formatter={(value) => [`${value} reportes`, 'Total']}
+                      formatter={(value) => [`${value} reporte${Number(value) === 1 ? '' : 's'}`, 'Total']}
                       labelFormatter={(label) => `Fecha: ${label}`}
                     />
                     <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -130,13 +146,13 @@ export function DashboardCharts({
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                  No hay datos para este período
+                  Sin reportes registrados en este período
                 </div>
               )}
             </div>
           </div>
           <div className="modern-card-footer">
-            Volumen generado por el bot de Telegram en los últimos días
+            Reportes confirmados y validados agrupados por fecha (America/Lima)
           </div>
         </div>
 
@@ -148,11 +164,11 @@ export function DashboardCharts({
                 <Wrench className="w-4 h-4" />
               </div>
               <span className="font-semibold text-slate-800 dark:text-slate-100">
-                Top 10 Fallas por Equipo
+                Top 10 Incidencias por Equipo
               </span>
             </div>
             <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
-              Incidencias
+              Fallas Registradas
             </span>
           </div>
           <div className="modern-card-body">
@@ -174,27 +190,27 @@ export function DashboardCharts({
                     />
                     <Tooltip
                       contentStyle={tooltipStyle}
-                      formatter={(value) => [`${value} fallas`, 'Incidencias']}
+                      formatter={(value) => [`${value} falla${Number(value) === 1 ? '' : 's'}`, 'Incidencias reportadas']}
                     />
                     <Bar dataKey="total_fallas" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                  Sin fallas registradas
+                  Sin fallas registradas en este período
                 </div>
               )}
             </div>
           </div>
           <div className="modern-card-footer">
-            Equipos con mayor frecuencia de reportes correctivos y preventivos
+            Equipos con mayor frecuencia de averías y reportes correctivos
           </div>
         </div>
       </div>
 
       {/* Row 2: Repuestos y Productividad Técnicos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Repuestos más usados */}
+        {/* Repuestos más mencionados */}
         <div className="modern-card">
           <div className="modern-card-header">
             <div className="flex items-center gap-2">
@@ -202,21 +218,21 @@ export function DashboardCharts({
                 <Package className="w-4 h-4" />
               </div>
               <span className="font-semibold text-slate-800 dark:text-slate-100">
-                Top 10 Repuestos más Consumidos
+                Top 10 Repuestos más Mencionados
               </span>
             </div>
-            <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
-              Materiales
+            <span className="text-[11px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-md">
+              Frecuencia de Uso
             </span>
           </div>
           <div className="modern-card-body">
             <div className="h-64 w-full">
-              {repuestosMasUsados.length > 0 ? (
+              {formattedRepuestos.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={repuestosMasUsados.slice(0, 10)}
+                    data={formattedRepuestos}
                     layout="vertical"
-                    margin={{ top: 5, right: 20, left: 40, bottom: 5 }}
+                    margin={{ top: 5, right: 20, left: 50, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.06} />
                     <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
@@ -224,28 +240,34 @@ export function DashboardCharts({
                       dataKey="repuesto"
                       type="category"
                       tick={{ fontSize: 11, fill: '#64748b' }}
-                      width={90}
+                      width={100}
                     />
                     <Tooltip
                       contentStyle={tooltipStyle}
-                      formatter={(value) => [`${value} unidades`, 'Total consumido']}
+                      formatter={(_val, _name, item) => {
+                        const payload = item?.payload as { repuesto: string; veces: number; unidades: number | null };
+                        const unidadesTxt = payload?.unidades !== null && payload?.unidades !== undefined
+                          ? `${payload.unidades} u. informadas`
+                          : 'Cantidad no especificada';
+                        return [`${payload?.veces} intervención(es) · ${unidadesTxt}`, 'Menciones'];
+                      }}
                     />
-                    <Bar dataKey="unidades" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="veces" fill="#f59e0b" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                  Sin repuestos registrados en este período
+                  Sin repuestos mencionados en este período
                 </div>
               )}
             </div>
           </div>
-          <div className="modern-card-footer">
-            Consumo total de repuestos y materiales extraído por IA
+          <div className="modern-card-footer text-xs text-slate-500">
+            Distingue frecuencia de mención de cantidades especificadas. Los datos provienen del relato técnico.
           </div>
         </div>
 
-        {/* Productividad por Técnico - removed parenthesis */}
+        {/* Productividad por Técnico */}
         <div className="modern-card">
           <div className="modern-card-header">
             <div className="flex items-center gap-2">
@@ -253,11 +275,11 @@ export function DashboardCharts({
                 <Users className="w-4 h-4" />
               </div>
               <span className="font-semibold text-slate-800 dark:text-slate-100">
-                Productividad por Técnico
+                Reportes por Técnico
               </span>
             </div>
             <span className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
-              Equipo Técnico
+              Actividad en Período
             </span>
           </div>
           <div className="modern-card-body">
@@ -273,20 +295,20 @@ export function DashboardCharts({
                     <YAxis tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
                     <Tooltip
                       contentStyle={tooltipStyle}
-                      formatter={(value) => [`${value} reportes`, 'Total']}
+                      formatter={(value) => [`${value} reporte${Number(value) === 1 ? '' : 's'}`, 'Total']}
                     />
                     <Bar dataKey="total" fill="#6366f1" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                  Sin registros de técnicos
+                  Sin registros de técnicos en este período
                 </div>
               )}
             </div>
           </div>
           <div className="modern-card-footer">
-            Cantidad de órdenes de trabajo enviadas por cada técnico
+            Intervenciones registradas y confirmadas por cada técnico en el período
           </div>
         </div>
       </div>
@@ -318,7 +340,7 @@ export function DashboardCharts({
                       dataKey="value"
                     >
                       {distribucionTipo.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
+                        <Cell key={`cell-tipo-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
                       ))}
                     </Pie>
                     <Tooltip contentStyle={tooltipStyle} />
@@ -326,7 +348,7 @@ export function DashboardCharts({
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                  Sin datos
+                  Sin datos en este período
                 </div>
               )}
             </div>
@@ -347,7 +369,7 @@ export function DashboardCharts({
           </div>
         </div>
 
-        {/* Prioridad - removed slash */}
+        {/* Prioridad */}
         <div className="modern-card">
           <div className="modern-card-header">
             <div className="flex items-center gap-2">
@@ -373,7 +395,7 @@ export function DashboardCharts({
                     >
                       {distribucionPrioridad.map((entry) => (
                         <Cell
-                          key={`cell-${entry.name}`}
+                          key={`cell-prio-${entry.name}`}
                           fill={PRIORIDAD_COLORS[entry.name.toLowerCase()] || '#64748b'}
                         />
                       ))}
@@ -383,7 +405,7 @@ export function DashboardCharts({
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                  Sin datos
+                  Sin datos en este período
                 </div>
               )}
             </div>
@@ -412,7 +434,7 @@ export function DashboardCharts({
                 <PieIcon className="w-4 h-4" />
               </div>
               <span className="font-semibold text-slate-800 dark:text-slate-100">
-                Flujo de Estados
+                Estados de Supervisión
               </span>
             </div>
           </div>
@@ -430,7 +452,7 @@ export function DashboardCharts({
                     >
                       {distribucionEstado.map((entry) => (
                         <Cell
-                          key={`cell-${entry.name}`}
+                          key={`cell-est-${entry.name}`}
                           fill={ESTADO_COLORS[entry.name.toLowerCase()] || '#64748b'}
                         />
                       ))}
@@ -440,7 +462,7 @@ export function DashboardCharts({
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                  Sin datos
+                  Sin datos en este período
                 </div>
               )}
             </div>
@@ -454,7 +476,10 @@ export function DashboardCharts({
                     className="w-1.5 h-1.5 rounded-full"
                     style={{ backgroundColor: ESTADO_COLORS[d.name.toLowerCase()] || '#64748b' }}
                   />
-                  <span className="capitalize">{d.name}: <strong className="text-slate-700 dark:text-slate-300">{d.value}</strong></span>
+                  <span>
+                    {ESTADO_LABELS[d.name.toLowerCase()] || d.name}:{' '}
+                    <strong className="text-slate-700 dark:text-slate-300">{d.value}</strong>
+                  </span>
                 </span>
               ))}
             </div>

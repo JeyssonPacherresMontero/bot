@@ -40,10 +40,16 @@ function LoginForm() {
       });
 
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setErrorMsg('Correo o contraseña incorrectos. Verifica tus credenciales.');
+        if (
+          error.message.includes('Invalid login credentials') ||
+          error.message.includes('invalid_grant') ||
+          error.message.includes('invalid_credentials')
+        ) {
+          setErrorMsg('Correo o contraseña incorrectos. Verifica tus credenciales institucionales.');
+        } else if (error.message.toLowerCase().includes('rate limit') || error.message.toLowerCase().includes('too many')) {
+          setErrorMsg('Demasiados intentos de acceso fallidos. Por seguridad, espera unos minutos.');
         } else {
-          setErrorMsg(error.message);
+          setErrorMsg('No se pudo verificar el acceso. Comprueba tus datos o contacta a soporte técnico.');
         }
         setIsLoading(false);
         return;

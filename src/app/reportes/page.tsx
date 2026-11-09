@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -44,6 +44,7 @@ function ReportesContent() {
   const { user } = useAuth();
   const toast = useToast();
   const supabase = createClient();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const initialEstadoParam = searchParams.get('estado');
   const initialEstados: EstadoReporte[] = initialEstadoParam
@@ -83,7 +84,7 @@ function ReportesContent() {
       if (filtros.busqueda.trim()) {
         const term = filtros.busqueda.trim();
         query = query.or(
-          `equipo.ilike.%${term}%,codigo_equipo.ilike.%${term}%,falla.ilike.%${term}%,tecnico_nombre.ilike.%${term}%,numero_ot.ilike.%${term}%,texto_original.ilike.%${term}%`
+          `equipo.ilike.%${term}%,codigo_equipo.ilike.%${term}%,area.ilike.%${term}%,falla.ilike.%${term}%,tecnico_nombre.ilike.%${term}%,numero_ot.ilike.%${term}%,texto_original.ilike.%${term}%`
         );
       }
 
@@ -141,25 +142,39 @@ function ReportesContent() {
     loadReportes();
   }, [loadReportes]);
 
+  // Supabase Realtime: escucha tanto INSERT como UPDATE (por ejemplo cuando pasa de borrador a confirmado o cuando se valida)
   useEffect(() => {
     const channel = supabase
-      .channel('realtime_reportes_channel')
+      .channel('realtime_reportes_all')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'reportes' },
+        { event: '*', schema: 'public', table: 'reportes' },
         (payload) => {
-          const newRep = payload.new as Reporte;
-          setNewReporteNotice(
-            `Nuevo reporte recibido: #${formatReporteNumero(newRep.numero)} · ${newRep.equipo || 'Equipo'} · ${newRep.tecnico_nombre || 'Técnico'}`
-          );
+          const rec = (payload.new || payload.old) as Reporte;
+          if (payload.eventType === 'INSERT') {
+            setNewReporteNotice(
+              `Nuevo reporte registrado: #${formatReporteNumero(rec?.numero)} · ${rec?.equipo || 'Equipo'} · ${rec?.tecnico_nombre || 'Técnico'}`
+            );
+          } else if (payload.eventType === 'UPDATE') {
+            const estadoTexto = rec?.estado === 'confirmado' ? 'Confirmado por técnico' : rec?.estado;
+            setNewReporteNotice(
+              `Reporte #${formatReporteNumero(rec?.numero)} actualizado (${estadoTexto})`
+            );
+          }
+
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          debounceRef.current = setTimeout(() => {
+            loadReportes();
+          }, 800);
         }
       )
       .subscribe();
 
     return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, [supabase, loadReportes]);
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -196,7 +211,7 @@ function ReportesContent() {
           estado: 'revisado',
           revisado_por: user?.id || null,
           revisado_en: nowIso,
-          comentario_supervisor: 'Validación en lote por supervisor.',
+          comentario_supervisor: 'Validación técnica en lote por supervisor.',
         })
         .in('id', selectedIds);
 
@@ -205,7 +220,7 @@ function ReportesContent() {
       } else {
         toast.success(
           'Validación en lote exitosa',
-          `Se marcaron ${selectedIds.length} reportes como revisados.`
+          `Se marcaron ${selectedIds.length} reporte(s) como revisados.`
         );
         setSelectedIds([]);
         setShowBatchConfirm(false);
@@ -227,7 +242,7 @@ function ReportesContent() {
       if (filtros.busqueda.trim()) {
         const term = filtros.busqueda.trim();
         query = query.or(
-          `equipo.ilike.%${term}%,codigo_equipo.ilike.%${term}%,falla.ilike.%${term}%,tecnico_nombre.ilike.%${term}%,numero_ot.ilike.%${term}%,texto_original.ilike.%${term}%`
+          `equipo.ilike.%${term}%,codigo_equipo.ilike.%${term}%,area.ilike.%${term}%,falla.ilike.%${term}%,tecnico_nombre.ilike.%${term}%,numero_ot.ilike.%${term}%,texto_original.ilike.%${term}%`
         );
       }
       if (filtros.estados.length > 0) query = query.in('estado', filtros.estados);
@@ -303,15 +318,15 @@ function ReportesContent() {
       {newReporteNotice && (
         <div
           role="status"
-          className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 flex flex-wrap items-center justify-between gap-3 border border-emerald-200 dark:border-emerald-800/60 shadow-xs animate-slide-in-up"
+          className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 flex flex-wrap items-center justify-between gap-3 border border-blue-200 dark:border-blue-800/60 shadow-xs animate-slide-in-up"
         >
           <div className="flex items-center gap-2.5 text-xs sm:text-sm font-medium">
-            <BellRing className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <BellRing className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
             <span>{newReporteNotice}</span>
           </div>
           <Button
             size="xs"
-            variant="success"
+            variant="primary"
             onClick={() => {
               setNewReporteNotice(null);
               loadReportes();
@@ -324,8 +339,8 @@ function ReportesContent() {
 
       {/* Content Header */}
       <ContentHeader
-        title="Registro de Reportes"
-        subtitle={`${totalCount} reporte${totalCount === 1 ? '' : 's'} registrados según los criterios activos`}
+        title="Registro de Reportes de Mantenimiento"
+        subtitle={`${totalCount} reporte${totalCount === 1 ? '' : 's'} visibles según los filtros aplicados`}
         breadcrumbs={[
           { label: 'Inicio', href: '/dashboard' },
           { label: 'Reportes', active: true },
@@ -360,7 +375,7 @@ function ReportesContent() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <CardTitle>
-              <span>Listado de Órdenes de Trabajo y Reportes</span>
+              <span>Listado de Intervenciones y Reportes</span>
               <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold px-2 py-0.5 rounded-md ml-1">
                 Total: {totalCount}
               </span>
@@ -380,7 +395,7 @@ function ReportesContent() {
             <EmptyState
               icon={AlertCircle}
               title="No se encontraron reportes"
-              description="No hay intervenciones que coincidan con los criterios seleccionados. Prueba modificando los filtros de búsqueda."
+              description="No hay intervenciones que coincidan con los criterios activos. Prueba modificando o limpiando los filtros."
               actionLabel="Limpiar filtros"
               onAction={() => {
                 setFiltros({
@@ -429,7 +444,7 @@ function ReportesContent() {
                         onClick={() => handleSort('created_at')}
                       >
                         <div className="flex items-center gap-1">
-                          <span>Fecha</span>
+                          <span>Fecha Registro</span>
                           <ArrowUpDown className="w-3 h-3 text-slate-400" />
                         </div>
                       </th>
@@ -439,11 +454,11 @@ function ReportesContent() {
                         onClick={() => handleSort('equipo')}
                       >
                         <div className="flex items-center gap-1">
-                          <span>Equipo</span>
+                          <span>Equipo, Tag y Área</span>
                           <ArrowUpDown className="w-3 h-3 text-slate-400" />
                         </div>
                       </th>
-                      <th className="py-3 px-4">Falla</th>
+                      <th className="py-3 px-4">Falla / Motivo</th>
                       <th className="py-3 px-4">Tipo</th>
                       <th className="py-3 px-4">Prioridad</th>
                       <th
@@ -455,7 +470,7 @@ function ReportesContent() {
                           <ArrowUpDown className="w-3 h-3 text-slate-400" />
                         </div>
                       </th>
-                      <th className="py-3 px-4">Confianza</th>
+                      <th className="py-3 px-4" title="Confianza orientativa calculada por IA">Confianza</th>
                       <th className="py-3 px-4">Origen</th>
                       <th className="py-3 px-4 text-right">Detalle</th>
                     </tr>
@@ -498,17 +513,16 @@ function ReportesContent() {
                             <div className="font-semibold text-slate-900 dark:text-slate-100">
                               {r.equipo || 'Sin equipo'}
                             </div>
-                            {r.codigo_equipo && (
-                              <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                                {r.codigo_equipo}
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                              {r.codigo_equipo && <span>Tag: {r.codigo_equipo}</span>}
+                              {r.area && <span className="text-slate-400 font-sans">· {r.area}</span>}
+                            </div>
                           </td>
                           <td
                             className="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-300"
                             title={r.falla || ''}
                           >
-                            {r.falla || '—'}
+                            {r.falla || (r.tipo_mantenimiento === 'preventivo' ? 'Mantenimiento preventivo programado' : '—')}
                           </td>
                           <td className="py-3 px-4 whitespace-nowrap">
                             <TipoBadge tipo={r.tipo_mantenimiento} />
@@ -520,7 +534,7 @@ function ReportesContent() {
                             <EstadoBadge estado={r.estado} isDemorado={demorado} />
                           </td>
                           <td className="py-3 px-4 whitespace-nowrap">
-                            <span className="font-medium text-slate-700 dark:text-slate-300">
+                            <span className="font-medium text-slate-700 dark:text-slate-300 text-[11px]" title="Certeza orientativa">
                               {formatConfianza(r.confianza)}
                             </span>
                           </td>
@@ -583,13 +597,12 @@ function ReportesContent() {
                         <div className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                           {r.equipo || 'Sin equipo especificado'}
                         </div>
-                        {r.codigo_equipo && (
-                          <div className="text-[11px] font-mono text-slate-500">
-                            Tag: {r.codigo_equipo}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                          {r.codigo_equipo && <span className="font-mono">Tag: {r.codigo_equipo}</span>}
+                          {r.area && <span>· {r.area}</span>}
+                        </div>
                         <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
-                          {r.falla || 'Sin falla reportada.'}
+                          {r.falla || (r.tipo_mantenimiento === 'preventivo' ? 'Mantenimiento preventivo programado' : 'Sin descripción')}
                         </p>
                       </div>
 
@@ -661,8 +674,8 @@ function ReportesContent() {
         isOpen={showBatchConfirm}
         onClose={() => setShowBatchConfirm(false)}
         onConfirm={handleBatchValidate}
-        title="Validación en Lote"
-        message={`¿Estás seguro de que deseas marcar como 'Revisados' los ${selectedIds.length} reportes seleccionados? Se registrará tu usuario como supervisor de revisión.`}
+        title="Validación Técnica en Lote"
+        message={`¿Estás seguro de que deseas marcar como 'Revisados' los ${selectedIds.length} reportes seleccionados? Se registrará tu usuario como supervisor de revisión y se conservará el historial.`}
         confirmLabel={`Validar ${selectedIds.length} Reportes`}
         variant="primary"
         isLoading={batchLoading}

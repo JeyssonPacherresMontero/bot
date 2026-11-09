@@ -62,9 +62,11 @@ export default function TecnicosPage() {
         const list = (data as UsuarioTelegram[]) || [];
         setTecnicos(list);
 
+        // Cuenta de actividad basada únicamente en reportes visibles y confirmados
         const { data: reportesData } = await supabase
           .from('reportes')
-          .select('telegram_chat_id');
+          .select('telegram_chat_id')
+          .in('estado', ['confirmado', 'revisado', 'rechazado']);
 
         if (reportesData) {
           const map: Record<number, number> = {};

@@ -1,6 +1,13 @@
 export type RolUsuario = 'supervisor' | 'admin';
 
-export type EstadoReporte = 'pendiente' | 'corregido' | 'confirmado' | 'revisado' | 'rechazado';
+export type EstadoReporte =
+  | 'borrador'
+  | 'editando'
+  | 'pendiente'
+  | 'corregido'
+  | 'confirmado'
+  | 'revisado'
+  | 'rechazado';
 
 export type PrioridadReporte = 'baja' | 'media' | 'alta' | 'critica';
 
@@ -66,16 +73,21 @@ export interface Reporte {
   comentario_supervisor: string | null;
   revisado_por: string | null;
   revisado_en: string | null;
-  // Relaciones
-  supervisor_revisor?: {
+  // Relación con perfiles
+  revisor?: {
+    id?: string;
     nombre: string;
+    rol?: string;
   } | null;
 }
 
 export interface VKpiResumen {
   total_reportes: number;
-  confirmados: number;
-  pendientes: number;
+  confirmados?: number;
+  confirmados_por_revisar?: number;
+  pendientes?: number;
+  pendientes_historicos?: number;
+  revisados?: number;
   rechazados: number;
   pct_sin_correccion: number | null;
   duracion_promedio_min: number | null;
@@ -97,12 +109,35 @@ export interface VFallasPorEquipo {
 
 export interface VRepuestosMasUsados {
   repuesto: string;
-  unidades: number;
+  unidades?: number | null;
+  unidades_informadas?: number | null;
   veces: number;
+  veces_sin_cantidad?: number;
 }
 
 export interface VReportesPorTecnico {
   tecnico: string;
   total: number;
   duracion_promedio_min: number | null;
+}
+
+export interface EquipoConsolidado {
+  id_clave: string;
+  equipo: string;
+  codigo_equipo: string | null;
+  area: string | null;
+  total_reportes: number;
+  total_fallas: number;
+  duracion_promedio_min: number | null;
+  ultimo_reporte: string;
+}
+
+export interface RepuestoConsolidado {
+  nombre: string;
+  codigo: string | null;
+  total_menciones: number;
+  unidades_totales: number | null;
+  tiene_cantidad_informada: boolean;
+  equipos_utilizados: string[];
+  ultimo_uso: string;
 }

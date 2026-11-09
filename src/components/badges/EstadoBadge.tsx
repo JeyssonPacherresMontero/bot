@@ -1,6 +1,6 @@
 import React from 'react';
 import type { EstadoReporte } from '@/types/database.types';
-import { Clock, CheckCircle2, AlertCircle, CheckCheck, XCircle } from 'lucide-react';
+import { Clock, CheckCheck, XCircle, FileEdit, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EstadoBadgeProps {
@@ -11,6 +11,47 @@ interface EstadoBadgeProps {
 
 export function EstadoBadge({ estado, isDemorado = false, className }: EstadoBadgeProps) {
   switch (estado) {
+    case 'confirmado':
+      return (
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20',
+            isDemorado && 'ring-1 ring-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30 animate-pulse',
+            className
+          )}
+          title={isDemorado ? 'Confirmado hace más de 24h esperando revisión de supervisor' : 'Confirmado por técnico · Esperando revisión'}
+        >
+          <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+          <span>Confirmado (Por revisar)</span>
+          {isDemorado && <span className="bg-rose-600 text-white text-[10px] px-1 rounded font-bold ml-0.5">+24h</span>}
+        </span>
+      );
+    case 'revisado':
+      return (
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20',
+            className
+          )}
+          title="Validado y aprobado por supervisor"
+        >
+          <CheckCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+          <span>Revisado</span>
+        </span>
+      );
+    case 'rechazado':
+      return (
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20',
+            className
+          )}
+          title="Rechazado por supervisión con observación enviada a Telegram"
+        >
+          <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+          <span>Rechazado</span>
+        </span>
+      );
     case 'pendiente':
       return (
         <span
@@ -19,10 +60,10 @@ export function EstadoBadge({ estado, isDemorado = false, className }: EstadoBad
             isDemorado && 'ring-1 ring-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
             className
           )}
-          title={isDemorado ? 'Pendiente hace más de 24h sin revisión' : 'Pendiente de revisión'}
+          title={isDemorado ? 'Histórico pendiente hace más de 24h' : 'Registro histórico en estado pendiente'}
         >
           <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-          <span>Pendiente</span>
+          <span>Pendiente (Histórico)</span>
           {isDemorado && <span className="bg-rose-600 text-white text-[10px] px-1 rounded font-bold ml-0.5">+24h</span>}
         </span>
       );
@@ -34,50 +75,37 @@ export function EstadoBadge({ estado, isDemorado = false, className }: EstadoBad
             isDemorado && 'ring-1 ring-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
             className
           )}
-          title={isDemorado ? 'Corregido hace más de 24h sin revisión' : 'Corregido por técnico'}
+          title={isDemorado ? 'Histórico corregido hace más de 24h' : 'Registro histórico corregido por técnico'}
         >
-          <AlertCircle className="w-3 h-3 text-orange-600 dark:text-orange-400" />
-          <span>Corregido</span>
+          <AlertTriangle className="w-3 h-3 text-orange-600 dark:text-orange-400" />
+          <span>Corregido (Histórico)</span>
           {isDemorado && <span className="bg-rose-600 text-white text-[10px] px-1 rounded font-bold ml-0.5">+24h</span>}
         </span>
       );
-    case 'confirmado':
+    case 'borrador':
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20',
+            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20',
             className
           )}
-          title="Confirmado por técnico"
+          title="Borrador en Telegram previo a confirmación"
         >
-          <CheckCircle2 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-          <span>Confirmado</span>
+          <FileEdit className="w-3 h-3 text-slate-500" />
+          <span>Borrador (Telegram)</span>
         </span>
       );
-    case 'revisado':
+    case 'editando':
       return (
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20',
+            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20',
             className
           )}
-          title="Aprobado y cerrado por supervisor"
+          title="Técnico corrigiendo o editando datos en Telegram"
         >
-          <CheckCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-          <span>Revisado</span>
-        </span>
-      );
-    case 'rechazado':
-      return (
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20',
-            className
-          )}
-          title="Rechazado"
-        >
-          <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
-          <span>Rechazado</span>
+          <FileEdit className="w-3 h-3 text-indigo-500" />
+          <span>En edición (Telegram)</span>
         </span>
       );
     default:
@@ -88,7 +116,7 @@ export function EstadoBadge({ estado, isDemorado = false, className }: EstadoBad
             className
           )}
         >
-          <span>{estado}</span>
+          <span>{estado || 'Sin estado'}</span>
         </span>
       );
   }

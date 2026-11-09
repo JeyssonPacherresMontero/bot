@@ -17,10 +17,10 @@ export function formatReporteNumero(num: number | null | undefined): string {
  * Formatea una fecha ISO o string en formato dd/mm/aaaa en zona horaria America/Lima
  */
 export function formatFechaLima(dateInput: string | Date | null | undefined): string {
-  if (!dateInput) return '—';
+  if (!dateInput) return 'Sin fecha';
   try {
     const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return 'Sin fecha';
     return new Intl.DateTimeFormat('es-PE', {
       timeZone: 'America/Lima',
       day: '2-digit',
@@ -28,7 +28,7 @@ export function formatFechaLima(dateInput: string | Date | null | undefined): st
       year: 'numeric',
     }).format(d);
   } catch {
-    return '—';
+    return 'Sin fecha';
   }
 }
 
@@ -36,10 +36,10 @@ export function formatFechaLima(dateInput: string | Date | null | undefined): st
  * Formatea fecha y hora completa en zona horaria America/Lima (dd/mm/aaaa hh:mm)
  */
 export function formatFechaHoraLima(dateInput: string | Date | null | undefined): string {
-  if (!dateInput) return '—';
+  if (!dateInput) return 'Sin fecha';
   try {
     const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return 'Sin fecha';
     return new Intl.DateTimeFormat('es-PE', {
       timeZone: 'America/Lima',
       day: '2-digit',
@@ -50,17 +50,23 @@ export function formatFechaHoraLima(dateInput: string | Date | null | undefined)
       hour12: true,
     }).format(d);
   } catch {
-    return '—';
+    return 'Sin fecha';
   }
 }
 
 /**
- * Determina si un reporte lleva más de 24 horas en estado pendiente o corregido sin ser revisado
+ * Determina si un reporte confirmado lleva más de 24 horas esperando revisión de supervisión
+ * (También compatible con reportes históricos en estado 'pendiente' o 'corregido')
  */
-export function isReporteDemorado(created_at: string, estado: string): boolean {
-  if (estado !== 'pendiente' && estado !== 'corregido') return false;
+export function isReporteDemorado(created_at: string | null | undefined, estado: string | null | undefined): boolean {
+  if (!created_at || !estado) return false;
+  // Estados que esperan atención o revisión de supervisión
+  const estadosEnEspera = ['confirmado', 'pendiente', 'corregido'];
+  if (!estadosEnEspera.includes(estado)) return false;
+
   try {
     const createdTime = new Date(created_at).getTime();
+    if (isNaN(createdTime)) return false;
     const now = Date.now();
     const diffHours = (now - createdTime) / (1000 * 60 * 60);
     return diffHours > 24;
@@ -70,22 +76,33 @@ export function isReporteDemorado(created_at: string, estado: string): boolean {
 }
 
 /**
- * Formatea el porcentaje de confianza
+ * Formatea el porcentaje de confianza orientativo de la IA
  */
 export function formatConfianza(conf: number | null | undefined): string {
-  if (conf === null || conf === undefined) return '—';
-  return `${Math.round(conf * 100)}%`;
+  if (conf === null || conf === undefined || isNaN(Number(conf))) return 'No evaluado';
+  return `${Math.round(Number(conf) * 100)}% (orientativo)`;
 }
 
 /**
- * Formatea duración en minutos o segundos
+ * Formatea duración en minutos. Nunca presenta 0 cuando falta el dato.
  */
 export function formatMinutos(min: number | null | undefined): string {
-  if (min === null || min === undefined) return '—';
+  if (min === null || min === undefined || isNaN(Number(min))) return 'No informado';
   return `${min} min`;
 }
 
+/**
+ * Formatea tiempo de procesamiento de IA en segundos
+ */
 export function formatSegundos(sec: number | null | undefined): string {
-  if (sec === null || sec === undefined) return '—';
+  if (sec === null || sec === undefined || isNaN(Number(sec))) return 'No registrado';
   return `${sec} s`;
+}
+
+/**
+ * Formatea unidades de repuestos. Si falta la cantidad, indica claramente 'No especificada'
+ */
+export function formatUnidadesRepuesto(cant: number | null | undefined): string {
+  if (cant === null || cant === undefined || isNaN(Number(cant))) return 'No especificada';
+  return `${cant} u.`;
 }

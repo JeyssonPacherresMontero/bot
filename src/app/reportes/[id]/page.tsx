@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import {
   formatReporteNumero,
   formatFechaHoraLima,
+  formatFechaLima,
   formatConfianza,
   formatSegundos,
   isReporteDemorado,
@@ -27,6 +28,7 @@ import type {
   TipoMantenimiento,
   PrioridadReporte,
   RepuestoItem,
+  Perfil,
 } from '@/types/database.types';
 import {
   ArrowLeft,
@@ -46,6 +48,8 @@ import {
   Clock,
   Sparkles,
   ShieldCheck,
+  User,
+  Wrench,
 } from 'lucide-react';
 
 export default function ReporteDetallePage() {
@@ -57,6 +61,7 @@ export default function ReporteDetallePage() {
   const supabase = createClient();
 
   const [reporte, setReporte] = useState<Reporte | null>(null);
+  const [supervisorRevisor, setSupervisorRevisor] = useState<Perfil | null>(null);
   const [otrosReportesEquipo, setOtrosReportesEquipo] = useState<Reporte[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -118,7 +123,21 @@ export default function ReporteDetallePage() {
         setObservaciones(r.observaciones || '');
         setComentarioSupervisor(r.comentario_supervisor || '');
 
-        // Fetch other reports from the same equipment
+        // Cargar perfil del supervisor si fue revisado
+        if (r.revisado_por) {
+          const { data: perfilData } = await supabase
+            .from('perfiles')
+            .select('*')
+            .eq('id', r.revisado_por)
+            .single();
+          if (perfilData) {
+            setSupervisorRevisor(perfilData as Perfil);
+          }
+        } else {
+          setSupervisorRevisor(null);
+        }
+
+        // Otros reportes del mismo equipo
         if (r.equipo || r.codigo_equipo) {
           const filterTerm = r.codigo_equipo || r.equipo;
           const { data: otros } = await supabase
@@ -135,7 +154,7 @@ export default function ReporteDetallePage() {
         }
       }
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error cargando reporte:', err);
       toast.error('Error al cargar la información del reporte');
     } finally {
       setLoading(false);
@@ -146,7 +165,7 @@ export default function ReporteDetallePage() {
     loadReporte();
   }, [loadReporte]);
 
-  // Handlers for dynamic list: Actividades
+  // Handlers para Actividades dinámicas
   const handleAddActividad = () => {
     setActividades([...actividades, '']);
   };
@@ -161,9 +180,9 @@ export default function ReporteDetallePage() {
     setActividades(actividades.filter((_, i) => i !== index));
   };
 
-  // Handlers for dynamic list: Repuestos
+  // Handlers para Repuestos
   const handleAddRepuesto = () => {
-    setRepuestos([...repuestos, { nombre: '', cantidad: 1, codigo: null }]);
+    setRepuestos([...repuestos, { nombre: '', cantidad: null, codigo: null }]);
   };
 
   const handleUpdateRepuesto = (
@@ -180,7 +199,7 @@ export default function ReporteDetallePage() {
     setRepuestos(repuestos.filter((_, i) => i !== index));
   };
 
-  // Save manual modifications
+  // Guardar cambios manuales
   const handleSaveChanges = async () => {
     if (!reporte) return;
     setSaving(true);
@@ -218,7 +237,7 @@ export default function ReporteDetallePage() {
     }
   };
 
-  // Validate (Revisado)
+  // Validar reporte (Revisado)
   const handleValidate = async () => {
     if (!reporte) return;
     setActionLoading(true);
@@ -237,7 +256,7 @@ export default function ReporteDetallePage() {
       if (error) {
         toast.error('Error al validar reporte', error.message);
       } else {
-        toast.success('Reporte validado exitosamente');
+        toast.success('Reporte validado y aprobado exitosamente');
         setShowValidateConfirm(false);
         loadReporte();
       }
@@ -249,7 +268,7 @@ export default function ReporteDetallePage() {
     }
   };
 
-  // Reject (Rechazado)
+  // Rechazar reporte (Rechazado)
   const handleConfirmReject = async () => {
     if (!reporte || !rejectReason.trim()) return;
     setActionLoading(true);
@@ -271,7 +290,7 @@ export default function ReporteDetallePage() {
         setShowRejectModal(false);
         toast.success(
           'Reporte rechazado',
-          'El motivo ha sido registrado para notificación al técnico.'
+          'El motivo ha sido guardado y se enviará al técnico en Telegram vía webhook.'
         );
         loadReporte();
       }
@@ -283,7 +302,7 @@ export default function ReporteDetallePage() {
     }
   };
 
-  // Reopen (Pendiente)
+  // Reabrir reporte a estado 'confirmado' para revisión
   const handleReopen = async () => {
     if (!reporte) return;
     setActionLoading(true);
@@ -291,14 +310,16 @@ export default function ReporteDetallePage() {
       const { error } = await supabase
         .from('reportes')
         .update({
-          estado: 'pendiente',
+          estado: 'confirmado',
+          revisado_por: null,
+          revisado_en: null,
         })
         .eq('id', reporte.id);
 
       if (error) {
         toast.error('Error al reabrir reporte', error.message);
       } else {
-        toast.success('Reporte reabierto en estado pendiente');
+        toast.success('Reporte reabierto: listo para nueva revisión de supervisión');
         setShowReopenConfirm(false);
         loadReporte();
       }
@@ -310,7 +331,7 @@ export default function ReporteDetallePage() {
     }
   };
 
-  // Delete (Admin only)
+  // Eliminar (Solo Admin)
   const handleDelete = async () => {
     if (!reporte || !isAdmin) return;
     setActionLoading(true);
@@ -340,8 +361,8 @@ export default function ReporteDetallePage() {
       <EmptyState
         icon={AlertTriangle}
         title="Reporte no encontrado"
-        description="El reporte solicitado no existe o fue eliminado del sistema."
-        actionLabel="Volver al listado"
+        description="El reporte solicitado no existe o no tienes permisos para visualizarlo."
+        actionLabel="Volver a reportes"
         actionIcon={<ArrowLeft className="w-4 h-4" />}
         onAction={() => router.push('/reportes')}
         className="py-16"
@@ -351,6 +372,7 @@ export default function ReporteDetallePage() {
 
   const faltantes = reporte.campos_faltantes || [];
   const demorado = isReporteDemorado(reporte.created_at, reporte.estado);
+  const esPreventivo = tipoMantenimiento === 'preventivo';
 
   const headerActions = (
     <div className="flex flex-wrap items-center gap-2">
@@ -379,7 +401,7 @@ export default function ReporteDetallePage() {
           disabled={actionLoading || saving}
           leftIcon={<CheckCheck className="w-3.5 h-3.5" />}
         >
-          <span>Validar</span>
+          <span>Validar reporte</span>
         </Button>
       )}
 
@@ -406,7 +428,7 @@ export default function ReporteDetallePage() {
           disabled={actionLoading || saving}
           leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
         >
-          <span>Reabrir</span>
+          <span>Reabrir revisión</span>
         </Button>
       )}
 
@@ -429,7 +451,7 @@ export default function ReporteDetallePage() {
       {/* Content Header */}
       <ContentHeader
         title={`Reporte #${formatReporteNumero(reporte.numero)}`}
-        subtitle={`Registrado el ${formatFechaHoraLima(reporte.created_at)} por ${reporte.tecnico_nombre || 'Técnico desconocido'}`}
+        subtitle={`Intervención técnica registrada el ${formatFechaHoraLima(reporte.created_at)}`}
         breadcrumbs={[
           { label: 'Inicio', href: '/dashboard' },
           { label: 'Reportes', href: '/reportes' },
@@ -438,28 +460,28 @@ export default function ReporteDetallePage() {
         actions={headerActions}
       />
 
-      {/* Origin & Metadata Strip */}
+      {/* Origin & Status Strip */}
       <Card className="p-4 text-xs">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-slate-500 dark:text-slate-400">Estado:</span>
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Estado actual:</span>
               <EstadoBadge estado={reporte.estado} isDemorado={demorado} />
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-medium text-slate-500 dark:text-slate-400">Origen:</span>
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Canal:</span>
               <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
             </div>
             <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
               <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>Tiempo IA:</span>
+              <span>Tiempo de IA:</span>
               <span className="font-semibold text-slate-800 dark:text-slate-200">
                 {formatSegundos(reporte.tiempo_procesamiento_ms ? Math.round(reporte.tiempo_procesamiento_ms / 1000) : null)}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400" title="Confianza orientativa estimada por el modelo">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Confianza:</span>
+              <span>Confianza IA:</span>
               <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                 {formatConfianza(reporte.confianza)}
               </span>
@@ -467,123 +489,177 @@ export default function ReporteDetallePage() {
           </div>
 
           {reporte.revisado_en && (
-            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Validado el {formatFechaHoraLima(reporte.revisado_en)}</span>
+            <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-medium text-xs bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800/60">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>
+                Validado el {formatFechaHoraLima(reporte.revisado_en)}
+                {supervisorRevisor ? ` por ${supervisorRevisor.nombre}` : ''}
+              </span>
             </div>
           )}
         </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Main 2 Columns: Transcriptions & Form */}
+        {/* Main 2 Columns: Sections 1 to 9 */}
         <div className="lg:col-span-2 space-y-5">
-          {/* Section: Relato Original del Técnico */}
+          {/* SECCIÓN 1: Identificación y Fechas */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
                   <FileText className="w-4 h-4" />
                 </div>
-                <CardTitle>Relato Original del Técnico</CardTitle>
+                <CardTitle>1. Identificación y Fechas</CardTitle>
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {reporte.origen === 'audio' ? 'Transcripción Whisper' : 'Texto directo Telegram'}
-              </span>
             </CardHeader>
-
-            <CardContent className="space-y-3">
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-950/40 rounded-xl border border-slate-200/80 dark:border-slate-800 text-xs">
-                <p className="font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] mb-1.5">
-                  Texto Transcrito:
-                </p>
-                <p className="text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-                  {reporte.texto_original || 'Sin texto original registrado.'}
-                </p>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Número Oficial:</span>
+                <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
+                  {formatReporteNumero(reporte.numero)}
+                </span>
               </div>
-
-              {reporte.texto_correccion && (
-                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-800/60 text-xs">
-                  <p className="font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[10px] mb-1.5">
-                    Corrección posterior enviada por el técnico:
-                  </p>
-                  <p className="text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-wrap">
-                    {reporte.texto_correccion}
-                  </p>
-                </div>
-              )}
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Fecha de Registro en Telegram:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {formatFechaHoraLima(reporte.created_at)}
+                </span>
+              </div>
+              <div>
+                <label htmlFor="fecha-intervencion" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                  Fecha de Intervención en Planta:
+                </label>
+                <input
+                  id="fecha-intervencion"
+                  type="date"
+                  value={fechaIntervencion}
+                  onChange={(e) => setFechaIntervencion(e.target.value)}
+                  className="modern-input"
+                />
+              </div>
+              <div>
+                <label htmlFor="duracion-minutos" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                  Duración de Intervención (minutos):
+                </label>
+                <input
+                  id="duracion-minutos"
+                  type="number"
+                  min="0"
+                  value={duracionMinutos}
+                  onChange={(e) => setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="Ej. 90 (dejar en blanco si no se informó)"
+                  className="modern-input"
+                />
+              </div>
             </CardContent>
           </Card>
 
-          {/* Section: Formulario editable de campos extraídos */}
+          {/* SECCIÓN 2: Técnico y Origen del Mensaje */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <CardTitle>Campos Estructurados de la Intervención</CardTitle>
+                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <User className="w-4 h-4" />
+                </div>
+                <CardTitle>2. Técnico y Origen del Mensaje</CardTitle>
               </div>
-              {faltantes.length > 0 && (
-                <span className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Pendientes: {faltantes.join(', ')}</span>
-                </span>
-              )}
             </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Nombre del Técnico:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
+                  {reporte.tecnico_nombre || 'No identificado'}
+                </span>
+                {reporte.tecnico_username && (
+                  <span className="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
+                    @{reporte.tecnico_username}
+                  </span>
+                )}
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Identificador de Telegram (Chat ID):</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[11px]">
+                  {reporte.telegram_chat_id ? String(reporte.telegram_chat_id) : 'No disponible'}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Tipo de Mensaje Recibido:</span>
+                <div className="flex items-center gap-2">
+                  <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
+                  {reporte.audio_duracion_seg && (
+                    <span className="text-slate-500 text-[11px]">
+                      Audio de {reporte.audio_duracion_seg} segundos
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">Nota de Reproducción:</span>
+                <p className="text-[11px] text-slate-500 italic">
+                  El audio fue procesado por Whisper en n8n. No se almacena el archivo binario en base de datos.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-            <CardContent className="space-y-4">
-              {/* Fields Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-                {/* Equipo */}
+          {/* SECCIÓN 3 y 4: Equipo, Área, Tipo de Intervención y OT */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <CardTitle>3 y 4. Equipo, Área, Tipo de Intervención y Orden de Trabajo</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label htmlFor="campo-equipo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Equipo {faltantes.includes('equipo') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">* Requerido</span>}
+                  <label htmlFor="equipo-nombre" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Equipo o Activo:
                   </label>
                   <input
-                    id="campo-equipo"
+                    id="equipo-nombre"
                     type="text"
                     value={equipo}
                     onChange={(e) => setEquipo(e.target.value)}
                     placeholder="Ej. Turbina de vapor TV-01"
-                    className={`modern-input ${faltantes.includes('equipo') ? 'border-rose-400 dark:border-rose-700 bg-rose-50/20' : ''}`}
-                  />
-                </div>
-
-                {/* Codigo Equipo */}
-                <div>
-                  <label htmlFor="campo-codigo-equipo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Código o Tag de Equipo
-                  </label>
-                  <input
-                    id="campo-codigo-equipo"
-                    type="text"
-                    value={codigoEquipo}
-                    onChange={(e) => setCodigoEquipo(e.target.value)}
-                    placeholder="Ej. P-101A, TV-01, CALD-2"
-                    className="modern-input font-mono"
-                  />
-                </div>
-
-                {/* Area */}
-                <div>
-                  <label htmlFor="campo-area" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Área de Planta
-                  </label>
-                  <input
-                    id="campo-area"
-                    type="text"
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    placeholder="Ej. Sala de Turbinas, Condensados"
                     className="modern-input"
                   />
                 </div>
-
-                {/* Tipo Mantenimiento */}
                 <div>
-                  <label htmlFor="campo-tipo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Tipo de Mantenimiento
+                  <label htmlFor="equipo-codigo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Código / Tag de Equipo:
+                  </label>
+                  <input
+                    id="equipo-codigo"
+                    type="text"
+                    value={codigoEquipo}
+                    onChange={(e) => setCodigoEquipo(e.target.value)}
+                    placeholder="Ej. TV-01, P-101A"
+                    className="modern-input font-mono"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="equipo-area" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Área Operativa:
+                  </label>
+                  <input
+                    id="equipo-area"
+                    type="text"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    placeholder="Ej. Generación Eléctrica, Calderas"
+                    className="modern-input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="equipo-tipo-mant" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Tipo de Mantenimiento:
                   </label>
                   <select
-                    id="campo-tipo"
+                    id="equipo-tipo-mant"
                     value={tipoMantenimiento}
                     onChange={(e) => setTipoMantenimiento(e.target.value as TipoMantenimiento)}
                     className="modern-input"
@@ -596,14 +672,25 @@ export default function ReporteDetallePage() {
                     <option value="otro">Otro</option>
                   </select>
                 </div>
-
-                {/* Prioridad */}
                 <div>
-                  <label htmlFor="campo-prioridad" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Prioridad
+                  <label htmlFor="numero-ot" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Número de Orden de Trabajo (OT):
+                  </label>
+                  <input
+                    id="numero-ot"
+                    type="text"
+                    value={numeroOt}
+                    onChange={(e) => setNumeroOt(e.target.value)}
+                    placeholder="Ej. OT-2026-089 (opcional)"
+                    className="modern-input font-mono"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="prioridad-intervencion" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Prioridad de Atención:
                   </label>
                   <select
-                    id="campo-prioridad"
+                    id="prioridad-intervencion"
                     value={prioridad}
                     onChange={(e) => setPrioridad(e.target.value as PrioridadReporte)}
                     className="modern-input"
@@ -615,254 +702,364 @@ export default function ReporteDetallePage() {
                     <option value="baja">Baja</option>
                   </select>
                 </div>
-
-                {/* Numero OT */}
-                <div>
-                  <label htmlFor="campo-ot" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Número de Orden de Trabajo
-                  </label>
-                  <input
-                    id="campo-ot"
-                    type="text"
-                    value={numeroOt}
-                    onChange={(e) => setNumeroOt(e.target.value)}
-                    placeholder="Ej. OT-2026-442"
-                    className="modern-input font-mono"
-                  />
-                </div>
-
-                {/* Fecha Intervención */}
-                <div>
-                  <label htmlFor="campo-fecha-intervencion" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Fecha de Intervención
-                  </label>
-                  <input
-                    id="campo-fecha-intervencion"
-                    type="date"
-                    value={fechaIntervencion}
-                    onChange={(e) => setFechaIntervencion(e.target.value)}
-                    className="modern-input"
-                  />
-                </div>
-
-                {/* Duración en minutos */}
-                <div>
-                  <label htmlFor="campo-duracion" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Duración Estimada en Minutos
-                  </label>
-                  <input
-                    id="campo-duracion"
-                    type="number"
-                    min="0"
-                    value={duracionMinutos}
-                    onChange={(e) =>
-                      setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    placeholder="Ej. 60"
-                    className="modern-input"
-                  />
-                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Falla */}
-              <div className="text-xs">
-                <label htmlFor="campo-falla" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Falla Observada {faltantes.includes('falla') && <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px] ml-1">* Requerido</span>}
-                </label>
+          {/* SECCIÓN 5: Falla y Causa Probable */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <CardTitle>5. Falla y Causa Probable (Hecho vs Hipótesis)</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 text-xs">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="campo-falla-hecho" className="font-semibold text-slate-800 dark:text-slate-200">
+                    Falla u Observación Constatada (Hecho Objetivo)
+                  </label>
+                  {esPreventivo && (
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                      Mantenimiento preventivo: no requiere inventar falla
+                    </span>
+                  )}
+                </div>
                 <textarea
-                  id="campo-falla"
+                  id="campo-falla-hecho"
                   rows={2}
                   value={falla}
                   onChange={(e) => setFalla(e.target.value)}
-                  placeholder="Descripción de la anomalía o falla reportada..."
-                  className={`modern-input ${faltantes.includes('falla') ? 'border-rose-400 dark:border-rose-700 bg-rose-50/20' : ''}`}
+                  placeholder={
+                    esPreventivo
+                      ? 'Describa el motivo preventivo o inspección programada (opcional)...'
+                      : 'Descripción objetiva del síntoma o avería detectada...'
+                  }
+                  className="modern-input"
                 />
               </div>
 
-              {/* Causa Probable */}
-              <div className="text-xs">
-                <label htmlFor="campo-causa" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Causa Probable Determinada
+              <div>
+                <label htmlFor="campo-causa-hipotesis" className="block font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                  Causa Probable (Hipótesis Técnica Preliminar)
                 </label>
                 <textarea
-                  id="campo-causa"
+                  id="campo-causa-hipotesis"
                   rows={2}
                   value={causaProbable}
                   onChange={(e) => setCausaProbable(e.target.value)}
-                  placeholder="Origen probable determinado tras la inspección..."
-                  className="modern-input"
-                />
-              </div>
-
-              {/* Actividades */}
-              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <label className="font-semibold text-slate-800 dark:text-slate-200">
-                      Actividades Realizadas
-                    </label>
-                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-[11px] font-semibold">
-                      {actividades.length}
-                    </span>
-                    {faltantes.includes('actividades') && (
-                      <span className="text-rose-600 dark:text-rose-400 font-medium text-[11px]">* Requerido</span>
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="xs"
-                    onClick={handleAddActividad}
-                    leftIcon={<Plus className="w-3.5 h-3.5" />}
-                  >
-                    Añadir actividad
-                  </Button>
-                </div>
-
-                {actividades.length === 0 ? (
-                  <p className="text-slate-400 italic py-1">No se han registrado actividades.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {actividades.map((act, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <span className="text-slate-400 font-mono text-xs w-4">{index + 1}.</span>
-                        <input
-                          type="text"
-                          value={act}
-                          onChange={(e) => handleUpdateActividad(index, e.target.value)}
-                          placeholder="Ej. Desmontaje y cambio de sello mecánico..."
-                          className="modern-input flex-1"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveActividad(index)}
-                          className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
-                          aria-label={`Eliminar actividad ${index + 1}`}
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Repuestos */}
-              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <label className="font-semibold text-slate-800 dark:text-slate-200">
-                      Repuestos Empleados
-                    </label>
-                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full text-[11px] font-semibold">
-                      {repuestos.length}
-                    </span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="xs"
-                    onClick={handleAddRepuesto}
-                    leftIcon={<Plus className="w-3.5 h-3.5" />}
-                  >
-                    Añadir repuesto
-                  </Button>
-                </div>
-
-                {repuestos.length === 0 ? (
-                  <p className="text-slate-400 italic py-1">No se indicaron repuestos utilizados.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {repuestos.map((rep, index) => (
-                      <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                        <div className="col-span-6">
-                          <input
-                            type="text"
-                            value={rep.nombre}
-                            onChange={(e) => handleUpdateRepuesto(index, 'nombre', e.target.value)}
-                            placeholder="Nombre del repuesto..."
-                            className="modern-input"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <input
-                            type="number"
-                            min="1"
-                            value={rep.cantidad ?? ''}
-                            onChange={(e) =>
-                              handleUpdateRepuesto(
-                                index,
-                                'cantidad',
-                                e.target.value === '' ? null : Number(e.target.value)
-                              )
-                            }
-                            placeholder="Cant."
-                            className="modern-input"
-                          />
-                        </div>
-                        <div className="col-span-3">
-                          <input
-                            type="text"
-                            value={rep.codigo ?? ''}
-                            onChange={(e) =>
-                              handleUpdateRepuesto(
-                                index,
-                                'codigo',
-                                e.target.value.trim() ? e.target.value : null
-                              )
-                            }
-                            placeholder="Código o Tag"
-                            className="modern-input font-mono"
-                          />
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveRepuesto(index)}
-                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
-                            aria-label={`Eliminar repuesto ${index + 1}`}
-                          >
-                            <Trash className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Observaciones */}
-              <div className="text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
-                <label htmlFor="campo-observaciones" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Observaciones Generales
-                </label>
-                <textarea
-                  id="campo-observaciones"
-                  rows={2}
-                  value={observaciones}
-                  onChange={(e) => setObservaciones(e.target.value)}
-                  placeholder="Notas adicionales o recomendaciones para el próximo turno..."
-                  className="modern-input"
-                />
-              </div>
-
-              {/* Comentario Supervisor */}
-              <div className="text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
-                <label htmlFor="campo-comentario-sup" className="block font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  Comentario de Supervisión para el Técnico
-                </label>
-                <textarea
-                  id="campo-comentario-sup"
-                  rows={2}
-                  value={comentarioSupervisor}
-                  onChange={(e) => setComentarioSupervisor(e.target.value)}
-                  placeholder="Comentarios u observaciones de supervisión que se envían al técnico..."
+                  placeholder="Hipótesis u origen probable según inspección técnica (sujeto a validación)..."
                   className="modern-input"
                 />
               </div>
             </CardContent>
+          </Card>
 
-            <CardFooter className="flex justify-end">
+          {/* SECCIÓN 6: Actividades Realizadas */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <CardTitle>6. Actividades Realizadas</CardTitle>
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                    {actividades.length}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="xs"
+                  onClick={handleAddActividad}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Añadir actividad
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2 text-xs">
+              {actividades.length === 0 ? (
+                <p className="text-slate-400 italic py-2">No se han registrado actividades técnicas.</p>
+              ) : (
+                actividades.map((act, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-slate-400 font-mono text-xs w-4">{index + 1}.</span>
+                    <input
+                      type="text"
+                      value={act}
+                      onChange={(e) => handleUpdateActividad(index, e.target.value)}
+                      placeholder="Describa la tarea ejecutada..."
+                      className="modern-input flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveActividad(index)}
+                      className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                      aria-label={`Eliminar actividad ${index + 1}`}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 7: Repuestos Empleados */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <CardTitle>7. Repuestos y Materiales Empleados</CardTitle>
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                    {repuestos.length}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="xs"
+                  onClick={handleAddRepuesto}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Añadir repuesto
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs">
+              {repuestos.length === 0 ? (
+                <p className="text-slate-400 italic py-2">No se mencionaron repuestos ni consumibles utilizados.</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-12 gap-2 text-[11px] font-semibold text-slate-500 uppercase px-1">
+                    <div className="col-span-6">Nombre de Componente</div>
+                    <div className="col-span-2">Cantidad</div>
+                    <div className="col-span-3">Código / Tag</div>
+                    <div className="col-span-1"></div>
+                  </div>
+                  {repuestos.map((rep, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-6">
+                        <input
+                          type="text"
+                          value={rep.nombre}
+                          onChange={(e) => handleUpdateRepuesto(index, 'nombre', e.target.value)}
+                          placeholder="Nombre del componente..."
+                          className="modern-input"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={rep.cantidad ?? ''}
+                          onChange={(e) =>
+                            handleUpdateRepuesto(
+                              index,
+                              'cantidad',
+                              e.target.value === '' ? null : Number(e.target.value)
+                            )
+                          }
+                          placeholder="Cant."
+                          className="modern-input"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <input
+                          type="text"
+                          value={rep.codigo ?? ''}
+                          onChange={(e) =>
+                            handleUpdateRepuesto(
+                              index,
+                              'codigo',
+                              e.target.value.trim() ? e.target.value : null
+                            )
+                          }
+                          placeholder="Código / Parte"
+                          className="modern-input font-mono"
+                        />
+                      </div>
+                      <div className="col-span-1 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRepuesto(index)}
+                          className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                          aria-label={`Eliminar repuesto ${index + 1}`}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 8: Observaciones */}
+          <Card>
+            <CardHeader>
+              <CardTitle>8. Observaciones Generales de la Intervención</CardTitle>
+            </CardHeader>
+            <CardContent className="text-xs">
+              <textarea
+                rows={2}
+                value={observaciones}
+                onChange={(e) => setObservaciones(e.target.value)}
+                placeholder="Observaciones de campo, advertencias técnicas o pendientes para el siguiente turno..."
+                className="modern-input"
+              />
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 9: Transcripción / Texto Original y Correcciones */}
+          <Card>
+            <CardHeader>
+              <CardTitle>9. Mensaje Original y Correcciones de Telegram</CardTitle>
+              <span className="text-xs text-slate-500">
+                {reporte.origen === 'audio' ? 'Transcripción Whisper' : 'Texto escrito'}
+              </span>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                <p className="font-semibold text-slate-500 uppercase tracking-wider text-[10px] mb-1.5">
+                  Relato original transmitido:
+                </p>
+                <p className="text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
+                  {reporte.texto_original || 'Sin texto original registrado.'}
+                </p>
+              </div>
+
+              {reporte.texto_correccion && (
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200/80 dark:border-amber-800/60">
+                  <p className="font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[10px] mb-1.5">
+                    Corrección posterior enviada por el técnico en Telegram:
+                  </p>
+                  <p className="text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-wrap">
+                    {reporte.texto_correccion}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar Column: Sections 10, 11 and Equipment History */}
+        <div className="space-y-5">
+          {/* SECCIÓN 10: Auditoría y Confianza de IA */}
+          <Card>
+            <CardHeader className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <CardTitle>10. Auditoría de Extracción por IA</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3 text-xs">
+              <div>
+                <span className="text-slate-500 block mb-1">Nivel de Confianza:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-base text-emerald-600 dark:text-emerald-400">
+                    {formatConfianza(reporte.confianza)}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Nota orientativa: Representa la estimación del modelo sobre la claridad del relato técnico. No reemplaza la inspección del supervisor.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-slate-500 block mb-1">Campos faltantes detectados:</span>
+                {faltantes.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {faltantes.map((f, i) => (
+                      <span
+                        key={i}
+                        className="bg-amber-500/15 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded text-[11px] font-medium"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-emerald-600 font-medium">Información completa según extractor</span>
+                )}
+              </div>
+
+              {/* Botón visor JSON */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowRawIa(!showRawIa)}
+                  className="w-full flex items-center justify-between text-left text-xs font-semibold text-slate-700 dark:text-slate-300 py-1"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Bot className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Ver JSON Estructurado IA</span>
+                  </span>
+                  {showRawIa ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+                {showRawIa && (
+                  <pre className="mt-2 p-2.5 rounded-lg bg-slate-950 text-emerald-400 text-[10px] font-mono overflow-x-auto max-h-60 border border-slate-800">
+                    {JSON.stringify(reporte.raw_ia || {}, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 11: Estado y Revisión de Supervisión */}
+          <Card>
+            <CardHeader className="p-4">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <CardTitle>11. Estado y Resolución de Supervisión</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3 text-xs">
+              <div>
+                <span className="text-slate-500 block mb-1">Estado de Revisión:</span>
+                <EstadoBadge estado={reporte.estado} isDemorado={demorado} />
+              </div>
+
+              {supervisorRevisor && (
+                <div>
+                  <span className="text-slate-500 block mb-1">Revisado Por:</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                    {supervisorRevisor.nombre} ({supervisorRevisor.rol})
+                  </span>
+                </div>
+              )}
+
+              {reporte.revisado_en && (
+                <div>
+                  <span className="text-slate-500 block mb-1">Fecha de Revisión:</span>
+                  <span className="text-slate-800 dark:text-slate-200">
+                    {formatFechaHoraLima(reporte.revisado_en)}
+                  </span>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="comentario-supervisor" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                  Comentario u Observación de Supervisión:
+                </label>
+                <textarea
+                  id="comentario-supervisor"
+                  rows={3}
+                  value={comentarioSupervisor}
+                  onChange={(e) => setComentarioSupervisor(e.target.value)}
+                  placeholder="Escriba comentarios para el técnico (se envían a Telegram al validar o rechazar)..."
+                  className="modern-input"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="p-4 justify-end">
               <Button
                 variant="primary"
                 size="sm"
@@ -870,58 +1067,28 @@ export default function ReporteDetallePage() {
                 isLoading={saving}
                 leftIcon={<Save className="w-3.5 h-3.5" />}
               >
-                Guardar Cambios del Formulario
+                Guardar comentario
               </Button>
             </CardFooter>
           </Card>
-        </div>
 
-        {/* Sidebar Column: AI JSON & Other Reports of Same Equipment */}
-        <div className="space-y-5">
-          {/* Collapsible raw_ia */}
+          {/* Historial del mismo equipo */}
           <Card>
-            <CardHeader className="p-3.5">
-              <button
-                onClick={() => setShowRawIa(!showRawIa)}
-                className="w-full flex items-center justify-between text-left text-xs font-semibold text-slate-800 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-              >
-                <span className="flex items-center gap-2">
-                  <div className="p-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                    <Bot className="w-3.5 h-3.5" />
-                  </div>
-                  <span>Datos Estructurados del Modelo</span>
-                </span>
-                {showRawIa ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
-              </button>
-            </CardHeader>
-
-            {showRawIa && (
-              <CardContent className="p-3">
-                <pre className="p-3 rounded-xl bg-slate-950 text-emerald-400 text-[11px] font-mono overflow-x-auto max-h-96 border border-slate-800">
-                  {JSON.stringify(reporte.raw_ia || {}, null, 2)}
-                </pre>
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Otros reportes del mismo equipo */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Historial del mismo equipo</CardTitle>
+            <CardHeader className="p-4">
+              <CardTitle>Historial de este Equipo</CardTitle>
               {reporte.equipo && (
                 <Link
                   href={`/equipos/${encodeURIComponent(reporte.codigo_equipo || reporte.equipo)}`}
-                  className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded"
+                  className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                 >
                   Ver todo
                   <ExternalLink className="w-3 h-3" />
                 </Link>
               )}
             </CardHeader>
-
-            <CardContent className="p-3 space-y-2">
+            <CardContent className="p-3 space-y-2 text-xs">
               {otrosReportesEquipo.length === 0 ? (
-                <p className="text-xs text-slate-400 italic p-2 text-center">
+                <p className="text-slate-400 italic p-2 text-center text-xs">
                   No hay otros reportes registrados para este equipo.
                 </p>
               ) : (
@@ -929,19 +1096,19 @@ export default function ReporteDetallePage() {
                   <Link
                     key={o.id}
                     href={`/reportes/${o.id}`}
-                    className="block p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="block p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
                   >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-blue-600 dark:text-blue-400 text-xs">
                         {formatReporteNumero(o.numero)}
                       </span>
                       <EstadoBadge estado={o.estado} />
                     </div>
                     <p className="text-xs font-medium text-slate-800 dark:text-slate-200 mt-1 line-clamp-1">
-                      {o.falla || 'Sin falla reportada'}
+                      {o.falla || 'Intervención de mantenimiento'}
                     </p>
                     <p className="text-[10px] text-slate-400 mt-0.5">
-                      {formatFechaHoraLima(o.created_at)} · {o.tecnico_nombre || 'Técnico'}
+                      {formatFechaLima(o.created_at)} · {o.tecnico_nombre || 'Técnico'}
                     </p>
                   </Link>
                 ))
@@ -951,12 +1118,12 @@ export default function ReporteDetallePage() {
         </div>
       </div>
 
-      {/* Accessible Reject Modal */}
+      {/* Modal Rechazar Reporte */}
       <Modal
         isOpen={showRejectModal}
         onClose={() => setShowRejectModal(false)}
         title={`Rechazar Reporte #${formatReporteNumero(reporte.numero)}`}
-        description="Indica el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram para que envíe la corrección correspondiente."
+        description="Indica el motivo del rechazo. Este comentario será enviado automáticamente al técnico por Telegram vía webhook para su corrección."
       >
         <div className="space-y-4">
           <div>
@@ -996,37 +1163,37 @@ export default function ReporteDetallePage() {
         </div>
       </Modal>
 
-      {/* Validate Confirmation Dialog */}
+      {/* Modal Validar Reporte */}
       <ConfirmDialog
         isOpen={showValidateConfirm}
         onClose={() => setShowValidateConfirm(false)}
         onConfirm={handleValidate}
-        title="Validar Reporte"
-        message={`¿Confirmas la validación técnica del reporte #${formatReporteNumero(reporte.numero)}? Se registrará como revisado.`}
+        title="Validar y Aprobar Reporte"
+        message={`¿Confirmas la validación técnica del reporte #${formatReporteNumero(reporte.numero)}? Se registrará como revisado y se notificará al técnico.`}
         confirmLabel="Validar Reporte"
         variant="primary"
         isLoading={actionLoading}
       />
 
-      {/* Reopen Confirmation Dialog */}
+      {/* Modal Reabrir Reporte */}
       <ConfirmDialog
         isOpen={showReopenConfirm}
         onClose={() => setShowReopenConfirm(false)}
         onConfirm={handleReopen}
-        title="Reabrir Reporte"
-        message={`¿Deseas devolver el reporte #${formatReporteNumero(reporte.numero)} a estado pendiente para su posterior corrección?`}
-        confirmLabel="Reabrir a Pendiente"
+        title="Reabrir Reporte para Revisión"
+        message={`¿Deseas devolver el reporte #${formatReporteNumero(reporte.numero)} a estado 'Confirmado' para permitir una nueva revisión por supervisión?`}
+        confirmLabel="Reabrir Reporte"
         variant="warning"
         isLoading={actionLoading}
       />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Modal Eliminar Reporte */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
         title="Eliminar Reporte"
-        message={`¿Estás seguro de que deseas eliminar permanentemente el reporte #${formatReporteNumero(reporte.numero)}? Esta acción es irreversible.`}
+        message={`¿Estás seguro de que deseas eliminar permanentemente el reporte #${formatReporteNumero(reporte.numero)}? Esta acción es irreversible y solo está disponible para administradores.`}
         confirmLabel="Eliminar Definitivamente"
         variant="danger"
         isLoading={actionLoading}
