@@ -5,7 +5,9 @@ export function exportReportesToCSV(reportes: Reporte[], filename = 'reportes_ma
   const headers = [
     'Numero',
     'Fecha Creacion',
+    'Tipo Notificacion',
     'Tecnico',
+    'Responsables Ejecutantes',
     'Equipo',
     'Codigo Equipo',
     'Area',
@@ -16,6 +18,10 @@ export function exportReportesToCSV(reportes: Reporte[], filename = 'reportes_ma
     'Repuestos',
     'Prioridad',
     'Numero OT',
+    'Fecha Inicio',
+    'Hora Inicio',
+    'Fecha Fin',
+    'Hora Fin',
     'Fecha Intervencion',
     'Duracion (min)',
     'Estado',
@@ -33,34 +39,46 @@ export function exportReportesToCSV(reportes: Reporte[], filename = 'reportes_ma
     return `"${str}"`;
   };
 
-  const rows = reportes.map((r) => [
-    escapeCSV(formatReporteNumero(r.numero)),
-    escapeCSV(formatFechaHoraLima(r.created_at)),
-    escapeCSV(r.tecnico_nombre || ''),
-    escapeCSV(r.equipo || ''),
-    escapeCSV(r.codigo_equipo || ''),
-    escapeCSV(r.area || ''),
-    escapeCSV(r.tipo_mantenimiento || ''),
-    escapeCSV(r.falla || ''),
-    escapeCSV(r.causa_probable || ''),
-    escapeCSV((r.actividades || []).join('; ')),
-    escapeCSV(
-      (r.repuestos || [])
-        .map((rep) => `${rep.nombre}${rep.cantidad ? ` x${rep.cantidad}` : ''}`)
-        .join('; ')
-    ),
-    escapeCSV(r.prioridad || ''),
-    escapeCSV(r.numero_ot || ''),
-    escapeCSV(r.fecha_intervencion || ''),
-    escapeCSV(r.duracion_minutos ?? ''),
-    escapeCSV(r.estado),
-    escapeCSV(r.confianza ? `${Math.round(r.confianza * 100)}%` : ''),
-    escapeCSV((r.campos_faltantes || []).join(', ')),
-    escapeCSV(r.observaciones || ''),
-    escapeCSV(r.origen || ''),
-    escapeCSV(r.comentario_supervisor || ''),
-    escapeCSV(r.revisado_en ? formatFechaHoraLima(r.revisado_en) : ''),
-  ]);
+  const rows = reportes.map((r) => {
+    const ejecutantesStr = (r.responsables_ejecutantes || [])
+      .map((ej) => `${ej.nombre} (${ej.rol})`)
+      .join('; ');
+
+    return [
+      escapeCSV(formatReporteNumero(r.numero)),
+      escapeCSV(formatFechaHoraLima(r.created_at)),
+      escapeCSV(r.tipo_notificacion || ''),
+      escapeCSV(r.tecnico_nombre || ''),
+      escapeCSV(ejecutantesStr || r.tecnico_nombre || ''),
+      escapeCSV(r.equipo || ''),
+      escapeCSV(r.codigo_equipo || ''),
+      escapeCSV(r.area || ''),
+      escapeCSV(r.tipo_mantenimiento || ''),
+      escapeCSV(r.falla || ''),
+      escapeCSV(r.causa_probable || ''),
+      escapeCSV((r.actividades || []).join('; ')),
+      escapeCSV(
+        (r.repuestos || [])
+          .map((rep) => `${rep.nombre}${rep.cantidad ? ` x${rep.cantidad}` : ''}`)
+          .join('; ')
+      ),
+      escapeCSV(r.prioridad || ''),
+      escapeCSV(r.numero_ot || ''),
+      escapeCSV(r.fecha_inicio || ''),
+      escapeCSV(r.hora_inicio || ''),
+      escapeCSV(r.fecha_fin || ''),
+      escapeCSV(r.hora_fin || ''),
+      escapeCSV(r.fecha_intervencion || ''),
+      escapeCSV(r.duracion_minutos ?? ''),
+      escapeCSV(r.estado),
+      escapeCSV(r.confianza ? `${Math.round(r.confianza * 100)}%` : ''),
+      escapeCSV((r.campos_faltantes || []).join(', ')),
+      escapeCSV(r.observaciones || ''),
+      escapeCSV(r.origen || ''),
+      escapeCSV(r.comentario_supervisor || ''),
+      escapeCSV(r.revisado_en ? formatFechaHoraLima(r.revisado_en) : ''),
+    ];
+  });
 
   const csvContent =
     '\uFEFF' + // UTF-8 BOM for Microsoft Excel compatibility

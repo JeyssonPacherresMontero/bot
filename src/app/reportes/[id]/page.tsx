@@ -16,6 +16,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
 import {
+  cn,
   formatReporteNumero,
   formatFechaHoraLima,
   formatFechaLima,
@@ -26,6 +27,8 @@ import {
 import type {
   Reporte,
   TipoMantenimiento,
+  TipoNotificacion,
+  ResponsableEjecutante,
   PrioridadReporte,
   RepuestoItem,
   Perfil,
@@ -48,8 +51,9 @@ import {
   Clock,
   Sparkles,
   ShieldCheck,
-  User,
+  Users,
   Wrench,
+  Check,
 } from 'lucide-react';
 
 export default function ReporteDetallePage() {
@@ -73,6 +77,7 @@ export default function ReporteDetallePage() {
   const [codigoEquipo, setCodigoEquipo] = useState('');
   const [area, setArea] = useState('');
   const [tipoMantenimiento, setTipoMantenimiento] = useState<TipoMantenimiento | ''>('');
+  const [tipoNotificacion, setTipoNotificacion] = useState<TipoNotificacion | ''>('');
   const [falla, setFalla] = useState('');
   const [causaProbable, setCausaProbable] = useState('');
   const [actividades, setActividades] = useState<string[]>([]);
@@ -80,9 +85,15 @@ export default function ReporteDetallePage() {
   const [prioridad, setPrioridad] = useState<PrioridadReporte | ''>('');
   const [numeroOt, setNumeroOt] = useState('');
   const [fechaIntervencion, setFechaIntervencion] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [horaInicio, setHoraInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [horaFin, setHoraFin] = useState('');
+  const [responsablesEjecutantes, setResponsablesEjecutantes] = useState<ResponsableEjecutante[]>([]);
   const [duracionMinutos, setDuracionMinutos] = useState<number | ''>('');
   const [observaciones, setObservaciones] = useState('');
   const [comentarioSupervisor, setComentarioSupervisor] = useState('');
+  const [intentadoGuardar, setIntentadoGuardar] = useState(false);
 
   // Dialog states
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -112,13 +123,30 @@ export default function ReporteDetallePage() {
         setCodigoEquipo(r.codigo_equipo || '');
         setArea(r.area || '');
         setTipoMantenimiento(r.tipo_mantenimiento || '');
+        setTipoNotificacion(r.tipo_notificacion || '');
         setFalla(r.falla || '');
         setCausaProbable(r.causa_probable || '');
         setActividades(Array.isArray(r.actividades) ? r.actividades : []);
         setRepuestos(Array.isArray(r.repuestos) ? (r.repuestos as RepuestoItem[]) : []);
         setPrioridad(r.prioridad || '');
         setNumeroOt(r.numero_ot || '');
-        setFechaIntervencion(r.fecha_intervencion ? r.fecha_intervencion.slice(0, 10) : '');
+
+        const fInterv = r.fecha_intervencion ? r.fecha_intervencion.slice(0, 10) : '';
+        setFechaIntervencion(fInterv);
+        setFechaInicio(r.fecha_inicio || fInterv);
+        setHoraInicio(r.hora_inicio || '');
+        setFechaFin(r.fecha_fin || fInterv);
+        setHoraFin(r.hora_fin || '');
+
+        // Cargar o inicializar lista de ejecutantes
+        if (Array.isArray(r.responsables_ejecutantes) && r.responsables_ejecutantes.length > 0) {
+          setResponsablesEjecutantes(r.responsables_ejecutantes);
+        } else if (r.tecnico_nombre) {
+          setResponsablesEjecutantes([{ nombre: r.tecnico_nombre, rol: 'TEC' }]);
+        } else {
+          setResponsablesEjecutantes([{ nombre: '', rol: 'TEC' }]);
+        }
+
         setDuracionMinutos(r.duracion_minutos ?? '');
         setObservaciones(r.observaciones || '');
         setComentarioSupervisor(r.comentario_supervisor || '');
@@ -165,6 +193,59 @@ export default function ReporteDetallePage() {
     loadReporte();
   }, [loadReporte]);
 
+  // Validación de incoherencia en fechas/horas
+  const getFechaHoraError = (): string | null => {
+    if (!fechaInicio && !horaInicio && !fechaFin && !horaFin) return null;
+    if (fechaInicio && horaInicio && fechaFin && horaFin) {
+      const start = new Date(`${fechaInicio}T${horaInicio}:00`);
+      const end = new Date(`${fechaFin}T${horaFin}:00`);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return 'El formato de fecha u hora es inválido.';
+      }
+      if (end.getTime() <= start.getTime()) {
+        return 'Incoherencia temporal: La fecha y hora de término debe ser posterior a la fecha y hora de inicio.';
+      }
+    }
+    return null;
+  };
+
+  const fechaHoraError = getFechaHoraError();
+
+  // Recálculo automático de duración en minutos al completar fechas/horas válidas
+  useEffect(() => {
+    if (fechaInicio && horaInicio && fechaFin && horaFin) {
+      const start = new Date(`${fechaInicio}T${horaInicio}:00`);
+      const end = new Date(`${fechaFin}T${horaFin}:00`);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end.getTime() > start.getTime()) {
+        const diffMinutes = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+        setDuracionMinutos(diffMinutes);
+      }
+    }
+  }, [fechaInicio, horaInicio, fechaFin, horaFin]);
+
+  // Validación de OT (debe contener 7 u 8 dígitos numéricos según regla)
+  const cleanOt = numeroOt.trim();
+  const otValida = cleanOt === '' || /^\d{7,8}$/.test(cleanOt);
+
+  // Handlers para Responsables Ejecutantes
+  const handleAddEjecutante = () => {
+    setResponsablesEjecutantes([...responsablesEjecutantes, { nombre: '', rol: 'TEC' }]);
+  };
+
+  const handleUpdateEjecutante = (
+    index: number,
+    field: keyof ResponsableEjecutante,
+    val: string
+  ) => {
+    const updated = [...responsablesEjecutantes];
+    updated[index] = { ...updated[index], [field]: val } as ResponsableEjecutante;
+    setResponsablesEjecutantes(updated);
+  };
+
+  const handleRemoveEjecutante = (index: number) => {
+    setResponsablesEjecutantes(responsablesEjecutantes.filter((_, i) => i !== index));
+  };
+
   // Handlers para Actividades dinámicas
   const handleAddActividad = () => {
     setActividades([...actividades, '']);
@@ -202,21 +283,60 @@ export default function ReporteDetallePage() {
   // Guardar cambios manuales
   const handleSaveChanges = async () => {
     if (!reporte) return;
+    setIntentadoGuardar(true);
+
+    // 1. Validar obligatoriedad de fechas y horas
+    if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
+      toast.error(
+        'Campos obligatorios incompletos',
+        'La fecha de inicio, hora de inicio, fecha de término y hora de término son obligatorias.'
+      );
+      return;
+    }
+
+    // 2. Validar coherencia temporal
+    if (fechaHoraError) {
+      toast.error('Incoherencia en fechas/horas', fechaHoraError);
+      return;
+    }
+
+    // 3. Validar regla de OT (7 u 8 dígitos numéricos)
+    if (cleanOt && !/^\d{7,8}$/.test(cleanOt)) {
+      toast.error(
+        'Número de OT incorrecto',
+        'El número de OT debe contener exactamente 7 u 8 dígitos numéricos (ej. 5125076).'
+      );
+      return;
+    }
+
     setSaving(true);
     try {
+      const filtradosEjecutantes = responsablesEjecutantes.filter((e) => e.nombre.trim() !== '');
+      const primerTecnico =
+        filtradosEjecutantes.find((e) => e.rol === 'TEC')?.nombre ||
+        filtradosEjecutantes[0]?.nombre ||
+        reporte.tecnico_nombre;
+
       const payload: Partial<Reporte> = {
         equipo: equipo.trim() || null,
         codigo_equipo: codigoEquipo.trim() || null,
         area: area.trim() || null,
         tipo_mantenimiento: (tipoMantenimiento as TipoMantenimiento) || null,
+        tipo_notificacion: (tipoNotificacion as TipoNotificacion) || null,
         falla: falla.trim() || null,
         causa_probable: causaProbable.trim() || null,
         actividades: actividades.filter((a) => a.trim() !== ''),
         repuestos: repuestos.filter((r) => r.nombre.trim() !== ''),
         prioridad: (prioridad as PrioridadReporte) || null,
-        numero_ot: numeroOt.trim() || null,
-        fecha_intervencion: fechaIntervencion ? `${fechaIntervencion}T00:00:00Z` : null,
+        numero_ot: cleanOt || null,
+        fecha_inicio: fechaInicio || null,
+        hora_inicio: horaInicio || null,
+        fecha_fin: fechaFin || null,
+        hora_fin: horaFin || null,
+        fecha_intervencion: fechaInicio ? `${fechaInicio}T00:00:00Z` : (fechaIntervencion ? `${fechaIntervencion}T00:00:00Z` : null),
         duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
+        tecnico_nombre: primerTecnico || null,
+        responsables_ejecutantes: filtradosEjecutantes,
         observaciones: observaciones.trim() || null,
         comentario_supervisor: comentarioSupervisor.trim() || null,
       };
@@ -240,9 +360,36 @@ export default function ReporteDetallePage() {
   // Validar reporte (Revisado)
   const handleValidate = async () => {
     if (!reporte) return;
+    setIntentadoGuardar(true);
+
+    if (!fechaInicio || !horaInicio || !fechaFin || !horaFin) {
+      toast.error(
+        'Validación requerida',
+        'Debe completar los campos obligatorios de fecha y hora antes de validar.'
+      );
+      return;
+    }
+    if (fechaHoraError) {
+      toast.error('Incoherencia en fechas/horas', fechaHoraError);
+      return;
+    }
+    if (cleanOt && !/^\d{7,8}$/.test(cleanOt)) {
+      toast.error(
+        'Número de OT inválido',
+        'El número de OT debe contener exactamente 7 u 8 dígitos numéricos (ej. 5125076).'
+      );
+      return;
+    }
+
     setActionLoading(true);
     try {
       const nowIso = new Date().toISOString();
+      const filtradosEjecutantes = responsablesEjecutantes.filter((e) => e.nombre.trim() !== '');
+      const primerTecnico =
+        filtradosEjecutantes.find((e) => e.rol === 'TEC')?.nombre ||
+        filtradosEjecutantes[0]?.nombre ||
+        reporte.tecnico_nombre;
+
       const { error } = await supabase
         .from('reportes')
         .update({
@@ -250,6 +397,26 @@ export default function ReporteDetallePage() {
           revisado_por: user?.id || null,
           revisado_en: nowIso,
           comentario_supervisor: comentarioSupervisor.trim() || null,
+          equipo: equipo.trim() || null,
+          codigo_equipo: codigoEquipo.trim() || null,
+          area: area.trim() || null,
+          tipo_mantenimiento: (tipoMantenimiento as TipoMantenimiento) || null,
+          tipo_notificacion: (tipoNotificacion as TipoNotificacion) || null,
+          falla: falla.trim() || null,
+          causa_probable: causaProbable.trim() || null,
+          actividades: actividades.filter((a) => a.trim() !== ''),
+          repuestos: repuestos.filter((r) => r.nombre.trim() !== ''),
+          prioridad: (prioridad as PrioridadReporte) || null,
+          numero_ot: cleanOt || null,
+          fecha_inicio: fechaInicio || null,
+          hora_inicio: horaInicio || null,
+          fecha_fin: fechaFin || null,
+          hora_fin: horaFin || null,
+          fecha_intervencion: fechaInicio ? `${fechaInicio}T00:00:00Z` : null,
+          duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
+          tecnico_nombre: primerTecnico || null,
+          responsables_ejecutantes: filtradosEjecutantes,
+          observaciones: observaciones.trim() || null,
         })
         .eq('id', reporte.id);
 
@@ -510,107 +677,251 @@ export default function ReporteDetallePage() {
                 <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
                   <FileText className="w-4 h-4" />
                 </div>
-                <CardTitle>1. Identificación y Fechas</CardTitle>
+                <CardTitle>1. Identificación y Horarios de Intervención</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1">Número Oficial:</span>
-                <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
-                  {formatReporteNumero(reporte.numero)}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1">Fecha de Registro en Telegram:</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
-                  {formatFechaHoraLima(reporte.created_at)}
-                </span>
-              </div>
-              <div>
-                <label htmlFor="fecha-intervencion" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
-                  Fecha de Intervención en Planta:
-                </label>
-                <input
-                  id="fecha-intervencion"
-                  type="date"
-                  value={fechaIntervencion}
-                  onChange={(e) => setFechaIntervencion(e.target.value)}
-                  className="modern-input"
-                />
-              </div>
-              <div>
-                <label htmlFor="duracion-minutos" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
-                  Duración de Intervención (minutos):
-                </label>
-                <input
-                  id="duracion-minutos"
-                  type="number"
-                  min="0"
-                  value={duracionMinutos}
-                  onChange={(e) => setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="Ej. 90 (dejar en blanco si no se informó)"
-                  className="modern-input"
-                />
+            <CardContent className="space-y-4 text-xs">
+              {/* Alerta de incoherencia temporal en fechas/horas */}
+              {fechaHoraError && (
+                <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">Alerta en fechas y horarios:</span>
+                    <span>{fechaHoraError}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">Número Oficial:</span>
+                  <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
+                    {formatReporteNumero(reporte.numero)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">Fecha de Registro en Telegram:</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                    {formatFechaHoraLima(reporte.created_at)}
+                  </span>
+                </div>
+
+                {/* Fecha y Hora de Inicio (Obligatorios) */}
+                <div>
+                  <label htmlFor="fecha-inicio" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Fecha de Inicio: <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input
+                    id="fecha-inicio"
+                    type="date"
+                    required
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className={cn(
+                      "modern-input",
+                      intentadoGuardar && !fechaInicio && "border-rose-500 ring-1 ring-rose-500"
+                    )}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="hora-inicio" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Hora de Inicio: <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input
+                    id="hora-inicio"
+                    type="time"
+                    required
+                    value={horaInicio}
+                    onChange={(e) => setHoraInicio(e.target.value)}
+                    className={cn(
+                      "modern-input",
+                      intentadoGuardar && !horaInicio && "border-rose-500 ring-1 ring-rose-500"
+                    )}
+                  />
+                </div>
+
+                {/* Fecha y Hora de Término (Obligatorios) */}
+                <div>
+                  <label htmlFor="fecha-fin" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Fecha de Término: <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input
+                    id="fecha-fin"
+                    type="date"
+                    required
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    className={cn(
+                      "modern-input",
+                      intentadoGuardar && !fechaFin && "border-rose-500 ring-1 ring-rose-500"
+                    )}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="hora-fin" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Hora de Término: <span className="text-rose-500 font-bold">*</span>
+                  </label>
+                  <input
+                    id="hora-fin"
+                    type="time"
+                    required
+                    value={horaFin}
+                    onChange={(e) => setHoraFin(e.target.value)}
+                    className={cn(
+                      "modern-input",
+                      intentadoGuardar && !horaFin && "border-rose-500 ring-1 ring-rose-500"
+                    )}
+                  />
+                </div>
+
+                {/* Duración y Total Horas-Hombre */}
+                <div>
+                  <label htmlFor="duracion-minutos" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Duración Total (minutos):
+                  </label>
+                  <input
+                    id="duracion-minutos"
+                    type="number"
+                    min="0"
+                    value={duracionMinutos}
+                    onChange={(e) => setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Se calcula automáticamente"
+                    className="modern-input"
+                  />
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1">Total de Horas-Hombre (H-H):</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                      {duracionMinutos && Number(duracionMinutos) > 0
+                        ? `${((Number(duracionMinutos) / 60) * Math.max(1, responsablesEjecutantes.filter((e) => e.nombre.trim()).length || 1)).toFixed(1)} hrs`
+                        : '—'}
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      {responsablesEjecutantes.filter((e) => e.nombre.trim()).length || 1} ejecutante(s)
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 2: Técnico y Origen del Mensaje */}
+          {/* SECCIÓN 2: Responsables Ejecutantes */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                  <User className="w-4 h-4" />
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <CardTitle>2. Responsables Ejecutantes</CardTitle>
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                    {responsablesEjecutantes.length}
+                  </span>
                 </div>
-                <CardTitle>2. Técnico y Origen del Mensaje</CardTitle>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="xs"
+                  onClick={handleAddEjecutante}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Añadir ejecutante
+                </Button>
               </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1">Nombre del Técnico:</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
-                  {reporte.tecnico_nombre || 'No identificado'}
-                </span>
-                {reporte.tecnico_username && (
-                  <span className="text-slate-500 dark:text-slate-400 text-[11px] block mt-0.5">
-                    @{reporte.tecnico_username}
-                  </span>
-                )}
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1">Identificador de Telegram (Chat ID):</span>
-                <span className="font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[11px]">
-                  {reporte.telegram_chat_id ? String(reporte.telegram_chat_id) : 'No disponible'}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1">Tipo de Mensaje Recibido:</span>
-                <div className="flex items-center gap-2">
-                  <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
-                  {reporte.audio_duracion_seg && (
-                    <span className="text-slate-500 text-[11px]">
-                      Audio de {reporte.audio_duracion_seg} segundos
-                    </span>
-                  )}
+            <CardContent className="space-y-3.5 text-xs">
+              <p className="text-[11px] text-slate-500">
+                Indique cada técnico (TEC) o ayudante (AYD) que participó en el trabajo físico (soporta 2, 3 o más personas para la misma OT).
+              </p>
+              {responsablesEjecutantes.length === 0 ? (
+                <div className="p-4 text-center border border-dashed rounded-lg border-slate-300 dark:border-slate-700 text-slate-500">
+                  No hay ejecutantes registrados. Pulsa "Añadir ejecutante" para registrar al personal de la OT.
                 </div>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block mb-1">Nota de Reproducción:</span>
-                <p className="text-[11px] text-slate-500 italic">
-                  El audio fue procesado por Whisper en n8n. No se almacena el archivo binario en base de datos.
-                </p>
+              ) : (
+                <div className="space-y-2">
+                  {responsablesEjecutantes.map((ej, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700"
+                    >
+                      <span className="font-mono text-slate-400 text-xs w-5">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={ej.nombre}
+                        onChange={(e) => handleUpdateEjecutante(index, 'nombre', e.target.value)}
+                        placeholder="Nombre y Apellidos del personal..."
+                        className="modern-input flex-1"
+                      />
+                      <div className="flex items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateEjecutante(index, 'rol', 'TEC')}
+                          className={cn(
+                            'px-2.5 py-1 rounded text-xs font-semibold transition-all',
+                            ej.rol === 'TEC'
+                              ? 'bg-blue-600 text-white shadow-xs'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          )}
+                        >
+                          TEC
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateEjecutante(index, 'rol', 'AYD')}
+                          className={cn(
+                            'px-2.5 py-1 rounded text-xs font-semibold transition-all',
+                            ej.rol === 'AYD'
+                              ? 'bg-amber-600 text-white shadow-xs'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          )}
+                        >
+                          AYD
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveEjecutante(index)}
+                        className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors shrink-0"
+                        aria-label={`Eliminar ejecutante ${index + 1}`}
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Registro origen Telegram */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-500">
+                <div>
+                  <span className="block text-[11px] font-medium text-slate-500">Usuario de Telegram emisor:</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                    {reporte.tecnico_nombre || 'No identificado'}
+                    {reporte.tecnico_username && ` (@${reporte.tecnico_username})`}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[11px] font-medium text-slate-500">Canal y Duración:</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <OrigenBadge origen={reporte.origen} duracionSeg={reporte.audio_duracion_seg} />
+                    {reporte.telegram_chat_id && (
+                      <span className="font-mono text-[10px] text-slate-400">ID: {reporte.telegram_chat_id}</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 3 y 4: Equipo, Área, Tipo de Intervención y OT */}
+          {/* SECCIÓN 3 y 4: Equipo, Área, Tipo de Notificación, Tipo de Intervención y OT */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
                   <Wrench className="w-4 h-4" />
                 </div>
-                <CardTitle>3 y 4. Equipo, Área, Tipo de Intervención y Orden de Trabajo</CardTitle>
+                <CardTitle>3 y 4. Equipo, Tipo de Notificación, Intervención y Orden de Trabajo</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 text-xs">
@@ -637,7 +948,7 @@ export default function ReporteDetallePage() {
                     type="text"
                     value={codigoEquipo}
                     onChange={(e) => setCodigoEquipo(e.target.value)}
-                    placeholder="Ej. TV-01, P-101A"
+                    placeholder="Ej. TV-01, FV 20501 A"
                     className="modern-input font-mono"
                   />
                 </div>
@@ -654,6 +965,43 @@ export default function ReporteDetallePage() {
                     className="modern-input"
                   />
                 </div>
+
+                {/* Tipo de Notificación: Parcial / Final */}
+                <div>
+                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Tipo de Notificación:
+                  </label>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setTipoNotificacion(tipoNotificacion === 'parcial' ? '' : 'parcial')}
+                      className={cn(
+                        'flex-1 py-2 px-3 rounded-lg text-xs font-semibold border transition-all text-center flex items-center justify-center gap-1.5',
+                        tipoNotificacion === 'parcial'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      )}
+                    >
+                      {tipoNotificacion === 'parcial' && <Check className="w-3.5 h-3.5" />}
+                      <span>Parcial</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTipoNotificacion(tipoNotificacion === 'final' ? '' : 'final')}
+                      className={cn(
+                        'flex-1 py-2 px-3 rounded-lg text-xs font-semibold border transition-all text-center flex items-center justify-center gap-1.5',
+                        tipoNotificacion === 'final'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      )}
+                    >
+                      {tipoNotificacion === 'final' && <Check className="w-3.5 h-3.5" />}
+                      <span>Final</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tipo de Mantenimiento con Mejora */}
                 <div>
                   <label htmlFor="equipo-tipo-mant" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Tipo de Mantenimiento:
@@ -668,23 +1016,49 @@ export default function ReporteDetallePage() {
                     <option value="correctivo">Correctivo</option>
                     <option value="preventivo">Preventivo</option>
                     <option value="predictivo">Predictivo</option>
+                    <option value="mejora">Mejora</option>
                     <option value="inspeccion">Inspección</option>
                     <option value="otro">Otro</option>
                   </select>
                 </div>
+
+                {/* Número de OT con regla de 7 u 8 dígitos */}
                 <div>
-                  <label htmlFor="numero-ot" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Número de Orden de Trabajo (OT):
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="numero-ot" className="font-medium text-slate-700 dark:text-slate-300">
+                      Número de Orden de Trabajo (OT):
+                    </label>
+                    {cleanOt && (
+                      <span
+                        className={cn(
+                          'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                          otValida
+                            ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40'
+                            : 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40'
+                        )}
+                      >
+                        {otValida ? `✓ ${cleanOt.length} dígitos` : `⚠️ ${cleanOt.length} dígitos`}
+                      </span>
+                    )}
+                  </div>
                   <input
                     id="numero-ot"
                     type="text"
                     value={numeroOt}
                     onChange={(e) => setNumeroOt(e.target.value)}
-                    placeholder="Ej. OT-2026-089 (opcional)"
-                    className="modern-input font-mono"
+                    placeholder="Ej. 5125076 (7 u 8 dígitos)"
+                    className={cn(
+                      'modern-input font-mono',
+                      cleanOt && !otValida && 'border-rose-500 ring-1 ring-rose-500'
+                    )}
                   />
+                  {cleanOt && !otValida && (
+                    <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-1 font-medium">
+                      ⚠️ El N° de OT debe contener exactamente 7 u 8 dígitos numéricos.
+                    </p>
+                  )}
                 </div>
+
                 <div>
                   <label htmlFor="prioridad-intervencion" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Prioridad de Atención:

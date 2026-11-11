@@ -171,6 +171,7 @@ export function FiltrosReportes({ filtros, onChange, onLimpiar }: FiltrosReporte
                 <option value="correctivo">Correctivo</option>
                 <option value="preventivo">Preventivo</option>
                 <option value="predictivo">Predictivo</option>
+                <option value="mejora">Mejora</option>
                 <option value="inspeccion">Inspección</option>
                 <option value="otro">Otro</option>
               </select>

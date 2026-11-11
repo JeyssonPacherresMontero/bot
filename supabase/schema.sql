@@ -46,7 +46,8 @@ create table if not exists public.reportes (
   equipo text,
   codigo_equipo text,
   area text,
-  tipo_mantenimiento text check (tipo_mantenimiento in ('preventivo', 'correctivo', 'predictivo', 'inspeccion', 'otro')),
+  tipo_notificacion text check (tipo_notificacion in ('parcial', 'final')),
+  tipo_mantenimiento text check (tipo_mantenimiento in ('preventivo', 'correctivo', 'predictivo', 'mejora', 'inspeccion', 'otro')),
   falla text,
   causa_probable text,
   actividades text[] not null default '{}',
@@ -54,7 +55,12 @@ create table if not exists public.reportes (
   prioridad text check (prioridad in ('baja', 'media', 'alta', 'critica')),
   numero_ot text,
   fecha_intervencion date,
+  fecha_inicio date,
+  hora_inicio time,
+  fecha_fin date,
+  hora_fin time,
   duracion_minutos int,                                 -- tiempo de atención
+  responsables_ejecutantes jsonb not null default '[]', -- [{nombre, rol: 'TEC'|'AYD'}]
   observaciones text,
   campos_faltantes text[] not null default '{}',
   confianza numeric(3, 2),

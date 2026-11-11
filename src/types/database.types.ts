@@ -11,7 +11,22 @@ export type EstadoReporte =
 
 export type PrioridadReporte = 'baja' | 'media' | 'alta' | 'critica';
 
-export type TipoMantenimiento = 'preventivo' | 'correctivo' | 'predictivo' | 'inspeccion' | 'otro';
+export type TipoMantenimiento =
+  | 'preventivo'
+  | 'correctivo'
+  | 'predictivo'
+  | 'mejora'
+  | 'inspeccion'
+  | 'otro';
+
+export type TipoNotificacion = 'parcial' | 'final';
+
+export type RolEjecutante = 'TEC' | 'AYD';
+
+export interface ResponsableEjecutante {
+  nombre: string;
+  rol: RolEjecutante;
+}
 
 export type OrigenReporte = 'audio' | 'texto';
 
@@ -60,9 +75,15 @@ export interface Reporte {
   actividades: string[];
   repuestos: RepuestoItem[];
   prioridad: PrioridadReporte | null;
+  tipo_notificacion?: TipoNotificacion | null;
   numero_ot: string | null;
   fecha_intervencion: string | null;
+  fecha_inicio?: string | null;
+  hora_inicio?: string | null;
+  fecha_fin?: string | null;
+  hora_fin?: string | null;
   duracion_minutos: number | null;
+  responsables_ejecutantes?: ResponsableEjecutante[] | null;
   observaciones: string | null;
   campos_faltantes: string[];
   confianza: number | null;

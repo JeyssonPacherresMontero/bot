@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TipoMantenimiento } from '@/types/database.types';
 import { cn } from '@/lib/utils';
-import { Wrench, ShieldAlert, Activity, Search, HelpCircle } from 'lucide-react';
+import { Wrench, ShieldAlert, Activity, Search, TrendingUp, HelpCircle } from 'lucide-react';
 
 interface TipoBadgeProps {
   tipo: TipoMantenimiento | string | null | undefined;
@@ -48,6 +48,18 @@ export function TipoBadge({ tipo, className }: TipoBadgeProps) {
         >
           <Activity className="w-3 h-3 text-purple-600 dark:text-purple-400" />
           <span>Predictivo</span>
+        </span>
+      );
+    case 'mejora':
+      return (
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20',
+            className
+          )}
+        >
+          <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+          <span>Mejora</span>
         </span>
       );
     case 'inspeccion':
