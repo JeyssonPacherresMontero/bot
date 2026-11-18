@@ -36,6 +36,22 @@ export interface RepuestoItem {
   codigo: string | null;
 }
 
+export type ProcedenciaItem = 'GMO' | 'EXT';
+
+export interface HerramientaItem {
+  nombre: string;
+  modelo?: string | null;
+  procedencia?: ProcedenciaItem | null;
+}
+
+export interface MaterialConsumibleItem {
+  nombre: string;
+  cantidad: number | null;
+  unidad?: string | null;
+  codigo?: string | null;
+  procedencia?: ProcedenciaItem | null;
+}
+
 export interface Perfil {
   id: string;
   nombre: string;
@@ -83,7 +99,19 @@ export interface Reporte {
   fecha_fin?: string | null;
   hora_fin?: string | null;
   duracion_minutos: number | null;
+  total_horas_hombre?: number | null;
+  unidad?: string | null;
+  ow_os?: string | null;
+  puesto_trabajo?: string | null;
+  titulo_trabajo?: string | null;
+  supervisor_operaciones?: string | null;
+  responsable_ejecucion?: string | null;
   responsables_ejecutantes?: ResponsableEjecutante[] | null;
+  responsable_trabajo_nombre?: string | null;
+  responsable_trabajo_telefono?: string | null;
+  herramientas?: HerramientaItem[] | null;
+  materiales_consumibles?: MaterialConsumibleItem[] | null;
+  requiere_aviso?: boolean | null;
   observaciones: string | null;
   campos_faltantes: string[];
   confianza: number | null;

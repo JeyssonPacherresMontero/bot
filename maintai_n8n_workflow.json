@@ -9,21 +9,21 @@
         ],
         "additionalFields": {}
       },
-      "id": "63ed9295-c6cb-46d4-91cb-3155f6581296",
+      "id": "5c694971-835e-497f-b44c-b7447271afa3",
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
       "position": [
-        0,
-        0
+        5392,
+        5536
       ],
+      "webhookId": "5291359d-2568-48f6-a887-c6e13d4303e7",
       "credentials": {
         "telegramApi": {
-          "id": "",
-          "name": "Telegram MaintAI"
+          "id": "JLhf47Vqckg00YUS",
+          "name": "Telegram account 16"
         }
-      },
-      "webhookId": "6fc3d8a8-cfc0-421d-928f-8e8898eebe71"
+      }
     },
     {
       "parameters": {
@@ -31,82 +31,94 @@
         "path": "maintai-estado",
         "options": {}
       },
-      "id": "259d4a25-09f0-42d8-b106-6cad537900ae",
+      "id": "68d7d734-3b4a-48f9-aab0-e32c358bed37",
       "name": "Webhook Panel",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        0,
-        400
+        5392,
+        5728
       ],
-      "webhookId": "fc57a398-c042-46f3-a5a5-676b0e0b072a"
+      "webhookId": "a197e53f-4c06-4810-b7f0-7b18d97d26a8"
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
             {
-              "id": "57223581-4f06-48cf-a30d-3e68348890a2",
+              "id": "d9917c43-bb2d-4266-9a25-b5e2e1bec3cc",
               "name": "telegram_token",
-              "value": "PEGA_AQUI_EL_TOKEN_DEL_BOT",
+              "value": "8791869401:AAHGnnBYjbzv4OpBuFVI6wpPPft4-DxYxmg",
               "type": "string"
             },
             {
-              "id": "f8f3dc74-bf71-4dc1-b4ab-164179f63f02",
+              "id": "d5f3563f-457c-4d96-ad63-bd5f4f644bbe",
               "name": "supabase_url",
-              "value": "https://TU-PROYECTO.supabase.co",
+              "value": "https://kdlrhulqvbowvqyfcvhe.supabase.co",
               "type": "string"
             },
             {
-              "id": "cb6117e1-9447-48da-88b3-bb55649d66ee",
+              "id": "891f3acb-fc7e-44ea-808f-f9739166b0cf",
               "name": "supabase_key",
-              "value": "PEGA_AQUI_LA_SERVICE_ROLE_KEY",
+              "value": "sb_publishable_L-FFD9ciNbCxjfmkrpV1LQ_XT5SnYjj",
               "type": "string"
             },
             {
-              "id": "7a180905-ad51-4c95-a2f5-3317d88c7502",
-              "name": "openai_api_key",
-              "value": "PEGA_AQUI_LA_API_KEY_DE_OPENAI",
+              "id": "a59d753c-cb19-4a42-8edb-385701345f11",
+              "name": "llm_api_key",
+              "value": "={{ $env.GOOGLE_API_KEY }}",
               "type": "string"
             },
             {
-              "id": "94878e43-3911-43a1-8e0c-32eff10ce2c2",
+              "id": "97a471b0-c5b8-4949-a242-800af1db2e30",
               "name": "llm_base_url",
-              "value": "https://api.openai.com/v1",
+              "value": "https://generativelanguage.googleapis.com/v1beta/openai",
               "type": "string"
             },
             {
-              "id": "89f47665-ef1d-4ede-9c38-d971f79d1684",
+              "id": "b0459c4a-1152-4707-bfdd-79a37dcc78bc",
               "name": "llm_model",
-              "value": "gpt-4o-mini",
+              "value": "gemini-2.5-flash",
               "type": "string"
             },
             {
-              "id": "a7188dcf-4c61-48f0-ab6b-5e53e7b19d49",
+              "id": "3918b6dc-b5a6-4678-a336-658275798698",
+              "name": "stt_api_key",
+              "value": "={{ $env.GROQ_API_KEY }}",
+              "type": "string"
+            },
+            {
+              "id": "cac64ff4-694a-4a17-9cfd-1c6b122e8b66",
+              "name": "stt_base_url",
+              "value": "https://api.groq.com/openai/v1",
+              "type": "string"
+            },
+            {
+              "id": "44547ea6-de77-40a9-95a5-e90300788f97",
               "name": "stt_model",
-              "value": "whisper-1",
+              "value": "whisper-large-v3-turbo",
               "type": "string"
             },
             {
-              "id": "9ec18700-bc03-4422-aa3a-352b6fe193f9",
+              "id": "e3dd1826-bf52-4110-9037-49882f6d1348",
               "name": "whisper_hint",
               "value": "Turbina de vapor, caldera, BMS, DCS Honeywell, SE-1, SE-2, RCO, tablero, instrumentación, repuesto, orden de trabajo, OT",
               "type": "string"
             },
             {
-              "id": "f8daa35d-abbe-4b0f-a967-16c08979351d",
+              "id": "3eafcf1b-1f5b-42f6-8fd5-dc14d56989b7",
               "name": "timezone",
               "value": "America/Lima",
               "type": "string"
             },
             {
-              "id": "bcc086d2-b176-45da-8004-6e8a371ddef1",
+              "id": "9059e1dd-64eb-4132-a3a7-db774fe00773",
               "name": "webhook_secret",
-              "value": "CAMBIA_ESTE_SECRETO",
+              "value": "e9e9ffebe46131ce3b6b1ebf1b10f3ebf2ba67399752ab8e",
               "type": "string"
             },
             {
-              "id": "a4ac9b1a-247e-465a-af26-7f013bb90443",
+              "id": "3b8c0992-715e-44cd-b3ed-4b7c2e5c6ab1",
               "name": "require_whitelist",
               "value": false,
               "type": "boolean"
@@ -116,39 +128,39 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "12374a88-983e-4789-988f-10ca4df4b70f",
+      "id": "3551fc99-ed87-4e58-8e8f-de8b19d52e0f",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        300,
-        200
+        5616,
+        5632
       ]
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Config').first().json;\nconst j = $input.first().json;\nconst t0 = Date.now();\n\n// Evento que envia Supabase cuando el supervisor valida o rechaza un reporte\nif (j.body && j.body.record) {\n  const hdr = j.headers || {};\n  const rec = j.body.record;\n  const old = j.body.old_record || {};\n  const cambio = old.estado !== rec.estado && ['revisado', 'rechazado'].includes(rec.estado);\n  if ((hdr['x-webhook-secret'] || '') !== cfg.webhook_secret || !cambio || !rec.telegram_chat_id) {\n    return [{ json: { kind: 'ignorar' } }];\n  }\n  return [{ json: { kind: 'estado', t0, chat_id: rec.telegram_chat_id, report_id: rec.id, estado: rec.estado, comentario: rec.comentario_supervisor || '', equipo: rec.equipo || '' } }];\n}\n\n// Eventos de Telegram\nconst cb = j.callback_query;\nconst m = j.message;\nconst nombre = (u) => [u.first_name, u.last_name].filter(Boolean).join(' ');\n\nif (cb) {\n  return [{ json: { kind: 'callback', t0, chat_id: cb.message.chat.id, callback_id: cb.id, message_id: cb.message.message_id, data: cb.data || '', from_name: nombre(cb.from) } }];\n}\nif (!m) return [{ json: { kind: 'ignorar' } }];\n\nconst base = { t0, chat_id: m.chat.id, message_id: m.message_id, from_name: nombre(m.from), username: m.from.username || '' };\nconst replyTxt = (m.reply_to_message && (m.reply_to_message.text || m.reply_to_message.caption)) || '';\nbase.reply_id = (replyTxt.match(/ID:\\s*([0-9a-fA-F-]{36})/) || [])[1] || '';\n\nif (m.voice || m.audio) {\n  const a = m.voice || m.audio;\n  return [{ json: { ...base, kind: 'voice', file_id: a.file_id, duration: a.duration || 0 } }];\n}\nif (m.text) {\n  if (m.text.startsWith('/')) return [{ json: { ...base, kind: 'command', command: m.text.split(/[\\s@]/)[0].toLowerCase() } }];\n  return [{ json: { ...base, kind: 'text', text: m.text } }];\n}\nreturn [{ json: { ...base, kind: 'command', command: '/no_soportado' } }];"
+        "jsCode": "const cfg = $('Config').first().json;\nconst j = $input.first().json;\nconst t0 = Date.now();\n\n// Evento que envia Supabase cuando el supervisor valida o rechaza un reporte\nif (j.body && j.body.record) {\n  const hdr = j.headers || {};\n  const rec = j.body.record;\n  const old = j.body.old_record || {};\n  const cambio = old.estado !== rec.estado && ['revisado', 'rechazado'].includes(rec.estado);\n  if ((hdr['x-webhook-secret'] || '') !== cfg.webhook_secret || !cambio || !rec.telegram_chat_id) {\n    return [{ json: { kind: 'ignorar' } }];\n  }\n  return [{ json: { kind: 'estado', t0, chat_id: rec.telegram_chat_id, report_id: rec.id, estado: rec.estado, comentario: rec.comentario_supervisor || '', equipo: rec.equipo || '' } }];\n}\n\n// Eventos de Telegram\nconst cb = j.callback_query;\nconst m = j.message;\nconst nombre = (u) => [u.first_name, u.last_name].filter(Boolean).join(' ');\n\nif (cb) {\n  return [{ json: { kind: 'callback', t0, chat_id: cb.message.chat.id, callback_id: cb.id, message_id: cb.message.message_id, data: cb.data || '', from_name: nombre(cb.from) } }];\n}\nif (!m) return [{ json: { kind: 'ignorar' } }];\n\nconst base = { t0, chat_id: m.chat.id, message_id: m.message_id, from_name: nombre(m.from), first_name: m.from.first_name || m.from.username || 'técnico', username: m.from.username || '' };\nconst replyTxt = (m.reply_to_message && (m.reply_to_message.text || m.reply_to_message.caption)) || '';\nbase.reply_id = (replyTxt.match(/ID:\\s*([0-9a-fA-F-]{36})/) || [])[1] || '';\n\nif (m.voice || m.audio) {\n  const a = m.voice || m.audio;\n  return [{ json: { ...base, kind: 'voice', file_id: a.file_id, duration: a.duration || 0 } }];\n}\nif (m.text) {\n  if (m.text.startsWith('/')) return [{ json: { ...base, kind: 'command', command: m.text.split(/[\\s@]/)[0].toLowerCase() } }];\n  return [{ json: { ...base, kind: 'text', text: m.text } }];\n}\nreturn [{ json: { ...base, kind: 'command', command: '/no_soportado' } }];"
       },
-      "id": "5f9961c1-4e1d-4706-b2c6-579602214141",
+      "id": "3abbd071-a8ef-4f9f-aad3-eb6d7d859f06",
       "name": "Normalizar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        560,
-        200
+        5840,
+        5632
       ]
     },
     {
       "parameters": {
         "jsCode": "const cfg = $('Config').first().json;\nconst ctx = $input.first().json;\nif (['estado', 'ignorar'].includes(ctx.kind) || !cfg.require_whitelist) {\n  return [{ json: { ...ctx, authorized: true } }];\n}\ntry {\n  const r = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${cfg.supabase_url}/rest/v1/usuarios_telegram?chat_id=eq.${ctx.chat_id}&activo=eq.true&select=chat_id,nombre`,\n    headers: { apikey: cfg.supabase_key, Authorization: `Bearer ${cfg.supabase_key}` },\n    json: true,\n  });\n  const ok = Array.isArray(r) && r.length > 0;\n  return [{ json: { ...ctx, authorized: ok, tecnico_registrado: ok ? r[0].nombre : null } }];\n} catch (e) {\n  return [{ json: { ...ctx, authorized: false } }];\n}"
       },
-      "id": "f2c325fb-a865-4e32-aca5-fba6e4a5b7a5",
+      "id": "2f1cb0b7-423c-49e7-ab3b-b2e73246cbd2",
       "name": "Verificar autorizacion",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        820,
-        200
+        6064,
+        5632
       ]
     },
     {
@@ -157,26 +169,26 @@
         "numberOutputs": 2,
         "output": "={{ $json.authorized ? 0 : 1 }}"
       },
-      "id": "458e4941-8e2a-49c8-8ce6-0aa4dc60e842",
+      "id": "428f25d5-6891-4982-9875-c2ae0e07af95",
       "name": "Autorizado",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        1080,
-        200
+        6288,
+        5632
       ]
     },
     {
       "parameters": {
         "jsCode": "const c = $input.first().json;\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text: `⛔ No estás autorizado para usar MaintAI.\\nPide a tu supervisor que registre tu chat ID: <code>${c.chat_id}</code>` } } }];"
       },
-      "id": "ee8fde72-849b-40b2-a304-15c667e48d1d",
+      "id": "8e3e2151-81e6-4c2d-a32b-9b4397cdc983",
       "name": "Respuesta no autorizado",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1340,
-        40
+        9648,
+        4416
       ]
     },
     {
@@ -185,77 +197,74 @@
         "numberOutputs": 6,
         "output": "={{ ['voice','text','callback','command','estado','ignorar'].indexOf($json.kind) }}"
       },
-      "id": "fdc054af-b2e1-4a08-89f3-c8408d9118cb",
+      "id": "681e83d5-d1a0-4bd0-8240-dd2ba41d9380",
       "name": "Tipo de mensaje",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        1340,
-        240
+        6544,
+        5872
       ]
     },
     {
       "parameters": {
-        "jsCode": "const c = $input.first().json;\nlet text;\nif (c.command === '/no_soportado') {\n  text = '⚠️ Solo puedo procesar <b>audios</b> y <b>mensajes de texto</b>.';\n} else {\n  text = `👷 <b>MaintAI</b> · asistente de reportes de mantenimiento\\n\\nEnvíame un <b>audio</b> o un <b>mensaje de texto</b> contando lo que hiciste: equipo, falla, actividades y repuestos usados.\\n\\nLuego revisa el resumen y pulsa ✅ <b>Confirmar</b> o ✏️ <b>Corregir</b>.\\n\\nTu chat ID: <code>${c.chat_id}</code>`;\n}\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text } } }];"
+        "jsCode": "const esc = (t) => String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst c = $input.first().json;\nlet text;\nif (c.command === '/no_soportado') {\n  text = '⚠️ Solo puedo procesar <b>audios</b> y <b>mensajes de texto</b>.';\n} else {\n  const nombre = esc(c.tecnico_registrado || c.first_name || 'técnico');\n  text = `👋 Hola, <b>${nombre}</b>. Soy <b>MaintAI</b>, tu asistente de reportes de mantenimiento.\n\nPuedes enviarme:\n🎙 Un <b>audio</b> contando el trabajo realizado\n⌨️ Un <b>mensaje de texto</b> con el detalle\nIncluye: equipo, falla, actividades y repuestos usados.\n\nDespués te muestro una <b>vista previa</b> (todavía sin guardar) y tú decides:\n✅ <b>Confirmar</b> → se registra y supervisión lo ve en el panel\n✏️ <b>Corregir</b> → me dices qué cambiar y actualizo el borrador\n\nTambién puedes escribir «confirmar» o «corregir» en lugar de pulsar los botones.`;\n}\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text } } }];"
       },
-      "id": "f2856e47-da5a-4d22-a6e1-fabf3df4cabd",
+      "id": "561b1bdc-5270-4fba-8dde-0990f98985d8",
       "name": "Respuesta comando",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1620,
-        1100
+        9648,
+        7120
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ 'https://api.telegram.org/bot' + $('Config').first().json.telegram_token + '/getFile?file_id=' + $json.file_id }}",
         "options": {}
       },
-      "id": "865177f6-dccf-441f-8780-a89b58d1fbad",
+      "id": "b80c5867-2e3c-49f8-999b-779c0149dc37",
       "name": "TG obtener ruta audio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1620,
-        40
+        6736,
+        5616
       ],
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "={{ 'https://api.telegram.org/file/bot' + $('Config').first().json.telegram_token + '/' + $json.result.file_path }}",
         "options": {
           "response": {
             "response": {
-              "responseFormat": "file",
-              "outputPropertyName": "data"
+              "responseFormat": "file"
             }
           }
         }
       },
-      "id": "add28ad3-007d-4740-a719-c5bf2eb52557",
+      "id": "2f26f595-1e54-46f5-ac20-587be4672e55",
       "name": "TG descargar audio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1880,
-        40
+        6960,
+        5536
       ],
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Config').first().json.llm_base_url + '/audio/transcriptions' }}",
+        "url": "={{ $('Config').first().json.stt_base_url + '/audio/transcriptions' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $('Config').first().json.openai_api_key }}"
+              "value": "=Bearer {{ $('Config').first().json.stt_api_key }}"
             }
           ]
         },
@@ -290,100 +299,71 @@
           "timeout": 60000
         }
       },
-      "id": "0a93fa91-9a0d-46ec-94b9-242b437d1ba8",
+      "id": "d6f6cee6-f11b-4cf8-9358-76b55fdf80ec",
       "name": "Transcribir audio",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2140,
-        40
+        7408,
+        5472
       ],
-      "onError": "continueErrorOutput",
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 1500
+      "waitBetweenTries": 1500,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Verificar autorizacion').first().json;\nconst j = $input.first().json;\nconst texto = String(ctx.kind === 'voice' ? (j.text || '') : (ctx.text || '')).trim();\nreturn [{ json: { ...ctx, texto } }];"
+        "jsCode": "const ctx = $('Verificar autorizacion').first().json;\nconst j = $input.first().json;\nconst texto = String(ctx.kind === 'voice' ? (j.text || '') : (ctx.text || '')).trim();\n// texto normalizado para detectar saludos / palabras clave\nconst n = texto.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9\\s]/g, ' ').replace(/\\s+/g, ' ').trim();\nconst words = n ? n.split(' ').length : 0;\nlet intent = 'reporte';\nif (!texto) intent = 'vacio';\nelse if (/^(si |ok )?(confirmar|confirmo|confirmado|guardar|guardalo)( reporte)?$/.test(n)) intent = 'confirmar';\nelse if (/^(quiero |voy a )?(corregir|correccion|editar|modificar)(lo| reporte)?$/.test(n)) intent = 'corregir';\nelse if (words <= 4 && /^(hola|holi|ola|hey|buenas|buenos dias|buen dia|buenas tardes|buenas noches|que tal|saludos)/.test(n)) intent = 'saludo';\nreturn [{ json: { ...ctx, texto, intent } }];"
       },
-      "id": "2b52b309-ff64-434d-97b4-f6687d35258a",
+      "id": "3d247e52-944d-4be3-8790-2f611c5dc97a",
       "name": "Preparar texto",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2400,
-        240
+        7632,
+        5392
       ]
     },
     {
       "parameters": {
         "mode": "expression",
-        "numberOutputs": 3,
-        "output": "={{ !$json.texto ? 0 : ($json.reply_id ? 1 : 2) }}"
+        "numberOutputs": 6,
+        "output": "={{ ['sin_texto','saludo','confirmar','corregir','reporte','sin_borrador'].indexOf($json.route) }}"
       },
-      "id": "336e686e-0e44-4baa-af72-cfc89bb576bd",
+      "id": "e262fdf9-5f52-4102-9d0f-3b5e337d7bac",
       "name": "Ruta de texto",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        2660,
-        240
+        8304,
+        5120
       ]
     },
     {
       "parameters": {
         "jsCode": "const c = $input.first().json;\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text: '🔇 No logré entender el mensaje. Intenta grabar de nuevo (más cerca del micrófono) o escríbelo.' } } }];"
       },
-      "id": "097b92b3-93d0-4aae-a21a-d6864264fb0a",
+      "id": "8d7cd6e4-25b1-4a6b-adfd-737bb312e96e",
       "name": "Respuesta sin texto",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2920,
-        20
+        9648,
+        4608
       ]
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "={{ $('Config').first().json.supabase_url + '/rest/v1/reportes?id=eq.' + $json.reply_id + '&telegram_chat_id=eq.' + $json.chat_id + '&select=*' }}",
-        "options": {},
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $('Config').first().json.supabase_key }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Config').first().json.supabase_key }}"
-            }
-          ]
-        }
+        "jsCode": "const SYSTEM = `Eres MaintAI, asistente de inteligencia artificial para mantenimiento de plantas industriales y cogeneración térmica.\nRecibes una transcripción de audio (Whisper) o mensaje de texto de un técnico de mantenimiento, basado en el formato físico oficial \"NOTIFICACIÓN ORDEN DE TRABAJO\" (anverso y reverso).\nLa transcripción puede contener errores fonéticos, ruido de planta o coloquialismos técnicos: interpreta con criterio técnico especializado sin inventar hechos.\n\nDevuelve EXCLUSIVAMENTE un objeto JSON válido con la siguiente estructura:\n{\n  \"numero_ot\": string | null, // N° Orden de Trabajo. Trátalo estrictamente como TEXTO para preservar letras, guiones, barras y ceros a la izquierda (ej: \"0052076\", \"5125-076\", \"OT-2026-001A\"). NUNCA lo trates solo como número ni limites su longitud.\n  \"unidad\": string | null, // Unidad del formato físico (ej: \"GE\", \"SGV\", \"RCO\").\n  \"ow_os\": string | null, // OW / OS si se indica.\n  \"puesto_trabajo\": string | null, // Puesto de trabajo / especialidad (ej: \"MEC\", \"ELEC\", \"I&C\", \"EXTREMO\").\n  \"titulo_trabajo\": string | null, // Título o descripción sintética del trabajo.\n  \"equipo\": string | null, // Nombre del equipo principal intervenido.\n  \"codigo_equipo\": string | null, // Tag o código de activo (ej: \"B-101A\", \"TUR-01\").\n  \"area\": string | null, // Área de planta.\n  \"tipo_mantenimiento\": \"preventivo\" | \"correctivo\" | \"predictivo\" | \"inspeccion\" | \"otro\" | null,\n  \"tipo_notificacion\": \"parcial\" | \"final\" | null, // Tipo de notificación de la orden. Solo si el técnico lo indica explícitamente; si no, null.\n  \"prioridad\": \"baja\" | \"media\" | \"alta\" | \"critica\" | null,\n  \"fecha_inicio\": string | null, // Fecha de inicio de trabajos (YYYY-MM-DD). Operación en zona America/Lima.\n  \"hora_inicio\": string | null, // Hora de inicio (HH:MM formato 24h). Si solo dice \"a las 8\" sin contexto AM/PM claro, marcar ambigüedad.\n  \"fecha_fin\": string | null, // Fecha de término de trabajos (YYYY-MM-DD). Si el turno cruza medianoche, fecha_fin es el día siguiente.\n  \"hora_fin\": string | null, // Hora de término (HH:MM formato 24h).\n  \"duracion_minutos\": number | null, // Duración transcurrida de la intervención en minutos. NO confundir con horas-hombre.\n  \"total_horas_hombre\": number | null, // Total H-H cuando participan varias personas o el técnico indica horas-hombre explícitamente.\n  \"falla\": string | null, // Síntoma reportado o motivo de intervención.\n  \"causa_probable\": string | null, // Causa técnica probable (diferenciar hecho reportado de hipótesis).\n  \"actividades\": string[], // Detalle del trabajo ejecutado. Conserva con precisión quirúrgica lecturas y parámetros técnicos (ej: 8.45 V, 4.5 ohmios, HART, 4-20 mA).\n  \"herramientas\": [\n    {\n      \"nombre\": string,\n      \"modelo\": string | null,\n      \"procedencia\": \"GMO\" | \"EXT\"\n    }\n  ],\n  \"materiales_consumibles\": [\n    {\n      \"nombre\": string,\n      \"cantidad\": number | null, // Cantidad mencionada. Si no se indica cantidad, DEBE ser null (NUNCA asumir 1).\n      \"unidad\": string | null,\n      \"codigo\": string | null,\n      \"procedencia\": \"GMO\" | \"EXT\"\n    }\n  ],\n  \"repuestos\": [\n    {\n      \"nombre\": string,\n      \"cantidad\": number | null,\n      \"codigo\": string | null\n    }\n  ],\n  \"observaciones\": string | null,\n  \"requiere_aviso\": boolean, // ¿Requiere generar aviso SAP/GMAO por observaciones encontradas? true/false.\n  \"supervisor_operaciones\": string | null,\n  \"responsable_ejecucion\": string | null,\n  \"responsable_trabajo_nombre\": string | null,\n  \"responsable_trabajo_telefono\": string | null,\n  \"campos_faltantes\": string[],\n  \"confianza\": number,\n  \"necesita_confirmacion\": boolean,\n  \"pregunta_aclaracion\": string | null\n}\n\nREGLAS CRÍTICAS:\n1. OT: Preserva ceros iniciales, letras, guiones (\"0052076\", \"5125-076\", \"OT-2026-001A\"). No limites la longitud. Si no se distingue con certeza, pregunta con necesita_confirmacion=true.\n2. HORAS Y FECHAS: America/Lima. Si turno cruza medianoche (ej: 22:00 a 02:30), fecha_fin es el día siguiente. Si el técnico dice \"a las 8\" sin especificar mañana o tarde y no se puede deducir con certeza, solicita aclaración.\n3. TIPO NOTIFICACIÓN: Solo \"parcial\" o \"final\" si el técnico lo dice; de lo contrario null. NO confundir con tipo de mantenimiento.\n4. HERRAMIENTAS VS CONSUMIBLES VS REPUESTOS: Multímetro, Fluke, llaves en herramientas. Cinta, teflón, grasa, pernos en consumibles. Consumible sin cantidad explícita debe ser null. Respeta la clasificación del técnico; no dupliques.\n5. NO INVENTES: No agregues repuestos, procedencias ni mediciones que el técnico no haya mencionado.`;\n\nconst cfg = $('Config').first().json;\nconst ctx = $('Decidir ruta').first().json;\nconst orig = ctx.draft || null;\nconst hoy = new Date().toLocaleDateString('en-CA', { timeZone: cfg.timezone || 'America/Lima' });\nconst system = SYSTEM + \"\\nFecha de referencia de la planta hoy: \" + hoy + \".\";\n\nlet user;\nif (orig) {\n  const actual = {\n    numero_ot: orig.numero_ot,\n    unidad: orig.unidad,\n    ow_os: orig.ow_os,\n    puesto_trabajo: orig.puesto_trabajo,\n    titulo_trabajo: orig.titulo_trabajo,\n    equipo: orig.equipo,\n    codigo_equipo: orig.codigo_equipo,\n    area: orig.area,\n    tipo_mantenimiento: orig.tipo_mantenimiento,\n    tipo_notificacion: orig.tipo_notificacion,\n    prioridad: orig.prioridad,\n    fecha_inicio: orig.fecha_inicio,\n    hora_inicio: orig.hora_inicio,\n    fecha_fin: orig.fecha_fin,\n    hora_fin: orig.hora_fin,\n    duracion_minutos: orig.duracion_minutos,\n    total_horas_hombre: orig.total_horas_hombre,\n    falla: orig.falla,\n    causa_probable: orig.causa_probable,\n    actividades: orig.actividades,\n    herramientas: orig.herramientas,\n    materiales_consumibles: orig.materiales_consumibles,\n    repuestos: orig.repuestos,\n    observaciones: orig.observaciones,\n    requiere_aviso: orig.requiere_aviso,\n    supervisor_operaciones: orig.supervisor_operaciones,\n    responsable_ejecucion: orig.responsable_ejecucion,\n    responsable_trabajo_nombre: orig.responsable_trabajo_nombre,\n    responsable_trabajo_telefono: orig.responsable_trabajo_telefono\n  };\n  user = \"REPORTE ACTUAL BORRADOR JSON:\\n\" + JSON.stringify(actual, null, 2) + \"\\n\\nINSTRUCCIÓN O CORRECCIÓN DEL TÉCNICO (audio transcrito o texto):\\n\" + ctx.texto + \"\\n\\nActualiza únicamente los campos mencionados en la corrección, conserva todos los demás datos ya registrados y devuelve el reporte completo en JSON.\";\n} else {\n  user = \"RELATO DEL TÉCNICO (\" + (ctx.kind === 'voice' ? 'audio transcrito' : 'texto') + \"):\\n\" + ctx.texto;\n}\n\nconst { draft: _d, ...rest } = ctx;\nreturn [{\n  json: {\n    ...rest,\n    orig_id: orig ? orig.id : null,\n    orig_correcciones: orig ? (orig.correcciones || 0) : 0,\n    llm_body: {\n      model: cfg.llm_model,\n      temperature: 0,\n      response_format: { type: 'json_object' },\n      messages: [\n        { role: 'system', content: system },\n        { role: 'user', content: user }\n      ]\n    }\n  }\n}];"
       },
-      "id": "d0545009-1c8e-4174-9e63-a37e91a0fb3c",
-      "name": "Obtener reporte original",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2920,
-        240
-      ],
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "jsCode": "const SYSTEM = \"Eres un asistente de mantenimiento industrial de una central termica de cogeneracion (turbinas de vapor, calderas, BMS, sistemas DCS Honeywell, tableros electricos, subestaciones SE-1 y SE-2, recuperacion de condensados RCO). Recibes el relato de un tecnico (puede venir de una transcripcion de audio con errores) y devuelves UNICAMENTE un objeto JSON con estas claves:\\nequipo (string|null), codigo_equipo (string|null, p. ej. P-101A), area (string|null), tipo_notificacion ('parcial'|'final'|null), tipo_mantenimiento ('preventivo'|'correctivo'|'predictivo'|'mejora'|'inspeccion'|'otro'|null), falla (string|null: sintoma o anomalia observada), causa_probable (string|null), actividades (array de strings, una accion por elemento, en infinitivo o pasado), repuestos (array de {nombre, cantidad (number|null), codigo (string|null)}), prioridad ('baja'|'media'|'alta'|'critica'|null), numero_ot (string|null, de 7 u 8 digitos), fecha_intervencion ('YYYY-MM-DD'|null), duracion_minutos (integer|null), observaciones (string|null), confianza (number entre 0 y 1: tu certeza global de la extraccion).\\nReglas: no inventes datos; si algo no se menciona usa null o []. Conserva codigos de equipo, numeros de serie y OT tal como se dicen (las OT suelen ser de 7 u 8 digitos). Corrige errores evidentes de transcripcion de terminos tecnicos. Interpreta fechas relativas (ayer, hoy) con la fecha actual indicada. Responde solo el JSON, sin texto adicional.\";\nconst cfg = $('Config').first().json;\nconst ctx = $('Preparar texto').first().json;\nlet orig = null;\nif (ctx.reply_id) {\n  try { const o = $('Obtener reporte original').first().json; if (o && o.id) orig = o; } catch (e) {}\n}\nconst hoy = new Date().toLocaleDateString('en-CA', { timeZone: cfg.timezone || 'America/Lima' });\nconst system = SYSTEM + `\\nFecha actual: ${hoy}.`;\nlet user;\nif (orig) {\n  const actual = {\n    equipo: orig.equipo, codigo_equipo: orig.codigo_equipo, area: orig.area, tipo_notificacion: orig.tipo_notificacion, tipo_mantenimiento: orig.tipo_mantenimiento,\n    falla: orig.falla, causa_probable: orig.causa_probable, actividades: orig.actividades, repuestos: orig.repuestos,\n    prioridad: orig.prioridad, numero_ot: orig.numero_ot, fecha_intervencion: orig.fecha_intervencion,\n    duracion_minutos: orig.duracion_minutos, observaciones: orig.observaciones,\n  };\n  user = `REPORTE ACTUAL (JSON):\\n${JSON.stringify(actual)}\\n\\nRELATO ORIGINAL DEL TECNICO:\\n${orig.texto_original || ''}\\n\\nCORRECCION DEL TECNICO:\\n${ctx.texto}\\n\\nAplica la correccion sobre el reporte actual y devuelve el JSON completo actualizado.`;\n} else {\n  user = `RELATO DEL TECNICO:\\n${ctx.texto}`;\n}\nreturn [{ json: { ...ctx, orig_id: orig ? orig.id : null, orig_correcciones: orig ? (orig.correcciones || 0) : 0, llm_body: { model: cfg.llm_model, temperature: 0, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] } } }];"
-      },
-      "id": "5860ffa6-70c8-4787-a74b-ff2d0e9a87b9",
+      "id": "2e2b2904-1255-4574-ae94-5e048dfacf93",
       "name": "Armar prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3180,
-        240
+        8528,
+        5088
       ]
     },
     {
@@ -395,7 +375,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $('Config').first().json.openai_api_key }}"
+              "value": "=Bearer {{ $('Config').first().json.llm_api_key }}"
             }
           ]
         },
@@ -406,30 +386,30 @@
           "timeout": 60000
         }
       },
-      "id": "612f5b38-ed9b-4c4e-9738-546074e4d480",
+      "id": "07995edb-f04e-41b4-bc99-769570948088",
       "name": "Extraer con IA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3440,
-        240
+        8752,
+        5088
       ],
-      "onError": "continueErrorOutput",
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 1500
+      "waitBetweenTries": 1500,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Armar prompt').first().json;\nconst resp = $input.first().json;\nlet d = {};\ntry { d = JSON.parse(resp.choices[0].message.content); } catch (e) { d = {}; }\n\nconst s = (v) => (v === null || v === undefined || String(v).trim() === '') ? null : String(v).trim();\nconst num = (v) => (v === null || v === undefined || v === '') ? null : (Number.isFinite(Number(v)) ? Number(v) : null);\nconst arr = (v) => Array.isArray(v) ? v.map((x) => String(x).trim()).filter(Boolean) : [];\nconst pick = (v, list) => { const x = String(v || '').toLowerCase().trim(); return list.includes(x) ? x : null; };\n\nconst repuestos = (Array.isArray(d.repuestos) ? d.repuestos : [])\n  .map((r) => typeof r === 'string' ? { nombre: s(r), cantidad: null, codigo: null } : { nombre: s(r && r.nombre), cantidad: num(r && r.cantidad), codigo: s(r && r.codigo) })\n  .filter((r) => r.nombre);\nconst dur = num(d.duracion_minutos);\nconst conf = num(d.confianza);\n\nconst campos = {\n  equipo: s(d.equipo), codigo_equipo: s(d.codigo_equipo), area: s(d.area),\n  tipo_notificacion: pick(d.tipo_notificacion, ['parcial', 'final']),\n  tipo_mantenimiento: pick(d.tipo_mantenimiento, ['preventivo', 'correctivo', 'predictivo', 'mejora', 'inspeccion', 'otro']),\n  falla: s(d.falla), causa_probable: s(d.causa_probable),\n  actividades: arr(d.actividades), repuestos,\n  prioridad: pick(d.prioridad, ['baja', 'media', 'alta', 'critica']),\n  numero_ot: s(d.numero_ot),\n  fecha_intervencion: /^\\d{4}-\\d{2}-\\d{2}$/.test(String(d.fecha_intervencion || '')) ? d.fecha_intervencion : null,\n  duracion_minutos: dur === null ? null : Math.max(0, Math.round(dur)),\n  observaciones: s(d.observaciones),\n  confianza: conf === null ? null : Math.min(1, Math.max(0, conf)),\n};\nconst faltantes = [];\nif (!campos.equipo) faltantes.push('equipo');\nif (!campos.falla) faltantes.push('falla');\nif (!campos.actividades.length) faltantes.push('actividades');\n\nconst ms = Date.now() - (ctx.t0 || Date.now());\nlet mode, db_row;\nif (ctx.orig_id) {\n  mode = 'update';\n  db_row = { ...campos, campos_faltantes: faltantes, raw_ia: d, texto_correccion: ctx.texto, estado: 'corregido', correcciones: (ctx.orig_correcciones || 0) + 1, tiempo_procesamiento_ms: ms };\n} else {\n  mode = 'new';\n  db_row = {\n    telegram_chat_id: ctx.chat_id, telegram_message_id: ctx.message_id,\n    tecnico_nombre: ctx.tecnico_registrado || ctx.from_name, tecnico_username: ctx.username || null,\n    origen: ctx.kind === 'voice' ? 'audio' : 'texto', audio_duracion_seg: ctx.kind === 'voice' ? ctx.duration : null,\n    texto_original: ctx.texto, ...campos, campos_faltantes: faltantes, raw_ia: d, estado: 'pendiente', tiempo_procesamiento_ms: ms,\n  };\n}\nreturn [{ json: { ...ctx, mode, db_row } }];"
+        "jsCode": "const ctx = $('Armar prompt').first().json;\nconst resp = $input.first().json;\nlet d = {};\ntry {\n  let content = resp.choices[0].message.content;\n  if (typeof content === 'string') {\n    content = content.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n    d = JSON.parse(content);\n  } else if (typeof content === 'object') {\n    d = content;\n  }\n} catch (e) {\n  d = {};\n}\n\nconst s = (v) => (v === null || v === undefined || String(v).trim() === '') ? null : String(v).trim();\nconst num = (v) => (v === null || v === undefined || v === '') ? null : (Number.isFinite(Number(v)) ? Number(v) : null);\nconst arr = (v) => Array.isArray(v) ? v.map((x) => String(x).trim()).filter(Boolean) : [];\nconst pick = (v, list) => {\n  const x = String(v || '').toLowerCase().trim();\n  return list.includes(x) ? x : null;\n};\n\n// Herramientas sanitizadas\nconst herramientas = (Array.isArray(d.herramientas) ? d.herramientas : [])\n  .map((h) => {\n    if (typeof h === 'string') {\n      return { nombre: s(h), modelo: null, procedencia: 'GMO' };\n    }\n    const nom = s(h && h.nombre);\n    if (!nom) return null;\n    const procRaw = String((h && h.procedencia) || '').toUpperCase();\n    const procedencia = procRaw === 'EXT' ? 'EXT' : 'GMO';\n    return {\n      nombre: nom,\n      modelo: s(h && h.modelo),\n      procedencia\n    };\n  })\n  .filter(Boolean);\n\n// Materiales Consumibles sanitizados\nconst materiales_consumibles = (Array.isArray(d.materiales_consumibles) ? d.materiales_consumibles : [])\n  .map((m) => {\n    if (typeof m === 'string') {\n      return { nombre: s(m), cantidad: null, unidad: null, codigo: null, procedencia: 'GMO' };\n    }\n    const nom = s(m && m.nombre);\n    if (!nom) return null;\n    const procRaw = String((m && m.procedencia) || '').toUpperCase();\n    const procedencia = procRaw === 'EXT' ? 'EXT' : 'GMO';\n    return {\n      nombre: nom,\n      cantidad: num(m && m.cantidad),\n      unidad: s(m && m.unidad),\n      codigo: s(m && m.codigo),\n      procedencia\n    };\n  })\n  .filter(Boolean);\n\n// Repuestos capitalizables sanitizados\nconst repuestos = (Array.isArray(d.repuestos) ? d.repuestos : [])\n  .map((r) => {\n    if (typeof r === 'string') {\n      return { nombre: s(r), cantidad: null, codigo: null };\n    }\n    const nom = s(r && r.nombre);\n    if (!nom) return null;\n    return {\n      nombre: nom,\n      cantidad: num(r && r.cantidad),\n      codigo: s(r && r.codigo)\n    };\n  })\n  .filter(Boolean);\n\n// Cálculo o validación de duración si hay horas de inicio y fin\nlet duracionCalc = num(d.duracion_minutos);\nconst horaInicio = s(d.hora_inicio);\nconst horaFin = s(d.hora_fin);\nconst fechaInicio = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(d.fecha_inicio || '')) ? d.fecha_inicio : null;\nconst fechaFin = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(d.fecha_fin || '')) ? d.fecha_fin : (fechaInicio || null);\n\nif (duracionCalc === null && horaInicio && horaFin) {\n  const fi = fechaInicio || '2000-01-01';\n  const ff = fechaFin || fi;\n  const t1 = new Date(`${fi}T${horaInicio.length === 5 ? horaInicio + ':00' : horaInicio}`).getTime();\n  const t2 = new Date(`${ff}T${horaFin.length === 5 ? horaFin + ':00' : horaFin}`).getTime();\n  if (!isNaN(t1) && !isNaN(t2) && t2 > t1) {\n    duracionCalc = Math.round((t2 - t1) / 60000);\n  }\n}\n\nconst campos = {\n  // Datos Generales\n  numero_ot: s(d.numero_ot),\n  unidad: s(d.unidad),\n  ow_os: s(d.ow_os),\n  puesto_trabajo: s(d.puesto_trabajo),\n  titulo_trabajo: s(d.titulo_trabajo),\n  equipo: s(d.equipo),\n  codigo_equipo: s(d.codigo_equipo),\n  area: s(d.area),\n  tipo_mantenimiento: pick(d.tipo_mantenimiento, ['preventivo', 'correctivo', 'predictivo', 'inspeccion', 'otro']),\n  tipo_notificacion: pick(d.tipo_notificacion, ['parcial', 'final']),\n  prioridad: pick(d.prioridad, ['baja', 'media', 'alta', 'critica']),\n\n  // Tiempos y Fechas\n  fecha_inicio: fechaInicio,\n  hora_inicio: horaInicio,\n  fecha_fin: fechaFin,\n  hora_fin: horaFin,\n  fecha_intervencion: fechaInicio,\n  duracion_minutos: duracionCalc === null ? null : Math.max(0, Math.round(duracionCalc)),\n  total_horas_hombre: num(d.total_horas_hombre),\n\n  // Diagnóstico y Trabajo\n  falla: s(d.falla),\n  causa_probable: s(d.causa_probable),\n  actividades: arr(d.actividades),\n\n  // Herramientas, Materiales y Repuestos\n  herramientas,\n  materiales_consumibles,\n  repuestos,\n\n  // Observaciones y Aviso SAP\n  observaciones: s(d.observaciones),\n  requiere_aviso: Boolean(d.requiere_aviso),\n\n  // Personal y Supervisión\n  supervisor_operaciones: s(d.supervisor_operaciones),\n  responsable_ejecucion: s(d.responsable_ejecucion),\n  responsable_trabajo_nombre: s(d.responsable_trabajo_nombre),\n  responsable_trabajo_telefono: s(d.responsable_trabajo_telefono),\n\n  // Confianza y Ambigüedad\n  confianza: num(d.confianza) === null ? null : Math.min(1, Math.max(0, Number(d.confianza))),\n  necesita_confirmacion: Boolean(d.necesita_confirmacion),\n  pregunta_aclaracion: s(d.pregunta_aclaracion)\n};\n\nconst faltantes = [];\nif (!campos.equipo) faltantes.push('equipo');\nif (!campos.falla) faltantes.push('falla / síntoma');\nif (!campos.actividades.length) faltantes.push('actividades ejecutadas');\n\nconst ms = Date.now() - (ctx.t0 || Date.now());\nlet mode, db_row;\n\nif (ctx.orig_id) {\n  mode = 'update';\n  db_row = {\n    ...campos,\n    campos_faltantes: faltantes,\n    raw_ia: d,\n    texto_correccion: ctx.texto,\n    estado: 'corregido',\n    correcciones: (ctx.orig_correcciones || 0) + 1,\n    tiempo_procesamiento_ms: ms\n  };\n} else {\n  mode = 'new';\n  db_row = {\n    telegram_chat_id: ctx.chat_id,\n    telegram_message_id: ctx.message_id,\n    tecnico_nombre: ctx.tecnico_registrado || ctx.from_name,\n    tecnico_username: ctx.username || null,\n    origen: ctx.kind === 'voice' ? 'audio' : 'texto',\n    audio_duracion_seg: ctx.kind === 'voice' ? ctx.duration : null,\n    texto_original: ctx.texto,\n    ...campos,\n    campos_faltantes: faltantes,\n    raw_ia: d,\n    estado: 'borrador',\n    tiempo_procesamiento_ms: ms\n  };\n}\n\nreturn [{ json: { ...ctx, mode, db_row } }];"
       },
-      "id": "5042df3d-ac48-434d-a23f-bb74b49736f9",
+      "id": "5800ef90-1eec-46e1-9b06-ef3dc0d5a4e8",
       "name": "Procesar respuesta IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3700,
-        240
+        8976,
+        5072
       ]
     },
     {
@@ -438,31 +418,24 @@
         "numberOutputs": 2,
         "output": "={{ $json.mode === 'update' ? 1 : 0 }}"
       },
-      "id": "a4a8361d-0ed1-49ad-b3a7-9a9d2a559f33",
+      "id": "1c63358b-78c0-4d37-bb4b-1662019bfeb8",
       "name": "Modo de guardado",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        3960,
-        240
+        9200,
+        5072
       ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "={{ $('Config').first().json.supabase_url + '/rest/v1/reportes' }}",
-        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $('Config').first().json.supabase_key }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Config').first().json.supabase_key }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -475,34 +448,34 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.db_row) }}"
+        "jsonBody": "={{ JSON.stringify($json.db_row) }}",
+        "options": {}
       },
-      "id": "fa15e1d7-7141-4415-957e-ad53de31e409",
+      "id": "7ebcf75d-67bd-4a95-a307-e8c241f8313c",
       "name": "Guardar reporte nuevo",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4220,
-        140
+        9424,
+        4992
       ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ru73N36dMLduNzyu",
+          "name": "Supabase account"
+        }
+      },
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "method": "PATCH",
         "url": "={{ $('Config').first().json.supabase_url + '/rest/v1/reportes?id=eq.' + $json.orig_id + '&telegram_chat_id=eq.' + $json.chat_id }}",
-        "options": {},
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $('Config').first().json.supabase_key }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Config').first().json.supabase_key }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -515,42 +488,49 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.db_row) }}"
+        "jsonBody": "={{ JSON.stringify($json.db_row) }}",
+        "options": {}
       },
-      "id": "adefe70a-4b5a-4857-867f-0ec87d469b09",
+      "id": "17f446f3-6aa1-4843-afcd-b648074636e9",
       "name": "Actualizar reporte",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4220,
-        340
+        9424,
+        5200
       ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ru73N36dMLduNzyu",
+          "name": "Supabase account"
+        }
+      },
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "const esc = (t) => String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst r = $input.first().json;\nconst p = $('Procesar respuesta IA').first().json;\nconst L = [];\nL.push(`📋 <b>Reporte de mantenimiento</b>${p.mode === 'update' ? ' · corregido' : ''}`, '');\nL.push(`🔧 <b>Equipo:</b> ${esc(r.equipo || '—')}${r.codigo_equipo ? ' (' + esc(r.codigo_equipo) + ')' : ''}`);\nif (r.area) L.push(`📍 <b>Área:</b> ${esc(r.area)}`);\nL.push(`⚠️ <b>Falla:</b> ${esc(r.falla || '—')}`);\nif (r.causa_probable) L.push(`🔍 <b>Causa probable:</b> ${esc(r.causa_probable)}`);\nL.push('🛠 <b>Actividades:</b>');\nconst acts = r.actividades || [];\nif (acts.length) acts.forEach((a) => L.push('  • ' + esc(a))); else L.push('  —');\nL.push('🔩 <b>Repuestos:</b>');\nconst reps = r.repuestos || [];\nif (reps.length) reps.forEach((x) => L.push('  • ' + esc(x.nombre) + (x.cantidad ? ' x' + esc(x.cantidad) : '') + (x.codigo ? ' (' + esc(x.codigo) + ')' : ''))); else L.push('  —');\nconst meta = [];\nif (r.tipo_notificacion) meta.push('Notif. ' + esc(r.tipo_notificacion));\nif (r.tipo_mantenimiento) meta.push(esc(r.tipo_mantenimiento));\nif (r.prioridad) meta.push('prioridad ' + esc(r.prioridad));\nif (r.duracion_minutos !== null && r.duracion_minutos !== undefined) meta.push(esc(r.duracion_minutos) + ' min');\nif (r.numero_ot) meta.push('OT ' + esc(r.numero_ot));\nif (r.fecha_intervencion) meta.push(esc(r.fecha_intervencion));\nif (meta.length) L.push('', '🏷 ' + meta.join(' · '));\nconst falt = r.campos_faltantes || [];\nif (falt.length) L.push('', `❗ <b>Faltan datos:</b> ${esc(falt.join(', '))}. Pulsa ✏️ Corregir para completarlos.`);\nL.push('', '¿Es correcto?', `ID: <code>${esc(r.id)}</code>`);\nreturn [{ json: { tg_method: 'sendMessage', tg: {\n  chat_id: p.chat_id, parse_mode: 'HTML', text: L.join('\\n'),\n  reply_markup: { inline_keyboard: [[{ text: '✅ Confirmar', callback_data: 'ok:' + r.id }, { text: '✏️ Corregir', callback_data: 'ed:' + r.id }]] },\n} } }];"
+        "jsCode": "const esc = (t) => String(t === null || t === undefined ? '' : t)\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;');\n\nconst r = $input.first().json;\nconst p = $('Procesar respuesta IA').first().json;\nconst raw = p.db_row || {};\nconst L = [];\n\nL.push(`📋 <b>VISTA PREVIA DEL REPORTE</b>${p.mode === 'update' ? ' · <i>Actualizado</i>' : ''}`);\nL.push('<i>Estado: Borrador activo (aún no registrado en el panel)</i>', '');\n\n// Identificación\nif (r.numero_ot) {\n  L.push(`🏷 <b>Orden de Trabajo (OT):</b> <code>${esc(r.numero_ot)}</code>`);\n}\nconst metaId = [];\nif (r.unidad) metaId.push(`Unidad: <b>${esc(r.unidad)}</b>`);\nif (r.puesto_trabajo) metaId.push(`Puesto: <b>${esc(r.puesto_trabajo)}</b>`);\nif (r.ow_os) metaId.push(`OW/OS: <b>${esc(r.ow_os)}</b>`);\nif (metaId.length) L.push(`🏭 ${metaId.join(' · ')}`);\n\nif (r.titulo_trabajo) {\n  L.push(`📌 <b>Título:</b> ${esc(r.titulo_trabajo)}`);\n}\n\nL.push(`🔧 <b>Equipo:</b> ${esc(r.equipo || '—')}${r.codigo_equipo ? ' (Tag: <code>' + esc(r.codigo_equipo) + '</code>)' : ''}`);\nif (r.area) L.push(`📍 <b>Área:</b> ${esc(r.area)}`);\n\nconst regimen = [];\nif (r.tipo_notificacion) regimen.push(`Notif. <b>${esc(r.tipo_notificacion).toUpperCase()}</b>`);\nif (r.tipo_mantenimiento) regimen.push(`Tipo: <b>${esc(r.tipo_mantenimiento)}</b>`);\nif (r.prioridad) regimen.push(`Prioridad: <b>${esc(r.prioridad)}</b>`);\nif (regimen.length) L.push(`⚙️ ${regimen.join(' · ')}`);\n\n// Horarios y Duración\nconst horario = [];\nif (r.hora_inicio || r.hora_fin) {\n  horario.push(`⏰ <b>Horario:</b> ${esc(r.hora_inicio || '—')} a ${esc(r.hora_fin || '—')}`);\n}\nif (r.duracion_minutos !== null && r.duracion_minutos !== undefined) {\n  horario.push(`⏱ ${esc(r.duracion_minutos)} min`);\n}\nif (r.total_horas_hombre !== null && r.total_horas_hombre !== undefined) {\n  horario.push(`👥 <b>${esc(r.total_horas_hombre)} H-H</b>`);\n}\nif (horario.length) L.push(horario.join(' · '));\n\n// Diagnóstico\nL.push(`⚠️ <b>Falla / Anomalía:</b> ${esc(r.falla || '—')}`);\nif (r.causa_probable) L.push(`🔍 <b>Causa probable:</b> ${esc(r.causa_probable)}`);\n\n// Actividades y Mediciones\nL.push('🛠 <b>Trabajo Ejecutado y Mediciones:</b>');\nconst acts = r.actividades || [];\nif (acts.length) {\n  acts.forEach((a, i) => L.push(`  ${i + 1}. ${esc(a)}`));\n} else {\n  L.push('  —');\n}\n\n// Herramientas\nconst tools = r.herramientas || [];\nif (tools.length) {\n  L.push('🧰 <b>Herramientas Usadas:</b>');\n  tools.forEach((h) => {\n    L.push(`  • ${esc(h.nombre)}${h.modelo ? ` [${esc(h.modelo)}]` : ''} <i>(${esc(h.procedencia || 'GMO')})</i>`);\n  });\n}\n\n// Materiales Consumibles\nconst mats = r.materiales_consumibles || [];\nif (mats.length) {\n  L.push('📦 <b>Materiales Consumibles:</b>');\n  mats.forEach((m) => {\n    const cantStr = m.cantidad !== null && m.cantidad !== undefined ? ` x${esc(m.cantidad)} ${esc(m.unidad || 'un.')}` : ' (cant. no esp.)';\n    L.push(`  • ${esc(m.nombre)}${cantStr}${m.codigo ? ` [Cód: ${esc(m.codigo)}]` : ''} <i>(${esc(m.procedencia || 'GMO')})</i>`);\n  });\n}\n\n// Repuestos\nconst reps = r.repuestos || [];\nif (reps.length) {\n  L.push('🔩 <b>Repuestos Capitalizables:</b>');\n  reps.forEach((x) => {\n    L.push(`  • ${esc(x.nombre)}${x.cantidad ? ` x${esc(x.cantidad)}` : ''}${x.codigo ? ` (${esc(x.codigo)})` : ''}`);\n  });\n}\n\n// Observaciones y Aviso SAP\nif (r.observaciones) {\n  L.push(`📝 <b>Observaciones:</b> ${esc(r.observaciones)}`);\n}\nif (r.requiere_aviso) {\n  L.push(`🔔 <b>Aviso SAP / GMAO:</b> Requiere generar aviso por observaciones`);\n}\n\n// Supervisión\nconst superv = [];\nif (r.supervisor_operaciones) superv.push(`Sup. Op: ${esc(r.supervisor_operaciones)}`);\nif (r.responsable_ejecucion) superv.push(`Resp. Ejec: ${esc(r.responsable_ejecucion)}`);\nif (r.responsable_trabajo_nombre) superv.push(`Resp. Trab: ${esc(r.responsable_trabajo_nombre)}`);\nif (superv.length) L.push(`👷 ${superv.join(' · ')}`);\n\n// Alertas de Ambigüedad o Datos Faltantes\nif (raw.necesita_confirmacion && raw.pregunta_aclaracion) {\n  L.push('', `❓ <b>Confirmación requerida:</b> ${esc(raw.pregunta_aclaracion)}`);\n}\n\nconst falt = r.campos_faltantes || [];\nif (falt.length) {\n  L.push('', `❗ <b>Faltan datos:</b> ${esc(falt.join(', '))}. Pulsa ✏️ Corregir para completarlos.`);\n}\n\nL.push('', '¿Todo conforme? ✅ <b>Confirmar</b> para publicar al panel o ✏️ <b>Corregir</b> para cambiar datos.');\n\nreturn [{\n  json: {\n    tg_method: 'sendMessage',\n    tg: {\n      chat_id: p.chat_id,\n      parse_mode: 'HTML',\n      text: L.join('\\n'),\n      reply_markup: {\n        inline_keyboard: [\n          [\n            { text: '✅ Confirmar', callback_data: 'ok:' + r.id },\n            { text: '✏️ Corregir', callback_data: 'ed:' + r.id }\n          ]\n        ]\n      }\n    }\n  }\n}];"
       },
-      "id": "8b706b9f-6ef2-4ee7-a2d8-fa85ed52fbbe",
+      "id": "53a14b8f-c53f-45f9-baca-3404ded0f0ed",
       "name": "Armar resumen",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4480,
-        240
+        9648,
+        5040
       ]
     },
     {
       "parameters": {
         "jsCode": "const c = $input.first().json;\nconst m = String(c.data || '').match(/^(ok|ed):([0-9a-fA-F-]{36})$/);\nreturn [{ json: { ...c, action: m ? m[1] : 'otro', report_id: m ? m[2] : null } }];"
       },
-      "id": "d69d44ce-bc50-4c4b-b28e-108f3bb4f073",
+      "id": "c27d0b50-8e1a-49d1-8950-b04fed04487a",
       "name": "Interpretar boton",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1620,
-        520
+        8080,
+        6768
       ]
     },
     {
@@ -559,31 +539,24 @@
         "numberOutputs": 3,
         "output": "={{ ['ok','ed','otro'].indexOf($json.action) }}"
       },
-      "id": "ba2476eb-7095-4872-82cd-9b92938d27d7",
+      "id": "c039f55d-8f89-46dc-9d4c-10ecf13e650b",
       "name": "Accion del boton",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
       "position": [
-        1880,
-        520
+        8304,
+        6752
       ]
     },
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $('Config').first().json.supabase_url + '/rest/v1/reportes?id=eq.' + $json.report_id + '&telegram_chat_id=eq.' + $json.chat_id + '&estado=in.(pendiente,corregido)' }}",
-        "options": {},
+        "url": "={{ $('Config').first().json.supabase_url + '/rest/v1/reportes?id=eq.' + $json.report_id + '&telegram_chat_id=eq.' + $json.chat_id + '&estado=in.(borrador,corregido,editando,pendiente)' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "apikey",
-              "value": "={{ $('Config').first().json.supabase_key }}"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Config').first().json.supabase_key }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -596,88 +569,243 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ estado: 'confirmado' }) }}"
+        "jsonBody": "={{ JSON.stringify({ estado: 'confirmado' }) }}",
+        "options": {}
       },
-      "id": "c7b3bf5d-1c11-4128-83a0-bf1a8d53182b",
+      "id": "649d6eb2-1e63-4cb8-b6f6-752aa3d145ca",
       "name": "Confirmar reporte",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2140,
-        440
+        9424,
+        5552
       ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ru73N36dMLduNzyu",
+          "name": "Supabase account"
+        }
+      },
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "jsCode": "const c = $('Interpretar boton').first().json;\nreturn [\n  { json: { tg_method: 'answerCallbackQuery', tg: { callback_query_id: c.callback_id, text: 'Reporte confirmado ✅' } } },\n  { json: { tg_method: 'editMessageReplyMarkup', tg: { chat_id: c.chat_id, message_id: c.message_id, reply_markup: { inline_keyboard: [] } } } },\n  { json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text: '✅ <b>Reporte confirmado</b> y enviado a supervisión.' } } },\n];"
+        "jsCode": "const esc = (t) => String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst c = $('Unificar confirmacion').first().json;\nconst r = $input.first().json || {};\nconst ok = !!r.id;\nconst out = [];\nif (c.callback_id) out.push({ json: { tg_method: 'answerCallbackQuery', tg: { callback_query_id: c.callback_id, text: ok ? 'Reporte confirmado ✅' : 'Este reporte ya fue procesado' } } });\nif (c.callback_id && c.message_id) out.push({ json: { tg_method: 'editMessageReplyMarkup', tg: { chat_id: c.chat_id, message_id: c.message_id, reply_markup: { inline_keyboard: [] } } } });\nconst eq = r.equipo ? ` de <b>${esc(r.equipo)}</b>` : '';\nconst text = ok\n  ? `✅ <b>Reporte confirmado</b>${eq}\\nYa quedó registrado y supervisión puede verlo en el panel.`\n  : 'ℹ️ Ese reporte ya fue confirmado o ya no está disponible. Envíame un nuevo audio o texto para crear otro.';\nout.push({ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text } } });\nreturn out;"
       },
-      "id": "1dc5ffcb-06da-4f8c-8caa-a06ca3378cc2",
+      "id": "a342a2ac-36f9-4139-a277-1052f3c23a07",
       "name": "Respuesta confirmacion",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2400,
-        440
+        9648,
+        5840
       ]
     },
     {
       "parameters": {
-        "jsCode": "const c = $('Interpretar boton').first().json;\nreturn [\n  { json: { tg_method: 'answerCallbackQuery', tg: { callback_query_id: c.callback_id } } },\n  { json: { tg_method: 'sendMessage', tg: {\n    chat_id: c.chat_id, parse_mode: 'HTML',\n    text: `✏️ Responde a <b>este mensaje</b> con la corrección (texto o audio).\\nEjemplo: «el equipo es la bomba P-101A, no la P-101B».\\n\\nID: ${c.report_id}`,\n    reply_markup: { force_reply: true, input_field_placeholder: 'Escribe o graba la corrección…' },\n  } } },\n];"
+        "jsCode": "const c = $('Unificar correccion').first().json;\nconst r = $input.first().json || {};\nconst out = [];\nif (c.callback_id) out.push({ json: { tg_method: 'answerCallbackQuery', tg: { callback_query_id: c.callback_id } } });\nconst text = r.id\n  ? `✏️ <b>Modo corrección</b>\\nEnvíame por <b>texto o audio</b> solo lo que quieres cambiar o agregar. Yo actualizo el borrador y te muestro una nueva vista previa.\\n\\n<b>Ejemplos:</b>\\n• «La falla fue sobrecalentamiento del motor»\\n• «El equipo es la bomba P-101A, no la P-101B»\\n• «Agrega 2 fusibles de 10 A como repuesto»\\n• «La duración fue de 90 minutos»`\n  : 'ℹ️ Ese reporte ya fue confirmado o ya no está disponible para corregir. Envíame un nuevo audio o texto para crear otro.';\nout.push({ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text } } });\nreturn out;"
       },
-      "id": "9496afc1-164f-49df-acad-995c6e14f841",
+      "id": "7a4a8536-eb57-488d-9ad3-ed2786ebe94b",
       "name": "Respuesta pedir correccion",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2140,
-        620
+        9648,
+        6080
       ]
     },
     {
       "parameters": {
         "jsCode": "const esc = (t) => String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst c = $input.first().json;\nconst eq = c.equipo ? ` de <b>${esc(c.equipo)}</b>` : '';\nlet text;\nif (c.estado === 'revisado') {\n  text = `✅ Tu reporte${eq} fue <b>validado</b> por supervisión.`;\n  if (c.comentario) text += `\\nComentario: ${esc(c.comentario)}`;\n} else {\n  text = `❌ Tu reporte${eq} fue <b>rechazado</b> por supervisión.`;\n  if (c.comentario) text += `\\nMotivo: ${esc(c.comentario)}`;\n}\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text } } }];"
       },
-      "id": "8b82411b-f6f0-435f-a5d3-f2218be1d128",
+      "id": "7f316f66-727c-4b7e-9aaf-e740b746aefa",
       "name": "Aviso de estado",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1620,
-        800
+        9648,
+        6928
       ]
     },
     {
       "parameters": {
         "jsCode": "let ctx = {};\ntry { ctx = $('Normalizar').first().json; } catch (e) {}\nif (!ctx.chat_id) return [];\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: ctx.chat_id, parse_mode: 'HTML', text: '⚠️ No pude procesar tu mensaje. Inténtalo de nuevo o envíalo como texto. Si persiste, avisa a tu supervisor.' } } }];"
       },
-      "id": "6ff43e50-bb62-4546-a0f0-81b315c10d9e",
+      "id": "1d3fae63-67ec-4fe8-b6b2-b463ee1a5561",
       "name": "Error de proceso",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4480,
-        640
+        9648,
+        5520
       ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "={{ 'https://api.telegram.org/bot' + $('Config').first().json.telegram_token + '/' + $json.tg_method }}",
-        "options": {},
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.tg) }}"
+        "jsonBody": "={{ JSON.stringify($json.tg) }}",
+        "options": {}
       },
-      "id": "01e02882-4b85-4e04-a774-0ac6716f7449",
+      "id": "71d8c976-ef7f-4596-a8ad-61db003e7e63",
       "name": "Enviar a Telegram",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4780,
-        400
+        9872,
+        5600
       ],
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nitem.binary.data.fileName = 'audio.ogg';\nitem.binary.data.mimeType = 'audio/ogg';\nreturn [{ json: item.json, binary: item.binary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7184,
+        5472
+      ],
+      "id": "414efb80-ecfb-4054-af6f-50c98cdb9b00",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').first().json.supabase_url + '/rest/v1/reportes?telegram_chat_id=eq.' + $json.chat_id + '&estado=in.(borrador,corregido,editando,pendiente)&select=*&limit=20' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "options": {}
+      },
+      "id": "0917ca46-4762-4949-b563-1cb67e3ae90b",
+      "name": "Buscar borrador activo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        7856,
+        5392
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ru73N36dMLduNzyu",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Preparar texto').first().json;\nconst drafts = $input.all().map((i) => i.json).filter((x) => x && x.id);\ndrafts.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));\n\nconst editing = drafts.find((d) => d.estado === 'editando') || null;\nconst singleDraft = drafts.length === 1 ? drafts[0] : null;\nconst draft = editing || singleDraft || drafts[0] || null;\n\nlet route = 'reporte';\nif (ctx.intent === 'vacio') {\n  route = 'sin_texto';\n} else if (ctx.intent === 'saludo') {\n  route = 'saludo';\n} else if (ctx.intent === 'confirmar') {\n  route = draft ? 'confirmar' : 'sin_borrador';\n} else if (ctx.intent === 'corregir') {\n  if (drafts.length > 1 && !editing) {\n    route = 'aclarar_borrador';\n  } else {\n    route = draft ? 'corregir' : 'sin_borrador';\n  }\n}\n\nreturn [{\n  json: {\n    ...ctx,\n    route,\n    report_id: draft ? draft.id : null,\n    draft: editing || (ctx.intent === 'corregir' ? draft : null)\n  }\n}];"
+      },
+      "id": "53725721-4585-449e-95a5-5cf077dd4746",
+      "name": "Decidir ruta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8080,
+        5184
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const esc = (t) => String(t === null || t === undefined ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst c = $input.first().json;\nconst nombre = esc(c.tecnico_registrado || c.first_name || 'técnico');\nconst text = `👋 Hola, <b>${nombre}</b>. Soy <b>MaintAI</b>, tu asistente de reportes de mantenimiento.\n\nPuedes enviarme:\n🎙 Un <b>audio</b> contando el trabajo realizado\n⌨️ Un <b>mensaje de texto</b> con el detalle\nIncluye: equipo, falla, actividades y repuestos usados.\n\nDespués te muestro una <b>vista previa</b> (todavía sin guardar) y tú decides:\n✅ <b>Confirmar</b> → se registra y supervisión lo ve en el panel\n✏️ <b>Corregir</b> → me dices qué cambiar y actualizo el borrador\n\nTambién puedes escribir «confirmar» o «corregir» en lugar de pulsar los botones.`;\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text } } }];"
+      },
+      "id": "86111719-3c20-473c-bd43-ae008698e68f",
+      "name": "Respuesta saludo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9648,
+        4800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nreturn [{ json: { tg_method: 'sendMessage', tg: { chat_id: c.chat_id, parse_mode: 'HTML', text: 'ℹ️ No tienes ningún reporte en borrador.\\nEnvíame un <b>audio</b> o un <b>mensaje de texto</b> con el trabajo realizado para crear uno.' } } }];"
+      },
+      "id": "f078ff50-c499-4b81-ae79-1a6f56749d8e",
+      "name": "Respuesta sin borrador",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9648,
+        6272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nreturn [{ json: { chat_id: c.chat_id, report_id: c.report_id, callback_id: c.callback_id || null, message_id: c.callback_id ? c.message_id : null } }];"
+      },
+      "id": "20b0e4e8-42df-43d3-8f8a-9b411e0c4a9c",
+      "name": "Unificar confirmacion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8528,
+        5552
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nreturn [{ json: { chat_id: c.chat_id, report_id: c.report_id, callback_id: c.callback_id || null, message_id: c.callback_id ? c.message_id : null } }];"
+      },
+      "id": "8082c972-93be-46ff-b957-a8869fdca614",
+      "name": "Unificar correccion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8528,
+        5744
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Config').first().json.supabase_url + '/rest/v1/reportes?id=eq.' + $json.report_id + '&telegram_chat_id=eq.' + $json.chat_id + '&estado=in.(borrador,corregido,editando,pendiente)' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ estado: 'editando' }) }}",
+        "options": {}
+      },
+      "id": "4d118d49-ed6f-4771-9089-3493083c22b2",
+      "name": "Marcar en edicion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9424,
+        5744
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ru73N36dMLduNzyu",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -686,29 +814,29 @@
         "width": 640,
         "color": 5
       },
-      "id": "777e0d26-8902-479f-844f-8fc5aa1cb167",
-      "name": "Nota 1",
+      "id": "0c584a0e-f91d-4d11-bf87-5334a296983b",
+      "name": "Nota ",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -60,
-        -330
+        5648,
+        4336
       ]
     },
     {
       "parameters": {
-        "content": "## Variables\nSolo se editan en **Config**. Puedes cambiar `llm_base_url` y `llm_model` para usar otro proveedor compatible con OpenAI (riesgo R6: dependencia de proveedor).\n`require_whitelist = true` limita el bot a los chat_id de la tabla `usuarios_telegram`.",
+        "content": "## Variables\nSolo se editan en **Config**. Puedes cambiar `llm_*` (texto/extracción) y `stt_*` (audio a texto) para usar proveedores distintos compatibles con OpenAI (riesgo R6).\n`require_whitelist = true` limita el bot a los chat_id de la tabla `usuarios_telegram`.",
         "height": 230,
         "width": 520,
         "color": 4
       },
-      "id": "fcf8b4c2-7c88-495d-a5b3-4060a74ea005",
-      "name": "Nota 2",
+      "id": "db8d2dbe-c2a4-4347-bbba-30e22b3b2b30",
+      "name": "Nota 4",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        260,
-        330
+        5648,
+        4912
       ]
     },
     {
@@ -718,16 +846,17 @@
         "width": 560,
         "color": 6
       },
-      "id": "bfc4c75f-e942-44d8-9717-191d9cf2a413",
-      "name": "Nota 3",
+      "id": "00af35e7-4a22-479d-b27b-f6afc027b6d2",
+      "name": "Nota 5",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -60,
-        520
+        5040,
+        5104
       ]
     }
   ],
+  "pinData": {},
   "connections": {
     "Telegram Trigger": {
       "main": [
@@ -863,7 +992,7 @@
       "main": [
         [
           {
-            "node": "Transcribir audio",
+            "node": "Code in JavaScript",
             "type": "main",
             "index": 0
           }
@@ -899,7 +1028,7 @@
       "main": [
         [
           {
-            "node": "Ruta de texto",
+            "node": "Buscar borrador activo",
             "type": "main",
             "index": 0
           }
@@ -917,7 +1046,21 @@
         ],
         [
           {
-            "node": "Obtener reporte original",
+            "node": "Respuesta saludo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unificar confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unificar correccion",
             "type": "main",
             "index": 0
           }
@@ -928,14 +1071,10 @@
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Obtener reporte original": {
-      "main": [
+        ],
         [
           {
-            "node": "Armar prompt",
+            "node": "Respuesta sin borrador",
             "type": "main",
             "index": 0
           }
@@ -1051,14 +1190,14 @@
       "main": [
         [
           {
-            "node": "Confirmar reporte",
+            "node": "Unificar confirmacion",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Respuesta pedir correccion",
+            "node": "Unificar correccion",
             "type": "main",
             "index": 0
           }
@@ -1170,13 +1309,122 @@
           }
         ]
       ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Transcribir audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar borrador activo": {
+      "main": [
+        [
+          {
+            "node": "Decidir ruta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error de proceso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decidir ruta": {
+      "main": [
+        [
+          {
+            "node": "Ruta de texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unificar confirmacion": {
+      "main": [
+        [
+          {
+            "node": "Confirmar reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unificar correccion": {
+      "main": [
+        [
+          {
+            "node": "Marcar en edicion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar en edicion": {
+      "main": [
+        [
+          {
+            "node": "Respuesta pedir correccion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error de proceso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta saludo": {
+      "main": [
+        [
+          {
+            "node": "Enviar a Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta sin borrador": {
+      "main": [
+        [
+          {
+            "node": "Enviar a Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "timezone": "America/Lima"
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
-  "pinData": {},
+  "versionId": "135654c2-4f90-4487-822e-661aac521499",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6a0308f29ee49d254ec6cc4e1d8dc37f712a0a11b1ad80970ab3a50225e4c03"
+  },
+  "nodeGroups": [],
+  "id": "F9D9BYj9XZkfkZIA",
   "tags": []
 }

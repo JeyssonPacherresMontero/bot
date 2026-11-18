@@ -82,8 +82,11 @@ export default function DashboardPage() {
     try {
       const startDate = getDateRangeFilter();
 
-      // Consulta de reportes para el período seleccionado
-      let baseQuery = supabase.from('reportes').select('*');
+      // Consulta de reportes confirmados o revisados para el período seleccionado
+      let baseQuery = supabase
+        .from('reportes')
+        .select('*')
+        .in('estado', ['confirmado', 'revisado', 'rechazado']);
       if (startDate) {
         baseQuery = baseQuery.gte('created_at', startDate);
       }

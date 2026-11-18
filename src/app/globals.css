@@ -150,3 +150,66 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* ============================================================
+   Estilos de Impresión Empresarial (@media print)
+   Genera un reporte corporativo limpio, sin barras ni botones
+   ============================================================ */
+@media print {
+  /* Ocultar elementos de navegación y de UI que no pertenecen al reporte impreso */
+  header,
+  nav,
+  aside,
+  footer,
+  .no-print,
+  button,
+  .btn-lte,
+  .btn-modern,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ajustar contenedor para pantalla completa en papel A4 / Carta */
+  .print-container {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Evitar saltos de página incómodos en medio de tablas o secciones */
+  .print-page-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Asegurar bordes nítidos en impresión monocromática o color */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

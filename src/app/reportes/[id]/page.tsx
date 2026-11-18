@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
+import { InformeEjecutivoModal } from '@/components/reportes/InformeEjecutivoModal';
+import { exportSingleReporteToExcel } from '@/lib/export-excel';
 import {
   cn,
   formatReporteNumero,
@@ -31,6 +33,9 @@ import type {
   ResponsableEjecutante,
   PrioridadReporte,
   RepuestoItem,
+  HerramientaItem,
+  MaterialConsumibleItem,
+  ProcedenciaItem,
   Perfil,
 } from '@/types/database.types';
 import {
@@ -54,6 +59,8 @@ import {
   Users,
   Wrench,
   Check,
+  Printer,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export default function ReporteDetallePage() {
@@ -82,8 +89,20 @@ export default function ReporteDetallePage() {
   const [causaProbable, setCausaProbable] = useState('');
   const [actividades, setActividades] = useState<string[]>([]);
   const [repuestos, setRepuestos] = useState<RepuestoItem[]>([]);
+  const [herramientas, setHerramientas] = useState<HerramientaItem[]>([]);
+  const [materialesConsumibles, setMaterialesConsumibles] = useState<MaterialConsumibleItem[]>([]);
   const [prioridad, setPrioridad] = useState<PrioridadReporte | ''>('');
   const [numeroOt, setNumeroOt] = useState('');
+  const [unidad, setUnidad] = useState('');
+  const [puestoTrabajo, setPuestoTrabajo] = useState('');
+  const [owOs, setOwOs] = useState('');
+  const [tituloTrabajo, setTituloTrabajo] = useState('');
+  const [totalHorasHombre, setTotalHorasHombre] = useState<number | ''>('');
+  const [supervisorOperaciones, setSupervisorOperaciones] = useState('');
+  const [responsableEjecucion, setResponsableEjecucion] = useState('');
+  const [responsableTrabajoNombre, setResponsableTrabajoNombre] = useState('');
+  const [responsableTrabajoTelefono, setResponsableTrabajoTelefono] = useState('');
+  const [requiereAviso, setRequiereAviso] = useState(false);
   const [fechaIntervencion, setFechaIntervencion] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
   const [horaInicio, setHoraInicio] = useState('');
@@ -101,6 +120,7 @@ export default function ReporteDetallePage() {
   const [showValidateConfirm, setShowValidateConfirm] = useState(false);
   const [showReopenConfirm, setShowReopenConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showExecutiveModal, setShowExecutiveModal] = useState(false);
 
   // Load Report Data
   const loadReporte = useCallback(async () => {
@@ -128,8 +148,20 @@ export default function ReporteDetallePage() {
         setCausaProbable(r.causa_probable || '');
         setActividades(Array.isArray(r.actividades) ? r.actividades : []);
         setRepuestos(Array.isArray(r.repuestos) ? (r.repuestos as RepuestoItem[]) : []);
+        setHerramientas(Array.isArray(r.herramientas) ? (r.herramientas as HerramientaItem[]) : []);
+        setMaterialesConsumibles(Array.isArray(r.materiales_consumibles) ? (r.materiales_consumibles as MaterialConsumibleItem[]) : []);
         setPrioridad(r.prioridad || '');
         setNumeroOt(r.numero_ot || '');
+        setUnidad(r.unidad || '');
+        setPuestoTrabajo(r.puesto_trabajo || '');
+        setOwOs(r.ow_os || '');
+        setTituloTrabajo(r.titulo_trabajo || '');
+        setTotalHorasHombre(r.total_horas_hombre ?? '');
+        setSupervisorOperaciones(r.supervisor_operaciones || '');
+        setResponsableEjecucion(r.responsable_ejecucion || '');
+        setResponsableTrabajoNombre(r.responsable_trabajo_nombre || '');
+        setResponsableTrabajoTelefono(r.responsable_trabajo_telefono || '');
+        setRequiereAviso(Boolean(r.requiere_aviso));
 
         const fInterv = r.fecha_intervencion ? r.fecha_intervencion.slice(0, 10) : '';
         setFechaIntervencion(fInterv);
@@ -223,9 +255,49 @@ export default function ReporteDetallePage() {
     }
   }, [fechaInicio, horaInicio, fechaFin, horaFin]);
 
-  // Validación de OT (debe contener 7 u 8 dígitos numéricos según regla)
+  // Validación de OT: texto libre, conservando ceros iniciales, guiones, barras y letras
   const cleanOt = numeroOt.trim();
-  const otValida = cleanOt === '' || /^\d{7,8}$/.test(cleanOt);
+
+  // Handlers para Herramientas (GMO / EXT)
+  const handleAddHerramienta = () => {
+    setHerramientas([...herramientas, { nombre: '', modelo: '', procedencia: 'GMO' }]);
+  };
+
+  const handleUpdateHerramienta = (
+    index: number,
+    field: keyof HerramientaItem,
+    val: string | null
+  ) => {
+    const updated = [...herramientas];
+    updated[index] = { ...updated[index], [field]: val } as HerramientaItem;
+    setHerramientas(updated);
+  };
+
+  const handleRemoveHerramienta = (index: number) => {
+    setHerramientas(herramientas.filter((_, i) => i !== index));
+  };
+
+  // Handlers para Materiales Consumibles (GMO / EXT)
+  const handleAddMaterialConsumible = () => {
+    setMaterialesConsumibles([
+      ...materialesConsumibles,
+      { nombre: '', cantidad: null, unidad: 'unidades', codigo: '', procedencia: 'GMO' },
+    ]);
+  };
+
+  const handleUpdateMaterialConsumible = (
+    index: number,
+    field: keyof MaterialConsumibleItem,
+    val: string | number | null
+  ) => {
+    const updated = [...materialesConsumibles];
+    updated[index] = { ...updated[index], [field]: val } as MaterialConsumibleItem;
+    setMaterialesConsumibles(updated);
+  };
+
+  const handleRemoveMaterialConsumible = (index: number) => {
+    setMaterialesConsumibles(materialesConsumibles.filter((_, i) => i !== index));
+  };
 
   // Handlers para Responsables Ejecutantes
   const handleAddEjecutante = () => {
@@ -300,15 +372,6 @@ export default function ReporteDetallePage() {
       return;
     }
 
-    // 3. Validar regla de OT (7 u 8 dígitos numéricos)
-    if (cleanOt && !/^\d{7,8}$/.test(cleanOt)) {
-      toast.error(
-        'Número de OT incorrecto',
-        'El número de OT debe contener exactamente 7 u 8 dígitos numéricos (ej. 5125076).'
-      );
-      return;
-    }
-
     setSaving(true);
     try {
       const filtradosEjecutantes = responsablesEjecutantes.filter((e) => e.nombre.trim() !== '');
@@ -321,12 +384,18 @@ export default function ReporteDetallePage() {
         equipo: equipo.trim() || null,
         codigo_equipo: codigoEquipo.trim() || null,
         area: area.trim() || null,
+        unidad: unidad.trim() || null,
+        puesto_trabajo: puestoTrabajo.trim() || null,
+        ow_os: owOs.trim() || null,
+        titulo_trabajo: tituloTrabajo.trim() || null,
         tipo_mantenimiento: (tipoMantenimiento as TipoMantenimiento) || null,
         tipo_notificacion: (tipoNotificacion as TipoNotificacion) || null,
         falla: falla.trim() || null,
         causa_probable: causaProbable.trim() || null,
         actividades: actividades.filter((a) => a.trim() !== ''),
         repuestos: repuestos.filter((r) => r.nombre.trim() !== ''),
+        herramientas: herramientas.filter((h) => h.nombre.trim() !== ''),
+        materiales_consumibles: materialesConsumibles.filter((m) => m.nombre.trim() !== ''),
         prioridad: (prioridad as PrioridadReporte) || null,
         numero_ot: cleanOt || null,
         fecha_inicio: fechaInicio || null,
@@ -335,8 +404,14 @@ export default function ReporteDetallePage() {
         hora_fin: horaFin || null,
         fecha_intervencion: fechaInicio ? `${fechaInicio}T00:00:00Z` : (fechaIntervencion ? `${fechaIntervencion}T00:00:00Z` : null),
         duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
+        total_horas_hombre: totalHorasHombre === '' ? null : Number(totalHorasHombre),
         tecnico_nombre: primerTecnico || null,
         responsables_ejecutantes: filtradosEjecutantes,
+        supervisor_operaciones: supervisorOperaciones.trim() || null,
+        responsable_ejecucion: responsableEjecucion.trim() || null,
+        responsable_trabajo_nombre: responsableTrabajoNombre.trim() || null,
+        responsable_trabajo_telefono: responsableTrabajoTelefono.trim() || null,
+        requiere_aviso: requiereAviso,
         observaciones: observaciones.trim() || null,
         comentario_supervisor: comentarioSupervisor.trim() || null,
       };
@@ -373,13 +448,6 @@ export default function ReporteDetallePage() {
       toast.error('Incoherencia en fechas/horas', fechaHoraError);
       return;
     }
-    if (cleanOt && !/^\d{7,8}$/.test(cleanOt)) {
-      toast.error(
-        'Número de OT inválido',
-        'El número de OT debe contener exactamente 7 u 8 dígitos numéricos (ej. 5125076).'
-      );
-      return;
-    }
 
     setActionLoading(true);
     try {
@@ -400,12 +468,18 @@ export default function ReporteDetallePage() {
           equipo: equipo.trim() || null,
           codigo_equipo: codigoEquipo.trim() || null,
           area: area.trim() || null,
+          unidad: unidad.trim() || null,
+          puesto_trabajo: puestoTrabajo.trim() || null,
+          ow_os: owOs.trim() || null,
+          titulo_trabajo: tituloTrabajo.trim() || null,
           tipo_mantenimiento: (tipoMantenimiento as TipoMantenimiento) || null,
           tipo_notificacion: (tipoNotificacion as TipoNotificacion) || null,
           falla: falla.trim() || null,
           causa_probable: causaProbable.trim() || null,
           actividades: actividades.filter((a) => a.trim() !== ''),
           repuestos: repuestos.filter((r) => r.nombre.trim() !== ''),
+          herramientas: herramientas.filter((h) => h.nombre.trim() !== ''),
+          materiales_consumibles: materialesConsumibles.filter((m) => m.nombre.trim() !== ''),
           prioridad: (prioridad as PrioridadReporte) || null,
           numero_ot: cleanOt || null,
           fecha_inicio: fechaInicio || null,
@@ -414,8 +488,14 @@ export default function ReporteDetallePage() {
           hora_fin: horaFin || null,
           fecha_intervencion: fechaInicio ? `${fechaInicio}T00:00:00Z` : null,
           duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
+          total_horas_hombre: totalHorasHombre === '' ? null : Number(totalHorasHombre),
           tecnico_nombre: primerTecnico || null,
           responsables_ejecutantes: filtradosEjecutantes,
+          supervisor_operaciones: supervisorOperaciones.trim() || null,
+          responsable_ejecucion: responsableEjecucion.trim() || null,
+          responsable_trabajo_nombre: responsableTrabajoNombre.trim() || null,
+          responsable_trabajo_telefono: responsableTrabajoTelefono.trim() || null,
+          requiere_aviso: requiereAviso,
           observaciones: observaciones.trim() || null,
         })
         .eq('id', reporte.id);
@@ -558,6 +638,26 @@ export default function ReporteDetallePage() {
         leftIcon={<Save className="w-3.5 h-3.5" />}
       >
         <span>Guardar cambios</span>
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setShowExecutiveModal(true)}
+        disabled={actionLoading}
+        leftIcon={<Printer className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+      >
+        <span>Informe Ejecutivo</span>
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => exportSingleReporteToExcel(reporte, supervisorRevisor)}
+        disabled={actionLoading}
+        leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+      >
+        <span>Exportar Excel</span>
       </Button>
 
       {reporte.estado !== 'revisado' && (
@@ -777,7 +877,7 @@ export default function ReporteDetallePage() {
                 {/* Duración y Total Horas-Hombre */}
                 <div>
                   <label htmlFor="duracion-minutos" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
-                    Duración Total (minutos):
+                    Duración Transcurrida (minutos):
                   </label>
                   <input
                     id="duracion-minutos"
@@ -785,22 +885,82 @@ export default function ReporteDetallePage() {
                     min="0"
                     value={duracionMinutos}
                     onChange={(e) => setDuracionMinutos(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="Se calcula automáticamente"
+                    placeholder="Se calcula de inicio a fin"
                     className="modern-input"
                   />
                 </div>
                 <div>
-                  <span className="text-slate-500 dark:text-slate-400 block mb-1">Total de Horas-Hombre (H-H):</span>
-                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                      {duracionMinutos && Number(duracionMinutos) > 0
-                        ? `${((Number(duracionMinutos) / 60) * Math.max(1, responsablesEjecutantes.filter((e) => e.nombre.trim()).length || 1)).toFixed(1)} hrs`
-                        : '—'}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      {responsablesEjecutantes.filter((e) => e.nombre.trim()).length || 1} ejecutante(s)
-                    </span>
-                  </div>
+                  <label htmlFor="total-hh" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Total Horas-Hombre (H-H):
+                  </label>
+                  <input
+                    id="total-hh"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={totalHorasHombre}
+                    onChange={(e) => setTotalHorasHombre(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder={
+                      duracionMinutos && Number(duracionMinutos) > 0
+                        ? `Estimado: ${((Number(duracionMinutos) / 60) * Math.max(1, responsablesEjecutantes.filter((e) => e.nombre.trim()).length || 1)).toFixed(1)} H-H`
+                        : "Total H-H..."
+                    }
+                    className="modern-input font-semibold"
+                  />
+                </div>
+
+                {/* Unidad, Puesto de Trabajo y OW/OS */}
+                <div>
+                  <label htmlFor="unidad-planta" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Unidad de Planta:
+                  </label>
+                  <input
+                    id="unidad-planta"
+                    type="text"
+                    value={unidad}
+                    onChange={(e) => setUnidad(e.target.value)}
+                    placeholder="Ej. GE, SGV, RCO..."
+                    className="modern-input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="puesto-trabajo" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Puesto de Trabajo / Especialidad:
+                  </label>
+                  <input
+                    id="puesto-trabajo"
+                    type="text"
+                    value={puestoTrabajo}
+                    onChange={(e) => setPuestoTrabajo(e.target.value)}
+                    placeholder="Ej. I&C, MEC, ELEC, EXTREMO..."
+                    className="modern-input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="ow-os" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    N° OW / OS Asociada:
+                  </label>
+                  <input
+                    id="ow-os"
+                    type="text"
+                    value={owOs}
+                    onChange={(e) => setOwOs(e.target.value)}
+                    placeholder="Ej. 19727704"
+                    className="modern-input font-mono"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="titulo-trabajo" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
+                    Título o Resumen del Trabajo:
+                  </label>
+                  <input
+                    id="titulo-trabajo"
+                    type="text"
+                    value={tituloTrabajo}
+                    onChange={(e) => setTituloTrabajo(e.target.value)}
+                    placeholder="Ej. Corrección en conexión 4-20 mA HART..."
+                    className="modern-input"
+                  />
                 </div>
               </div>
             </CardContent>
@@ -831,8 +991,64 @@ export default function ReporteDetallePage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3.5 text-xs">
+              {/* Supervisión y Responsables de Ejecución */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+                <div>
+                  <label htmlFor="sup-operaciones" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Supervisor GM Operaciones:
+                  </label>
+                  <input
+                    id="sup-operaciones"
+                    type="text"
+                    value={supervisorOperaciones}
+                    onChange={(e) => setSupervisorOperaciones(e.target.value)}
+                    placeholder="Nombre y Apellido..."
+                    className="modern-input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="resp-ejecucion" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Responsable de Ejecución:
+                  </label>
+                  <input
+                    id="resp-ejecucion"
+                    type="text"
+                    value={responsableEjecucion}
+                    onChange={(e) => setResponsableEjecucion(e.target.value)}
+                    placeholder="Nombre y Apellido..."
+                    className="modern-input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="resp-trabajo" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Responsable del Trabajo:
+                  </label>
+                  <input
+                    id="resp-trabajo"
+                    type="text"
+                    value={responsableTrabajoNombre}
+                    onChange={(e) => setResponsableTrabajoNombre(e.target.value)}
+                    placeholder="Nombre y Apellido..."
+                    className="modern-input"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="resp-telefono" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Celular / Teléfono de Contacto:
+                  </label>
+                  <input
+                    id="resp-telefono"
+                    type="text"
+                    value={responsableTrabajoTelefono}
+                    onChange={(e) => setResponsableTrabajoTelefono(e.target.value)}
+                    placeholder="N° Celular..."
+                    className="modern-input font-mono"
+                  />
+                </div>
+              </div>
+
               <p className="text-[11px] text-slate-500">
-                Indique cada técnico (TEC) o ayudante (AYD) que participó en el trabajo físico (soporta 2, 3 o más personas para la misma OT).
+                Personal Ejecutante: indique cada técnico (TEC) o ayudante (AYD) que participó en la intervención.
               </p>
               {responsablesEjecutantes.length === 0 ? (
                 <div className="p-4 text-center border border-dashed rounded-lg border-slate-300 dark:border-slate-700 text-slate-500">
@@ -1022,41 +1238,22 @@ export default function ReporteDetallePage() {
                   </select>
                 </div>
 
-                {/* Número de OT con regla de 7 u 8 dígitos */}
+                {/* Número de OT como texto libre */}
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="numero-ot" className="font-medium text-slate-700 dark:text-slate-300">
-                      Número de Orden de Trabajo (OT):
-                    </label>
-                    {cleanOt && (
-                      <span
-                        className={cn(
-                          'text-[10px] font-semibold px-1.5 py-0.5 rounded',
-                          otValida
-                            ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40'
-                            : 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40'
-                        )}
-                      >
-                        {otValida ? `✓ ${cleanOt.length} dígitos` : `⚠️ ${cleanOt.length} dígitos`}
-                      </span>
-                    )}
-                  </div>
+                  <label htmlFor="numero-ot" className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Número de Orden de Trabajo (OT):
+                  </label>
                   <input
                     id="numero-ot"
                     type="text"
                     value={numeroOt}
                     onChange={(e) => setNumeroOt(e.target.value)}
-                    placeholder="Ej. 5125076 (7 u 8 dígitos)"
-                    className={cn(
-                      'modern-input font-mono',
-                      cleanOt && !otValida && 'border-rose-500 ring-1 ring-rose-500'
-                    )}
+                    placeholder="Ej. 0052076, 5125-076, OT-2026-001A"
+                    className="modern-input font-mono font-semibold"
                   />
-                  {cleanOt && !otValida && (
-                    <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-1 font-medium">
-                      ⚠️ El N° de OT debe contener exactamente 7 u 8 dígitos numéricos.
-                    </p>
-                  )}
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Tratado como texto para preservar ceros iniciales, guiones, barras y letras.
+                  </p>
                 </div>
 
                 <div>
@@ -1181,12 +1378,211 @@ export default function ReporteDetallePage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 7: Repuestos Empleados */}
+          {/* SECCIÓN 7: Herramientas Usadas */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
-                  <CardTitle>7. Repuestos y Materiales Empleados</CardTitle>
+                  <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                    <Wrench className="w-4 h-4" />
+                  </div>
+                  <CardTitle>7. Herramientas Usadas (Formato Físico Secc. 2)</CardTitle>
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                    {herramientas.length}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="xs"
+                  onClick={handleAddHerramienta}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Añadir herramienta
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs">
+              <p className="text-[11px] text-slate-500">
+                Registre las herramientas utilizadas e indique su pertenencia: GMO (planta interna) o EXT (externa).
+              </p>
+              {herramientas.length === 0 ? (
+                <p className="text-slate-400 italic py-2">No se indicaron herramientas utilizadas.</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-12 gap-2 text-[11px] font-semibold text-slate-500 uppercase px-1">
+                    <div className="col-span-6">Herramienta / Equipo</div>
+                    <div className="col-span-3">Modelo / Código</div>
+                    <div className="col-span-2">Propiedad</div>
+                    <div className="col-span-1"></div>
+                  </div>
+                  {herramientas.map((h, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-6">
+                        <input
+                          type="text"
+                          value={h.nombre}
+                          onChange={(e) => handleUpdateHerramienta(index, 'nombre', e.target.value)}
+                          placeholder="Ej. Fluke 754, Llave de torque..."
+                          className="modern-input"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <input
+                          type="text"
+                          value={h.modelo || ''}
+                          onChange={(e) => handleUpdateHerramienta(index, 'modelo', e.target.value.trim() ? e.target.value : null)}
+                          placeholder="Modelo..."
+                          className="modern-input font-mono"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <select
+                          value={h.procedencia || ''}
+                          onChange={(e) => handleUpdateHerramienta(index, 'procedencia', (e.target.value as ProcedenciaItem) || null)}
+                          className="modern-input font-semibold"
+                        >
+                          <option value="">No informada</option>
+                          <option value="GMO">GMO (Planta)</option>
+                          <option value="EXT">EXT (Externa)</option>
+                        </select>
+                      </div>
+                      <div className="col-span-1 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveHerramienta(index)}
+                          className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                          aria-label={`Eliminar herramienta ${index + 1}`}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 8: Materiales Consumibles */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </div>
+                  <CardTitle>8. Materiales Consumibles (Formato Físico Secc. 3)</CardTitle>
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                    {materialesConsumibles.length}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="xs"
+                  onClick={handleAddMaterialConsumible}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Añadir consumible
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs">
+              <p className="text-[11px] text-slate-500">
+                Consumibles y materiales utilizados (fusibles, cinta, terminales). Cantidad no dicha permanece como desconocida/no informada.
+              </p>
+              {materialesConsumibles.length === 0 ? (
+                <p className="text-slate-400 italic py-2">No se indicaron consumibles utilizados.</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-12 gap-2 text-[11px] font-semibold text-slate-500 uppercase px-1">
+                    <div className="col-span-4">Material / Consumible</div>
+                    <div className="col-span-2">Cantidad</div>
+                    <div className="col-span-2">Unidad</div>
+                    <div className="col-span-2">Código / Espec.</div>
+                    <div className="col-span-1">Prop.</div>
+                    <div className="col-span-1"></div>
+                  </div>
+                  {materialesConsumibles.map((m, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-4">
+                        <input
+                          type="text"
+                          value={m.nombre}
+                          onChange={(e) => handleUpdateMaterialConsumible(index, 'nombre', e.target.value)}
+                          placeholder="Nombre del material..."
+                          className="modern-input"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={m.cantidad ?? ''}
+                          onChange={(e) =>
+                            handleUpdateMaterialConsumible(
+                              index,
+                              'cantidad',
+                              e.target.value === '' ? null : Number(e.target.value)
+                            )
+                          }
+                          placeholder="Cant."
+                          className="modern-input"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="text"
+                          value={m.unidad || ''}
+                          onChange={(e) => handleUpdateMaterialConsumible(index, 'unidad', e.target.value.trim() ? e.target.value : null)}
+                          placeholder="Ej. unid, m"
+                          className="modern-input"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="text"
+                          value={m.codigo || ''}
+                          onChange={(e) => handleUpdateMaterialConsumible(index, 'codigo', e.target.value.trim() ? e.target.value : null)}
+                          placeholder="Código..."
+                          className="modern-input font-mono"
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <select
+                          value={m.procedencia || ''}
+                          onChange={(e) => handleUpdateMaterialConsumible(index, 'procedencia', (e.target.value as ProcedenciaItem) || null)}
+                          className="modern-input font-semibold px-1 text-center"
+                        >
+                          <option value="">—</option>
+                          <option value="GMO">GMO</option>
+                          <option value="EXT">EXT</option>
+                        </select>
+                      </div>
+                      <div className="col-span-1 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMaterialConsumible(index)}
+                          className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                          aria-label={`Eliminar material ${index + 1}`}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* SECCIÓN 9: Repuestos Capitalizables */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <CardTitle>9. Repuestos y Partes de Recambio Capitalizables</CardTitle>
                   <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
                     {repuestos.length}
                   </span>
@@ -1272,12 +1668,12 @@ export default function ReporteDetallePage() {
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 8: Observaciones */}
+          {/* SECCIÓN 10: Observaciones y Aviso SAP */}
           <Card>
             <CardHeader>
-              <CardTitle>8. Observaciones Generales de la Intervención</CardTitle>
+              <CardTitle>10. Observación y/o Sugerencias (Formato Físico Secc. 5)</CardTitle>
             </CardHeader>
-            <CardContent className="text-xs">
+            <CardContent className="space-y-3 text-xs">
               <textarea
                 rows={2}
                 value={observaciones}
@@ -1285,13 +1681,24 @@ export default function ReporteDetallePage() {
                 placeholder="Observaciones de campo, advertencias técnicas o pendientes para el siguiente turno..."
                 className="modern-input"
               />
+              <label className="flex items-center gap-2.5 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={requiereAviso}
+                  onChange={(e) => setRequiereAviso(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-600"
+                />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  ¿Requiere generar aviso en SAP/GMAO por las observaciones encontradas?
+                </span>
+              </label>
             </CardContent>
           </Card>
 
-          {/* SECCIÓN 9: Transcripción / Texto Original y Correcciones */}
+          {/* SECCIÓN 11: Transcripción / Texto Original y Correcciones */}
           <Card>
             <CardHeader>
-              <CardTitle>9. Mensaje Original y Correcciones de Telegram</CardTitle>
+              <CardTitle>11. Mensaje Original y Correcciones de Telegram</CardTitle>
               <span className="text-xs text-slate-500">
                 {reporte.origen === 'audio' ? 'Transcripción Whisper' : 'Texto escrito'}
               </span>
@@ -1571,6 +1978,14 @@ export default function ReporteDetallePage() {
         confirmLabel="Eliminar Definitivamente"
         variant="danger"
         isLoading={actionLoading}
+      />
+
+      {/* Modal Vista Informe Ejecutivo Corporativo */}
+      <InformeEjecutivoModal
+        reporte={reporte}
+        supervisorRevisor={supervisorRevisor}
+        isOpen={showExecutiveModal}
+        onClose={() => setShowExecutiveModal(false)}
       />
     </div>
   );

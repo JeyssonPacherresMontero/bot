@@ -17,7 +17,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Card, CardHeader, CardTitle, CardFooter } from '@/components/ui/Card';
-import { exportReportesToCSV } from '@/lib/export-csv';
+import { exportReportesToExcel } from '@/lib/export-excel';
 import {
   formatReporteNumero,
   formatFechaHoraLima,
@@ -90,6 +90,9 @@ function ReportesContent() {
 
       if (filtros.estados.length > 0) {
         query = query.in('estado', filtros.estados);
+      } else {
+        // El panel principal solo muestra el reporte cuando está confirmado o procesado por supervisión
+        query = query.in('estado', ['confirmado', 'revisado', 'rechazado']);
       }
 
       if (filtros.prioridad) {
@@ -234,10 +237,10 @@ function ReportesContent() {
     }
   };
 
-  const handleExportCSV = async () => {
+  const handleExportExcel = async () => {
     setExporting(true);
     try {
-      let query = supabase.from('reportes').select('*');
+      let query = supabase.from('reportes').select('*, revisor:perfiles!revisado_por(id, nombre)');
 
       if (filtros.busqueda.trim()) {
         const term = filtros.busqueda.trim();
@@ -245,7 +248,11 @@ function ReportesContent() {
           `equipo.ilike.%${term}%,codigo_equipo.ilike.%${term}%,area.ilike.%${term}%,falla.ilike.%${term}%,tecnico_nombre.ilike.%${term}%,numero_ot.ilike.%${term}%,texto_original.ilike.%${term}%`
         );
       }
-      if (filtros.estados.length > 0) query = query.in('estado', filtros.estados);
+      if (filtros.estados.length > 0) {
+        query = query.in('estado', filtros.estados);
+      } else {
+        query = query.in('estado', ['confirmado', 'revisado', 'rechazado']);
+      }
       if (filtros.prioridad) query = query.eq('prioridad', filtros.prioridad);
       if (filtros.tipo) query = query.eq('tipo_mantenimiento', filtros.tipo);
       if (filtros.origen) query = query.eq('origen', filtros.origen);
@@ -259,15 +266,15 @@ function ReportesContent() {
       if (error) {
         toast.error('Error al exportar datos', error.message);
       } else if (data) {
-        exportReportesToCSV(
+        await exportReportesToExcel(
           data as Reporte[],
-          `reportes_maintai_${new Date().toISOString().slice(0, 10)}.csv`
+          `reporte_gerencial_mantenimiento_${new Date().toISOString().slice(0, 10)}.xlsx`
         );
-        toast.success('Archivo CSV exportado exitosamente');
+        toast.success('Reporte ejecutivo Excel generado exitosamente (.xlsx)');
       }
     } catch (err: unknown) {
       const error = err as Error;
-      toast.error('Error al exportar CSV', error.message);
+      toast.error('Error al generar Excel', error.message);
     } finally {
       setExporting(false);
     }
@@ -291,12 +298,12 @@ function ReportesContent() {
       <Button
         variant="success"
         size="sm"
-        onClick={handleExportCSV}
+        onClick={handleExportExcel}
         isLoading={exporting}
         disabled={totalCount === 0}
         leftIcon={<FileSpreadsheet className="w-3.5 h-3.5" />}
       >
-        <span>Exportar CSV</span>
+        <span>Exportar Excel (.xlsx)</span>
       </Button>
 
       <Button
