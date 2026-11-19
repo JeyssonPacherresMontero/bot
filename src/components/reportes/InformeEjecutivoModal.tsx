@@ -58,7 +58,13 @@ export function InformeEjecutivoModal({
     lines.push(`ÁREA: ${reporte.area || '—'}`);
     lines.push(`RÉGIMEN: Notif. ${reporte.tipo_notificacion || '—'} | Tipo: ${reporte.tipo_mantenimiento || '—'} | Prioridad: ${reporte.prioridad || '—'}`);
     lines.push(`HORARIO: ${reporte.fecha_inicio || '—'} ${reporte.hora_inicio || ''} a ${reporte.fecha_fin || '—'} ${reporte.hora_fin || ''}`);
-    lines.push(`DURACIÓN: ${reporte.duracion_minutos ? `${reporte.duracion_minutos} min` : 'No especificada'} | H-H TOTAL: ${reporte.total_horas_hombre ?? '—'}`);
+    const countEjecutantes = Math.max(1, Array.isArray(reporte.responsables_ejecutantes) ? reporte.responsables_ejecutantes.filter((e) => e.nombre?.trim()).length || 1 : 1);
+    const hhTxt = reporte.total_horas_hombre !== null && reporte.total_horas_hombre !== undefined
+      ? `${reporte.total_horas_hombre} H-H`
+      : (reporte.duracion_minutos && reporte.duracion_minutos > 0
+          ? `${Number(((reporte.duracion_minutos / 60) * countEjecutantes).toFixed(2))} H-H`
+          : '—');
+    lines.push(`DURACIÓN: ${reporte.duracion_minutos ? `${reporte.duracion_minutos} min` : 'No especificada'} | H-H TOTAL: ${hhTxt}`);
     lines.push(`-------------------------------------------------------`);
     lines.push(`PERSONAL Y RESPONSABLES:`);
     lines.push(`- Supervisor Operaciones: ${reporte.supervisor_operaciones || '—'}`);
@@ -156,6 +162,20 @@ export function InformeEjecutivoModal({
 
   const ejecutantes = reporte.responsables_ejecutantes || [];
   const fechaDoc = reporte.fecha_inicio || reporte.fecha_intervencion || reporte.created_at;
+
+  const countEjecutantesReporte = Math.max(
+    1,
+    (Array.isArray(reporte.responsables_ejecutantes)
+      ? reporte.responsables_ejecutantes.filter((e) => e.nombre?.trim()).length
+      : 0) || (reporte.tecnico_nombre ? 1 : 1)
+  );
+
+  const hhCalculadoDisplay =
+    reporte.total_horas_hombre !== null && reporte.total_horas_hombre !== undefined
+      ? `${reporte.total_horas_hombre} H-H`
+      : reporte.duracion_minutos && reporte.duracion_minutos > 0
+      ? `${Number(((reporte.duracion_minutos / 60) * countEjecutantesReporte).toFixed(2))} H-H`
+      : '—';
 
   return (
     <div
@@ -390,9 +410,7 @@ export function InformeEjecutivoModal({
                   Total Horas-Hombre
                 </span>
                 <span className="font-bold text-blue-700 dark:text-blue-400">
-                  {reporte.total_horas_hombre !== null && reporte.total_horas_hombre !== undefined
-                    ? `${reporte.total_horas_hombre} H-H`
-                    : '—'}
+                  {hhCalculadoDisplay}
                 </span>
               </div>
             </div>

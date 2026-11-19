@@ -156,7 +156,6 @@ export default function ReporteDetallePage() {
         setPuestoTrabajo(r.puesto_trabajo || '');
         setOwOs(r.ow_os || '');
         setTituloTrabajo(r.titulo_trabajo || '');
-        setTotalHorasHombre(r.total_horas_hombre ?? '');
         setSupervisorOperaciones(r.supervisor_operaciones || '');
         setResponsableEjecucion(r.responsable_ejecucion || '');
         setResponsableTrabajoNombre(r.responsable_trabajo_nombre || '');
@@ -171,15 +170,25 @@ export default function ReporteDetallePage() {
         setHoraFin(r.hora_fin || '');
 
         // Cargar o inicializar lista de ejecutantes
-        if (Array.isArray(r.responsables_ejecutantes) && r.responsables_ejecutantes.length > 0) {
-          setResponsablesEjecutantes(r.responsables_ejecutantes);
-        } else if (r.tecnico_nombre) {
-          setResponsablesEjecutantes([{ nombre: r.tecnico_nombre, rol: 'TEC' }]);
-        } else {
-          setResponsablesEjecutantes([{ nombre: '', rol: 'TEC' }]);
-        }
+        const ejecutantesIniciales: ResponsableEjecutante[] =
+          Array.isArray(r.responsables_ejecutantes) && r.responsables_ejecutantes.length > 0
+            ? r.responsables_ejecutantes
+            : r.tecnico_nombre
+            ? [{ nombre: r.tecnico_nombre, rol: 'TEC' }]
+            : [{ nombre: '', rol: 'TEC' }];
+        setResponsablesEjecutantes(ejecutantesIniciales);
 
         setDuracionMinutos(r.duracion_minutos ?? '');
+
+        // Si no tiene horas-hombre guardadas en BD pero sí tiene duración, calcular automáticamente
+        const countEjec = Math.max(1, ejecutantesIniciales.filter((e) => e.nombre?.trim()).length || 1);
+        const hhInicial =
+          r.total_horas_hombre !== null && r.total_horas_hombre !== undefined
+            ? r.total_horas_hombre
+            : r.duracion_minutos && r.duracion_minutos > 0
+            ? Math.round(((r.duracion_minutos / 60) * countEjec) * 100) / 100
+            : '';
+        setTotalHorasHombre(hhInicial);
         setObservaciones(r.observaciones || '');
         setComentarioSupervisor(r.comentario_supervisor || '');
 
@@ -254,6 +263,26 @@ export default function ReporteDetallePage() {
       }
     }
   }, [fechaInicio, horaInicio, fechaFin, horaFin]);
+
+  // Helper para calcular H-H automáticamente según duración y técnicos ejecutantes
+  const calcularHorasHombre = useCallback((minutos: number | '' | null, ejecutantes: ResponsableEjecutante[]): number | '' => {
+    if (minutos === '' || minutos === null || isNaN(Number(minutos)) || Number(minutos) <= 0) {
+      return '';
+    }
+    const countEjecutantes = Math.max(1, ejecutantes.filter((e) => e.nombre && e.nombre.trim() !== '').length || 1);
+    const hh = (Number(minutos) / 60) * countEjecutantes;
+    return Math.round(hh * 100) / 100;
+  }, []);
+
+  // Recálculo automático de Horas-Hombre cuando cambian la duración o la nómina de ejecutantes
+  useEffect(() => {
+    if (duracionMinutos !== '' && Number(duracionMinutos) > 0) {
+      const hh = calcularHorasHombre(duracionMinutos, responsablesEjecutantes);
+      setTotalHorasHombre(hh);
+    } else if (duracionMinutos === '' || Number(duracionMinutos) === 0) {
+      setTotalHorasHombre('');
+    }
+  }, [duracionMinutos, responsablesEjecutantes, calcularHorasHombre]);
 
   // Validación de OT: texto libre, conservando ceros iniciales, guiones, barras y letras
   const cleanOt = numeroOt.trim();
@@ -380,6 +409,15 @@ export default function ReporteDetallePage() {
         filtradosEjecutantes[0]?.nombre ||
         reporte.tecnico_nombre;
 
+      const durMin = duracionMinutos === '' ? null : Number(duracionMinutos);
+      const countEjecutantes = Math.max(1, filtradosEjecutantes.length || 1);
+      const finalTotalHH =
+        totalHorasHombre !== '' && totalHorasHombre !== null
+          ? Number(totalHorasHombre)
+          : durMin && durMin > 0
+          ? Math.round(((durMin / 60) * countEjecutantes) * 100) / 100
+          : null;
+
       const payload: Partial<Reporte> = {
         equipo: equipo.trim() || null,
         codigo_equipo: codigoEquipo.trim() || null,
@@ -403,8 +441,8 @@ export default function ReporteDetallePage() {
         fecha_fin: fechaFin || null,
         hora_fin: horaFin || null,
         fecha_intervencion: fechaInicio ? `${fechaInicio}T00:00:00Z` : (fechaIntervencion ? `${fechaIntervencion}T00:00:00Z` : null),
-        duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
-        total_horas_hombre: totalHorasHombre === '' ? null : Number(totalHorasHombre),
+        duracion_minutos: durMin,
+        total_horas_hombre: finalTotalHH,
         tecnico_nombre: primerTecnico || null,
         responsables_ejecutantes: filtradosEjecutantes,
         supervisor_operaciones: supervisorOperaciones.trim() || null,
@@ -458,6 +496,15 @@ export default function ReporteDetallePage() {
         filtradosEjecutantes[0]?.nombre ||
         reporte.tecnico_nombre;
 
+      const durMin = duracionMinutos === '' ? null : Number(duracionMinutos);
+      const countEjecutantes = Math.max(1, filtradosEjecutantes.length || 1);
+      const finalTotalHH =
+        totalHorasHombre !== '' && totalHorasHombre !== null
+          ? Number(totalHorasHombre)
+          : durMin && durMin > 0
+          ? Math.round(((durMin / 60) * countEjecutantes) * 100) / 100
+          : null;
+
       const { error } = await supabase
         .from('reportes')
         .update({
@@ -487,8 +534,8 @@ export default function ReporteDetallePage() {
           fecha_fin: fechaFin || null,
           hora_fin: horaFin || null,
           fecha_intervencion: fechaInicio ? `${fechaInicio}T00:00:00Z` : null,
-          duracion_minutos: duracionMinutos === '' ? null : Number(duracionMinutos),
-          total_horas_hombre: totalHorasHombre === '' ? null : Number(totalHorasHombre),
+          duracion_minutos: durMin,
+          total_horas_hombre: finalTotalHH,
           tecnico_nombre: primerTecnico || null,
           responsables_ejecutantes: filtradosEjecutantes,
           supervisor_operaciones: supervisorOperaciones.trim() || null,
@@ -890,23 +937,44 @@ export default function ReporteDetallePage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="total-hh" className="block text-slate-700 dark:text-slate-300 font-medium mb-1">
-                    Total Horas-Hombre (H-H):
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="total-hh" className="block text-slate-700 dark:text-slate-300 font-medium">
+                      Total Horas-Hombre (H-H):
+                    </label>
+                    {duracionMinutos !== '' && Number(duracionMinutos) > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const hh = calcularHorasHombre(duracionMinutos, responsablesEjecutantes);
+                          setTotalHorasHombre(hh);
+                          toast.info('Horas-Hombre recalculadas automáticamente');
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium hover:underline inline-flex items-center gap-1"
+                        title="Forzar cálculo automático: (Duración / 60) × N° de ejecutantes"
+                      >
+                        ⚡ Recalcular auto
+                      </button>
+                    )}
+                  </div>
                   <input
                     id="total-hh"
                     type="number"
-                    step="0.1"
+                    step="0.01"
                     min="0"
                     value={totalHorasHombre}
                     onChange={(e) => setTotalHorasHombre(e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder={
                       duracionMinutos && Number(duracionMinutos) > 0
-                        ? `Estimado: ${((Number(duracionMinutos) / 60) * Math.max(1, responsablesEjecutantes.filter((e) => e.nombre.trim()).length || 1)).toFixed(1)} H-H`
+                        ? `Auto: ${calcularHorasHombre(duracionMinutos, responsablesEjecutantes)} H-H`
                         : "Total H-H..."
                     }
                     className="modern-input font-semibold"
                   />
+                  {duracionMinutos !== '' && Number(duracionMinutos) > 0 && (
+                    <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                      Cálculo: ({(Number(duracionMinutos) / 60).toFixed(2)} h) × {Math.max(1, responsablesEjecutantes.filter((e) => e.nombre.trim()).length || 1)} ejecutante(s)
+                    </span>
+                  )}
                 </div>
 
                 {/* Unidad, Puesto de Trabajo y OW/OS */}

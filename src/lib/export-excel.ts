@@ -471,7 +471,11 @@ export async function exportReportesToExcel(
       r.hora_fin || '—',
       durMin || '—',
       durHrs || '—',
-      r.total_horas_hombre ?? '—',
+      r.total_horas_hombre !== null && r.total_horas_hombre !== undefined
+        ? r.total_horas_hombre
+        : (r.duracion_minutos && r.duracion_minutos > 0
+            ? Math.round(((r.duracion_minutos / 60) * Math.max(1, Array.isArray(r.responsables_ejecutantes) ? r.responsables_ejecutantes.filter((e) => e.nombre?.trim()).length || 1 : 1)) * 100) / 100
+            : '—'),
       r.falla || '—',
       r.causa_probable || '—',
       actsStr || '—',
@@ -699,7 +703,16 @@ export async function exportSingleReporteToExcel(
     ['Tipo Mantenimiento:', (reporte.tipo_mantenimiento || '—').toUpperCase(), 'Tipo Notificación:', (reporte.tipo_notificacion || '—').toUpperCase()],
     ['Prioridad:', (reporte.prioridad || '—').toUpperCase(), 'Duración Efectiva:', reporte.duracion_minutos ? `${reporte.duracion_minutos} min` : '—'],
     ['Fecha de Inicio:', `${reporte.fecha_inicio || '—'} ${reporte.hora_inicio || ''}`, 'Fecha de Término:', `${reporte.fecha_fin || '—'} ${reporte.hora_fin || ''}`],
-    ['Total Horas-Hombre:', reporte.total_horas_hombre !== null && reporte.total_horas_hombre !== undefined ? `${reporte.total_horas_hombre} H-H` : '—', '¿Requiere Aviso SAP?:', reporte.requiere_aviso ? 'SÍ' : 'NO'],
+    [
+      'Total Horas-Hombre:',
+      reporte.total_horas_hombre !== null && reporte.total_horas_hombre !== undefined
+        ? `${reporte.total_horas_hombre} H-H`
+        : (reporte.duracion_minutos && reporte.duracion_minutos > 0
+            ? `${(Math.round(((reporte.duracion_minutos / 60) * Math.max(1, Array.isArray(reporte.responsables_ejecutantes) ? reporte.responsables_ejecutantes.filter((e) => e.nombre?.trim()).length || 1 : 1)) * 100) / 100).toFixed(2)} H-H`
+            : '—'),
+      '¿Requiere Aviso SAP?:',
+      reporte.requiere_aviso ? 'SÍ' : 'NO'
+    ],
   ];
 
   let rIdx = 6;
